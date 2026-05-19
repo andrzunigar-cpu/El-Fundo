@@ -40,12 +40,12 @@
     "mercadopago": "^2.0.6",
     "resend": "^3.2.0",
     "zod": "^3.22.4",
-    "@elfundo/shared": "workspace:*"
+    "@elfundo/shared": "workspace:*",
+    "prisma": "^5.12.0",
+    "@nestjs/cli": "^10.3.0"
   },
   "devDependencies": {
-    "@nestjs/cli": "^10.3.0",
     "@nestjs/testing": "^10.3.0",
-    "prisma": "^5.12.0",
     "ts-node": "^10.9.2",
     "typescript": "^5.4.0",
     "@types/bcryptjs": "^2.4.6",
