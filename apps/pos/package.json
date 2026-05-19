@@ -1,0 +1,61 @@
+{
+  "name": "@elfundo/pos",
+  "version": "1.0.0",
+  "private": true,
+  "description": "POS Local Carnicería El Fundo — Electron",
+  "main": "electron/main.js",
+  "scripts": {
+    "dev": "concurrently \"vite\" \"wait-on http://localhost:5173 && electron .\"",
+    "build": "vite build && electron-builder",
+    "build:win": "electron-builder --win",
+    "lint": "eslint src --ext .ts,.tsx",
+    "test": "vitest"
+  },
+  "dependencies": {
+    "react": "^18.3.0",
+    "react-dom": "^18.3.0",
+    "react-router-dom": "^6.23.0",
+    "zustand": "^4.5.2",
+    "socket.io-client": "^4.7.4",
+    "better-sqlite3": "^9.4.3",
+    "axios": "^1.7.0",
+    "date-fns": "^3.6.0",
+    "date-fns-tz": "^3.1.3",
+    "react-hot-toast": "^2.4.1",
+    "lucide-react": "^0.378.0",
+    "clsx": "^2.1.1",
+    "@elfundo/shared": "workspace:*"
+  },
+  "devDependencies": {
+    "electron": "^31.0.0",
+    "electron-builder": "^24.13.0",
+    "vite": "^5.2.0",
+    "@vitejs/plugin-react": "^4.3.0",
+    "concurrently": "^8.2.2",
+    "wait-on": "^7.2.0",
+    "typescript": "^5.4.0",
+    "@types/react": "^18.3.0",
+    "@types/react-dom": "^18.3.0",
+    "@types/better-sqlite3": "^7.6.10",
+    "tailwindcss": "^3.4.0",
+    "autoprefixer": "^10.4.19",
+    "postcss": "^8.4.38",
+    "vitest": "^1.6.0"
+  },
+  "build": {
+    "appId": "cl.carniceriaelfundo.pos",
+    "productName": "El Fundo POS",
+    "directories": { "output": "release" },
+    "win": {
+      "target": "nsis",
+      "icon": "public/icon.ico"
+    },
+    "nsis": {
+      "oneClick": false,
+      "allowToChangeInstallationDirectory": true
+    },
+    "extraResources": [
+      { "from": "data/", "to": "data/", "filter": ["**/*"] }
+    ]
+  }
+}

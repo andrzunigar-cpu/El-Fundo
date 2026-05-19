@@ -1,0 +1,52 @@
+# Dependencies
+node_modules/
+.pnp
+.pnp.js
+
+# Build
+dist/
+build/
+out/
+.next/
+.turbo/
+
+# Environment
+.env
+.env.local
+.env.production
+.env.*.local
+
+# Databases
+*.db
+*.db-journal
+*.db-shm
+*.db-wal
+data/
+
+# Logs
+logs/
+*.log
+npm-debug.log*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Electron
+apps/pos/release/
+apps/pos/.electron/
+
+# Cache
+.cache/
+*.cache
+
+# Certificates
+*.pem
+*.key
+*.crt
