@@ -3,7 +3,12 @@
 import { createContext, useContext, useRef } from 'react'
 import { create, useStore } from 'zustand'
 import { persist } from 'zustand/middleware'
-import type { Product } from '@elfundo/shared'
+interface Product {
+  id: string
+  basePrice: number
+  onlinePrice?: number
+  requiresWeight: boolean
+}
 
 interface CartItem {
   product: Product
