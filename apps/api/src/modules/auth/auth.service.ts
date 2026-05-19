@@ -3,7 +3,7 @@ import { JwtService } from '@nestjs/jwt'
 import { ConfigService } from '@nestjs/config'
 import * as bcrypt from 'bcryptjs'
 import { DatabaseService } from '../../database/database.service'
-import type { LoginDto, RegisterDto, AuthTokens } from '@elfundo/shared'
+import type { LoginDto, RegisterDto, AuthTokens } from '../../../../../packages/shared/src'
 
 @Injectable()
 export class AuthService {

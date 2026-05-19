@@ -2,7 +2,7 @@ import { Controller, Post, Get, Body, Query, Headers, UseGuards } from '@nestjs/
 import { ApiTags, ApiOperation, ApiBearerAuth } from '@nestjs/swagger'
 import { JwtAuthGuard } from '../../common/guards/jwt-auth.guard'
 import { SyncService } from './sync.service'
-import type { SyncQueueItem } from '@elfundo/shared'
+import type { SyncQueueItem } from '../../../../../packages/shared/src'
 
 @ApiTags('Sincronización')
 @ApiBearerAuth()
