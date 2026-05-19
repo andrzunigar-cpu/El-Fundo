@@ -14,7 +14,7 @@ async function bootstrap() {
   )
 
   const config = app.get(ConfigService)
-  const port = config.get<number>('API_PORT', 3001)
+  const port = Number(process.env.PORT) || config.get<number>('API_PORT', 3001)
 
   app.enableCors({
     origin: [
@@ -35,8 +35,8 @@ async function bootstrap() {
 
   app.setGlobalPrefix('api/v1')
 
-  // Swagger solo en desarrollo
-  if (config.get('NODE_ENV') !== 'production') {
+  // Swagger habilitado siempre para diagnóstico inicial
+  {
     const swaggerConfig = new DocumentBuilder()
       .setTitle('Carnicería El Fundo API')
       .setDescription('API REST + WebSocket para sistema POS/Ecommerce')
