@@ -1,16 +1,14 @@
 // Carnicería El Fundo — Prisma Schema
-// https://pris.ly/d/prisma-schema
 
 generator client {
   provider = "prisma-client-js"
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
 }
-
-// ── Auth / Usuarios ──────────────────────────────────────────
 
 model User {
   id          String    @id @default(uuid())
@@ -27,10 +25,7 @@ model User {
   updatedAt   DateTime  @updatedAt @map("updated_at")
 
   @@map("users")
-  @@schema("branches")
 }
-
-// ── Catálogo ─────────────────────────────────────────────────
 
 model Category {
   id          String     @id @default(uuid())
@@ -46,244 +41,225 @@ model Category {
   products    Product[]
 
   @@map("categories")
-  @@schema("catalog")
 }
 
 model Product {
-  id                  String      @id @default(uuid())
-  localId             String?     @unique @map("local_id")
-  sku                 String      @unique
-  name                String
-  slug                String      @unique
-  description         String?
-  categoryId          String?     @map("category_id")
-  category            Category?   @relation(fields: [categoryId], references: [id])
-  meatType            String      @map("meat_type")
-  cut                 String?
-  origin              String?
-  agingDays           Int?        @map("aging_days")
-  isFeatured          Boolean     @default(false) @map("is_featured")
-  isAvailableOnline   Boolean     @default(true) @map("is_available_online")
-  requiresWeight      Boolean     @default(false) @map("requires_weight")
-  priceUnit           String      @default("kg") @map("price_unit")
-  basePrice           Int         @map("base_price")
-  onlinePrice         Int?        @map("online_price")
-  imageUrls           String[]    @default([]) @map("image_urls")
-  tags                String[]    @default([])
-  status              String      @default("active")
-  syncStatus          String      @default("synced") @map("sync_status")
-  version             Int         @default(1)
-  branchId            String?     @map("branch_id")
-  createdAt           DateTime    @default(now()) @map("created_at")
-  updatedAt           DateTime    @updatedAt @map("updated_at")
+  id                String         @id @default(uuid())
+  localId           String?        @unique @map("local_id")
+  sku               String         @unique
+  name              String
+  slug              String         @unique
+  description       String?
+  categoryId        String?        @map("category_id")
+  category          Category?      @relation(fields: [categoryId], references: [id])
+  meatType          String         @map("meat_type")
+  cut               String?
+  origin            String?
+  agingDays         Int?           @map("aging_days")
+  isFeatured        Boolean        @default(false) @map("is_featured")
+  isAvailableOnline Boolean        @default(true) @map("is_available_online")
+  requiresWeight    Boolean        @default(false) @map("requires_weight")
+  priceUnit         String         @default("kg") @map("price_unit")
+  basePrice         Int            @map("base_price")
+  onlinePrice       Int?           @map("online_price")
+  imageUrls         String[]       @default([]) @map("image_urls")
+  tags              String[]       @default([])
+  status            String         @default("active")
+  syncStatus        String         @default("synced") @map("sync_status")
+  version           Int            @default(1)
+  branchId          String?        @map("branch_id")
+  createdAt         DateTime       @default(now()) @map("created_at")
+  updatedAt         DateTime       @updatedAt @map("updated_at")
 
-  stockLevel          StockLevel?
-  stockMovements      StockMovement[]
-  orderItems          OrderItem[]
-  priceHistory        PriceHistory[]
+  stockLevels    StockLevel[]
+  stockMovements StockMovement[]
+  orderItems     OrderItem[]
+  priceHistory   PriceHistory[]
 
   @@map("products")
-  @@schema("catalog")
 }
 
 model PriceHistory {
-  id         String   @id @default(uuid())
-  productId  String   @map("product_id")
-  product    Product  @relation(fields: [productId], references: [id])
-  price      Int
-  changedBy  String   @map("changed_by")
-  reason     String?
-  createdAt  DateTime @default(now()) @map("created_at")
+  id        String   @id @default(uuid())
+  productId String   @map("product_id")
+  product   Product  @relation(fields: [productId], references: [id])
+  price     Int
+  changedBy String   @map("changed_by")
+  reason    String?
+  createdAt DateTime @default(now()) @map("created_at")
 
   @@map("price_history")
-  @@schema("catalog")
 }
 
-// ── Inventario ───────────────────────────────────────────────
-
 model StockLevel {
-  id                String   @id @default(uuid())
-  productId         String   @map("product_id")
-  product           Product  @relation(fields: [productId], references: [id])
-  branchId          String   @default("main") @map("branch_id")
-  quantity          Decimal  @default(0)
-  reservedQuantity  Decimal  @default(0) @map("reserved_quantity")
-  minStock          Decimal  @default(0) @map("min_stock")
-  maxStock          Decimal? @map("max_stock")
-  lastCountAt       DateTime? @map("last_count_at")
-  syncStatus        String   @default("synced") @map("sync_status")
-  updatedAt         DateTime @updatedAt @map("updated_at")
+  id               String    @id @default(uuid())
+  productId        String    @map("product_id")
+  product          Product   @relation(fields: [productId], references: [id])
+  branchId         String    @default("main") @map("branch_id")
+  quantity         Decimal   @default(0)
+  reservedQuantity Decimal   @default(0) @map("reserved_quantity")
+  minStock         Decimal   @default(0) @map("min_stock")
+  maxStock         Decimal?  @map("max_stock")
+  lastCountAt      DateTime? @map("last_count_at")
+  syncStatus       String    @default("synced") @map("sync_status")
+  updatedAt        DateTime  @updatedAt @map("updated_at")
 
   @@unique([productId, branchId])
   @@map("stock_levels")
-  @@schema("inventory")
 }
 
 model StockMovement {
-  id              String   @id @default(uuid())
-  productId       String   @map("product_id")
-  product         Product  @relation(fields: [productId], references: [id])
-  branchId        String   @default("main") @map("branch_id")
-  type            String
-  quantity        Decimal
-  quantityBefore  Decimal  @map("quantity_before")
-  quantityAfter   Decimal  @map("quantity_after")
-  referenceId     String?  @map("reference_id")
-  referenceType   String?  @map("reference_type")
-  notes           String?
-  costPerUnit     Int?     @map("cost_per_unit")
-  userId          String   @map("user_id")
-  syncStatus      String   @default("pending") @map("sync_status")
-  localId         String?  @unique @map("local_id")
-  createdAt       DateTime @default(now()) @map("created_at")
+  id             String   @id @default(uuid())
+  productId      String   @map("product_id")
+  product        Product  @relation(fields: [productId], references: [id])
+  branchId       String   @default("main") @map("branch_id")
+  type           String
+  quantity       Decimal
+  quantityBefore Decimal  @map("quantity_before")
+  quantityAfter  Decimal  @map("quantity_after")
+  referenceId    String?  @map("reference_id")
+  referenceType  String?  @map("reference_type")
+  notes          String?
+  costPerUnit    Int?     @map("cost_per_unit")
+  userId         String   @map("user_id")
+  syncStatus     String   @default("pending") @map("sync_status")
+  localId        String?  @unique @map("local_id")
+  createdAt      DateTime @default(now()) @map("created_at")
 
   @@map("stock_movements")
-  @@schema("inventory")
 }
-
-// ── Clientes ─────────────────────────────────────────────────
 
 model Customer {
-  id             String   @id @default(uuid())
-  localId        String?  @unique @map("local_id")
-  rut            String?  @unique
-  firstName      String   @map("first_name")
-  lastName       String   @map("last_name")
-  email          String?  @unique
-  phone          String?
-  birthDate      DateTime? @map("birth_date")
-  loyaltyPoints  Int      @default(0) @map("loyalty_points")
-  totalSpent     Int      @default(0) @map("total_spent")
-  orderCount     Int      @default(0) @map("order_count")
-  notes          String?
-  tags           String[] @default([])
-  status         String   @default("active")
-  syncStatus     String   @default("synced") @map("sync_status")
-  version        Int      @default(1)
-  createdAt      DateTime @default(now()) @map("created_at")
-  updatedAt      DateTime @updatedAt @map("updated_at")
+  id            String    @id @default(uuid())
+  localId       String?   @unique @map("local_id")
+  rut           String?   @unique
+  firstName     String    @map("first_name")
+  lastName      String    @map("last_name")
+  email         String?   @unique
+  phone         String?
+  birthDate     DateTime? @map("birth_date")
+  loyaltyPoints Int       @default(0) @map("loyalty_points")
+  totalSpent    Int       @default(0) @map("total_spent")
+  orderCount    Int       @default(0) @map("order_count")
+  notes         String?
+  tags          String[]  @default([])
+  status        String    @default("active")
+  syncStatus    String    @default("synced") @map("sync_status")
+  version       Int       @default(1)
+  createdAt     DateTime  @default(now()) @map("created_at")
+  updatedAt     DateTime  @updatedAt @map("updated_at")
 
-  orders         Order[]
+  orders Order[]
 
   @@map("customers")
-  @@schema("customers")
 }
 
-// ── Ventas ───────────────────────────────────────────────────
-
 model SaleSession {
-  id              String    @id @default(uuid())
-  branchId        String    @map("branch_id")
-  cashierId       String    @map("cashier_id")
-  registerNumber  Int       @default(1) @map("register_number")
-  openedAt        DateTime  @map("opened_at")
-  closedAt        DateTime? @map("closed_at")
-  openingCash     Int       @map("opening_cash")
-  closingCash     Int?      @map("closing_cash")
-  expectedCash    Int?      @map("expected_cash")
-  difference      Int?
-  totalSales      Int       @default(0) @map("total_sales")
-  totalOrders     Int       @default(0) @map("total_orders")
-  notes           String?
+  id             String    @id @default(uuid())
+  branchId       String    @map("branch_id")
+  cashierId      String    @map("cashier_id")
+  registerNumber Int       @default(1) @map("register_number")
+  openedAt       DateTime  @map("opened_at")
+  closedAt       DateTime? @map("closed_at")
+  openingCash    Int       @map("opening_cash")
+  closingCash    Int?      @map("closing_cash")
+  expectedCash   Int?      @map("expected_cash")
+  difference     Int?
+  totalSales     Int       @default(0) @map("total_sales")
+  totalOrders    Int       @default(0) @map("total_orders")
+  notes          String?
 
-  orders          Order[]
+  orders Order[]
 
   @@map("sale_sessions")
-  @@schema("sales")
 }
 
 model Order {
-  id                String      @id @default(uuid())
-  localId           String?     @unique @map("local_id")
-  orderNumber       String      @unique @map("order_number")
-  source            String      @default("pos")
-  status            String      @default("pending")
-  branchId          String?     @map("branch_id")
-  sessionId         String?     @map("session_id")
-  session           SaleSession? @relation(fields: [sessionId], references: [id])
-  customerId        String?     @map("customer_id")
-  customer          Customer?   @relation(fields: [customerId], references: [id])
-  customerName      String?     @map("customer_name")
-  customerPhone     String?     @map("customer_phone")
-  customerEmail     String?     @map("customer_email")
-  subtotal          Int
-  discountTotal     Int         @default(0) @map("discount_total")
-  taxTotal          Int         @default(0) @map("tax_total")
-  total             Int
-  paymentMethod     String?     @map("payment_method")
-  paymentStatus     String      @default("pending") @map("payment_status")
-  paymentReference  String?     @map("payment_reference")
-  deliveryType      String      @default("pickup") @map("delivery_type")
-  deliveryAddress   Json?       @map("delivery_address")
-  deliveryFee       Int         @default(0) @map("delivery_fee")
-  notes             String?
-  internalNotes     String?     @map("internal_notes")
-  cancelReason      String?     @map("cancel_reason")
-  printedAt         DateTime?   @map("printed_at")
-  confirmedAt       DateTime?   @map("confirmed_at")
-  completedAt       DateTime?   @map("completed_at")
-  syncStatus        String      @default("synced") @map("sync_status")
-  version           Int         @default(1)
-  createdAt         DateTime    @default(now()) @map("created_at")
-  updatedAt         DateTime    @updatedAt @map("updated_at")
+  id               String       @id @default(uuid())
+  localId          String?      @unique @map("local_id")
+  orderNumber      String       @unique @map("order_number")
+  source           String       @default("pos")
+  status           String       @default("pending")
+  branchId         String?      @map("branch_id")
+  sessionId        String?      @map("session_id")
+  session          SaleSession? @relation(fields: [sessionId], references: [id])
+  customerId       String?      @map("customer_id")
+  customer         Customer?    @relation(fields: [customerId], references: [id])
+  customerName     String?      @map("customer_name")
+  customerPhone    String?      @map("customer_phone")
+  customerEmail    String?      @map("customer_email")
+  subtotal         Int
+  discountTotal    Int          @default(0) @map("discount_total")
+  taxTotal         Int          @default(0) @map("tax_total")
+  total            Int
+  paymentMethod    String?      @map("payment_method")
+  paymentStatus    String       @default("pending") @map("payment_status")
+  paymentReference String?      @map("payment_reference")
+  deliveryType     String       @default("pickup") @map("delivery_type")
+  deliveryAddress  Json?        @map("delivery_address")
+  deliveryFee      Int          @default(0) @map("delivery_fee")
+  notes            String?
+  internalNotes    String?      @map("internal_notes")
+  cancelReason     String?      @map("cancel_reason")
+  printedAt        DateTime?    @map("printed_at")
+  confirmedAt      DateTime?    @map("confirmed_at")
+  completedAt      DateTime?    @map("completed_at")
+  syncStatus       String       @default("synced") @map("sync_status")
+  version          Int          @default(1)
+  createdAt        DateTime     @default(now()) @map("created_at")
+  updatedAt        DateTime     @updatedAt @map("updated_at")
 
-  items             OrderItem[]
+  items OrderItem[]
 
   @@map("orders")
-  @@schema("sales")
 }
 
 model OrderItem {
-  id           String   @id @default(uuid())
-  orderId      String   @map("order_id")
-  order        Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
-  productId    String   @map("product_id")
-  product      Product  @relation(fields: [productId], references: [id])
-  productName  String   @map("product_name")
-  productSku   String   @map("product_sku")
-  quantity     Decimal
-  weightKg     Decimal? @map("weight_kg")
-  unitPrice    Int      @map("unit_price")
-  subtotal     Int
-  discount     Int      @default(0)
-  notes        String?
+  id          String   @id @default(uuid())
+  orderId     String   @map("order_id")
+  order       Order    @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String   @map("product_id")
+  product     Product  @relation(fields: [productId], references: [id])
+  productName String   @map("product_name")
+  productSku  String   @map("product_sku")
+  quantity    Decimal
+  weightKg    Decimal? @map("weight_kg")
+  unitPrice   Int      @map("unit_price")
+  subtotal    Int
+  discount    Int      @default(0)
+  notes       String?
 
   @@map("order_items")
-  @@schema("sales")
 }
 
-// ── Sincronización ───────────────────────────────────────────
-
 model SyncSession {
-  id              String    @id @default(uuid())
-  branchId        String?   @map("branch_id")
-  deviceId        String    @map("device_id")
-  startedAt       DateTime  @map("started_at")
-  completedAt     DateTime? @map("completed_at")
-  direction       String
-  totalItems      Int       @default(0) @map("total_items")
-  processedItems  Int       @default(0) @map("processed_items")
-  failedItems     Int       @default(0) @map("failed_items")
-  conflictItems   Int       @default(0) @map("conflict_items")
-  status          String    @default("running")
+  id             String    @id @default(uuid())
+  branchId       String?   @map("branch_id")
+  deviceId       String    @map("device_id")
+  startedAt      DateTime  @map("started_at")
+  completedAt    DateTime? @map("completed_at")
+  direction      String
+  totalItems     Int       @default(0) @map("total_items")
+  processedItems Int       @default(0) @map("processed_items")
+  failedItems    Int       @default(0) @map("failed_items")
+  conflictItems  Int       @default(0) @map("conflict_items")
+  status         String    @default("running")
 
   @@map("sync_sessions")
-  @@schema("sync")
 }
 
 model SyncConflict {
-  id               String    @id @default(uuid())
-  entityType       String    @map("entity_type")
-  entityId         String    @map("entity_id")
-  localData        Json      @map("local_data")
-  cloudData        Json      @map("cloud_data")
-  localUpdatedAt   DateTime? @map("local_updated_at")
-  cloudUpdatedAt   DateTime? @map("cloud_updated_at")
-  resolution       String?
-  resolvedAt       DateTime? @map("resolved_at")
-  resolvedBy       String?   @map("resolved_by")
-  createdAt        DateTime  @default(now()) @map("created_at")
+  id             String    @id @default(uuid())
+  entityType     String    @map("entity_type")
+  entityId       String    @map("entity_id")
+  localData      Json      @map("local_data")
+  cloudData      Json      @map("cloud_data")
+  localUpdatedAt DateTime? @map("local_updated_at")
+  cloudUpdatedAt DateTime? @map("cloud_updated_at")
+  resolution     String?
+  resolvedAt     DateTime? @map("resolved_at")
+  resolvedBy     String?   @map("resolved_by")
+  createdAt      DateTime  @default(now()) @map("created_at")
 
   @@map("sync_conflicts")
-  @@schema("sync")
 }
