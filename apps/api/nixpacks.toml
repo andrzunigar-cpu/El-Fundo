@@ -1,0 +1,14 @@
+[phases.setup]
+nixPkgs = ["nodejs_20"]
+
+[phases.install]
+cmds = ["npm install -g pnpm@9", "pnpm install --filter @elfundo/api --filter @elfundo/shared"]
+
+[phases.build]
+cmds = [
+  "pnpm --filter @elfundo/api exec prisma generate",
+  "pnpm --filter @elfundo/api build"
+]
+
+[start]
+cmd = "pnpm --filter @elfundo/api start"

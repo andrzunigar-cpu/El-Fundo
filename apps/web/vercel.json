@@ -1,0 +1,6 @@
+{
+  "framework": "nextjs",
+  "buildCommand": "pnpm --filter @elfundo/web build",
+  "installCommand": "pnpm install --filter @elfundo/web --filter @elfundo/shared",
+  "outputDirectory": "apps/web/.next"
+}
