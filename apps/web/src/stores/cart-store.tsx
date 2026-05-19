@@ -5,9 +5,20 @@ import { create, useStore } from 'zustand'
 import { persist } from 'zustand/middleware'
 interface Product {
   id: string
+  sku: string
+  name: string
+  slug: string
+  description?: string
+  categoryId?: string
+  meatType?: string
   basePrice: number
   onlinePrice?: number
   requiresWeight: boolean
+  priceUnit?: string
+  imageUrls?: string[]
+  tags?: string[]
+  status?: string
+  [key: string]: any
 }
 
 interface CartItem {
