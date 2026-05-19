@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { useForm } from 'react-hook-form'
 import { zodResolver } from '@hookform/resolvers/zod'
@@ -184,10 +184,11 @@ export default function CheckoutPage() {
     }
   }
 
-  if (!items.length) {
-    router.replace('/products')
-    return null
-  }
+  useEffect(() => {
+    if (!items.length) router.replace('/products')
+  }, [items.length, router])
+
+  if (!items.length) return null
 
   return (
     <main className="max-w-5xl mx-auto px-4 py-10">

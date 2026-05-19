@@ -2,5 +2,5 @@
   "framework": "nextjs",
   "buildCommand": "pnpm --filter @elfundo/web build",
   "installCommand": "pnpm install --filter @elfundo/web --filter @elfundo/shared --no-frozen-lockfile",
-  "outputDirectory": "apps/web/.next"
+  "outputDirectory": ".next"
 }
