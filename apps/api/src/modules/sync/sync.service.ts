@@ -4,7 +4,7 @@ import { Queue, Worker, Job } from 'bullmq'
 import { ConfigService } from '@nestjs/config'
 import { DatabaseService } from '../../database/database.service'
 import { OrdersGateway } from '../../websocket/orders.gateway'
-import type { SyncQueueItem, SyncSession } from '../../../../../packages/shared/src'
+import type { SyncQueueItem, SyncSession } from '../../types'
 
 @Injectable()
 export class SyncService {

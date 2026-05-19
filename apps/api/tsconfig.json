@@ -19,12 +19,8 @@
     "forceConsistentCasingInFileNames": false,
     "noFallthroughCasesInSwitch": false,
     "resolveJsonModule": true,
-    "moduleResolution": "node",
-    "paths": {
-      "@elfundo/shared": ["../../packages/shared/src/index.ts"],
-      "@elfundo/shared/*": ["../../packages/shared/src/*"]
-    }
+    "moduleResolution": "node"
   },
-  "include": ["src/**/*", "../../packages/shared/src/**/*"],
+  "include": ["src/**/*"],
   "exclude": ["node_modules", "dist"]
 }

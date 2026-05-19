@@ -4,7 +4,7 @@ import { Queue } from 'bullmq'
 import { OrdersGateway } from '../../websocket/orders.gateway'
 import { DatabaseService } from '../../database/database.service'
 import { CreateOrderDto, UpdateOrderStatusDto } from './orders.dto'
-import type { User } from '../../../../../packages/shared/src'
+import type { User } from '../../types'
 
 @Injectable()
 export class OrdersService {
