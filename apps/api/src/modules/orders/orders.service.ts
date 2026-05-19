@@ -25,7 +25,7 @@ export class OrdersService {
         status: dto.source === 'web' ? 'pending' : 'confirmed',
         syncStatus: 'pending',
         version: 1,
-      },
+      } as any,
       include: { items: true, customer: true },
     })
 

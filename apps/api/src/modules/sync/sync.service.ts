@@ -150,8 +150,8 @@ export class SyncService {
     const { productId, branchId, quantity } = item.payload as any
     return this.db.stockLevel.upsert({
       where: { productId_branchId: { productId, branchId: branchId ?? 'main' } },
-      create: { productId, branchId: branchId ?? 'main', quantity, reservedQuantity: 0, availableQuantity: quantity, minStock: 0 },
-      update: { quantity, availableQuantity: { set: quantity } },
+      create: { productId, branchId: branchId ?? 'main', quantity, reservedQuantity: 0, minStock: 0 },
+      update: { quantity },
     })
   }
 

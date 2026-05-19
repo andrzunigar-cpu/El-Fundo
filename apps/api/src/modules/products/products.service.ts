@@ -14,7 +14,7 @@ export class ProductsService {
     if (search) where.name = { contains: search, mode: 'insensitive' }
 
     const [data, total] = await Promise.all([
-      this.db.product.findMany({ where, include: { category: true, stockLevel: true }, skip, take: limit, orderBy: { name: 'asc' } }),
+      this.db.product.findMany({ where, include: { category: true, stockLevels: true }, skip, take: limit, orderBy: { name: 'asc' } }),
       this.db.product.count({ where }),
     ])
     return { data, total, page, pageSize: limit, totalPages: Math.ceil(total / limit) }
@@ -23,7 +23,7 @@ export class ProductsService {
   async findOne(id: string) {
     const product = await this.db.product.findFirst({
       where: { OR: [{ id }, { slug: id }] },
-      include: { category: true, stockLevel: true },
+      include: { category: true, stockLevels: true },
     })
     if (!product) throw new NotFoundException('Producto no encontrado')
     return product
