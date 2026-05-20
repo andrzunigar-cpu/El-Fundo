@@ -32,6 +32,34 @@ export function setupIpcHandlers() {
     return db().prepare('SELECT * FROM products WHERE id = ?').get(id)
   })
 
+  ipcMain.handle('products:create', (_, data: any) => {
+    const id = `prod-${data.sku.toLowerCase()}`
+    const deviceId = (db().prepare("SELECT value FROM config WHERE key='device_id'").get() as any).value
+    try {
+      db().prepare(`
+        INSERT INTO products (id, sku, name, category_id, meat_type, cut, price_unit, base_price,
+          requires_weight, is_available_online, is_featured, image_urls, status, sync_status, version, created_at, updated_at)
+        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, '[]', 'active', 'pending', 1, datetime('now'), datetime('now'))
+      `).run(id, data.sku, data.name, data.categoryId, data.meatType, data.cut || null,
+             data.priceUnit, data.basePrice, data.requiresWeight ? 1 : 0)
+
+      db().prepare(`
+        INSERT INTO stock_levels (id, product_id, quantity, reserved_quantity, min_stock, sync_status, updated_at)
+        VALUES (?, ?, 0, 0, 0, 'pending', datetime('now'))
+      `).run(`stock-${id}`, id)
+
+      db().prepare(`
+        INSERT INTO sync_queue (id, entity_type, entity_id, operation, payload, device_id, created_at)
+        VALUES (?, 'product', ?, 'create', ?, ?, datetime('now'))
+      `).run(randomUUID(), id, JSON.stringify({ id, ...data }), deviceId)
+
+      return { id, ...data }
+    } catch (err: any) {
+      if (err.message?.includes('UNIQUE')) throw new Error('SKU ya existe')
+      throw err
+    }
+  })
+
   ipcMain.handle('products:updatePrice', (_, id: string, price: number) => {
     db().prepare(`
       UPDATE products SET base_price = ?, sync_status = 'pending', updated_at = datetime('now') WHERE id = ?

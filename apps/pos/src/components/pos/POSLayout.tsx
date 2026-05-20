@@ -1,59 +1,46 @@
 import React, { useEffect, useCallback } from 'react'
-import { Wifi, WifiOff, RefreshCw, Bell, ShoppingCart, Package, Users, BarChart2, Settings } from 'lucide-react'
+import { Wifi, WifiOff, RefreshCw, Bell, ShoppingCart, Package, Boxes, Wallet, BarChart3, History, Settings } from 'lucide-react'
 import toast from 'react-hot-toast'
-import { usePOSStore } from '../../stores/posStore'
-import { ProductGrid } from '../products/ProductGrid'
-import { CartPanel } from './CartPanel'
-import { WebOrdersPanel } from '../orders/WebOrdersPanel'
 import { clsx } from 'clsx'
+import { usePOSStore, type POSView } from '../../stores/posStore'
+import { SalesView } from '../views/SalesView'
+import { ProductsView } from '../views/ProductsView'
+import { StockView } from '../views/StockView'
+import { CashSessionView } from '../views/CashSessionView'
+import { ReportsView } from '../views/ReportsView'
+import { HistoryView } from '../views/HistoryView'
+import { SettingsView } from '../views/SettingsView'
+
+const NAV_ITEMS: Array<{ id: POSView; icon: any; label: string }> = [
+  { id: 'sales',    icon: ShoppingCart, label: 'Venta' },
+  { id: 'products', icon: Package,      label: 'Productos' },
+  { id: 'stock',    icon: Boxes,        label: 'Stock' },
+  { id: 'cash',     icon: Wallet,       label: 'Caja' },
+  { id: 'history',  icon: History,      label: 'Ventas' },
+  { id: 'reports',  icon: BarChart3,    label: 'Reportes' },
+  { id: 'settings', icon: Settings,     label: 'Config' },
+]
 
 export function POSLayout() {
   const {
-    isOnline, isSyncing, pendingSyncItems, hasNewOrders,
-    setOnlineStatus, setSyncStatus, addWebOrder, updateWebOrderStatus,
+    currentView, setView,
+    isOnline, isSyncing, pendingSyncItems,
+    setOnlineStatus, setSyncStatus,
   } = usePOSStore()
 
   useEffect(() => {
     const api = (window as any).posAPI
+    if (!api) return
 
     api.on('connection-status', ({ online }: { online: boolean }) => {
       setOnlineStatus(online)
-      if (online) toast.success('Conectado al servidor', { id: 'conn' })
-      else toast.error('Sin conexión al servidor', { id: 'conn' })
     })
 
-    api.on('new-order', (payload: any) => {
-      toast.custom(
-        (t) => (
-          <div className={clsx('bg-green-600 text-white px-6 py-4 rounded-xl shadow-2xl flex items-center gap-3', t.visible ? 'animate-bounce' : '')}>
-            <Bell className="w-6 h-6" />
-            <div>
-              <p className="font-bold text-lg">¡Nuevo pedido web!</p>
-              <p>#{payload.orderNumber} — ${payload.total?.toLocaleString('es-CL')}</p>
-            </div>
-          </div>
-        ),
-        { duration: 8000, position: 'top-right' }
-      )
-      addWebOrder(payload)
-      // Imprimir automáticamente
-      api.printer.printTicket(payload)
-    })
-
-    api.on('stock-updated', (payload: any) => {
-      if (payload.newStock <= 0) {
-        toast.error(`Stock agotado: ${payload.productId}`, { duration: 4000 })
-      }
-    })
-
-    api.on('sync-completed', (session: any) => {
+    api.on('sync-completed', () => {
       setSyncStatus(false, 0)
-      if (session.failedItems > 0) {
-        toast.error(`Sync: ${session.failedItems} ítems fallidos`)
-      }
     })
 
-    // Estado inicial de sincronización
+    // Estado inicial
     api.sync.getStatus().then((status: any) => {
       setOnlineStatus(status.isOnline)
       setSyncStatus(status.isSyncing, status.pendingItems)
@@ -61,7 +48,7 @@ export function POSLayout() {
 
     return () => {
       api.off('connection-status', () => {})
-      api.off('new-order', () => {})
+      api.off('sync-completed', () => {})
     }
   }, [])
 
@@ -69,88 +56,70 @@ export function POSLayout() {
     const api = (window as any).posAPI
     setSyncStatus(true, pendingSyncItems)
     await api.sync.triggerNow()
-    toast.success('Sincronización completada')
+    toast.success('Sincronización solicitada')
+    setSyncStatus(false, 0)
   }, [pendingSyncItems])
 
   return (
     <div className="flex flex-col h-screen bg-gray-950 text-white">
-      {/* Barra superior */}
-      <header className="flex items-center justify-between px-4 py-2 bg-gray-900 border-b border-gray-800 h-14">
+      {/* Header */}
+      <header className="flex items-center justify-between px-5 py-3 bg-gray-900 border-b border-gray-800 h-14 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <img src="/logo.png" alt="El Fundo" className="h-8" />
-          <span className="font-bold text-lg text-red-500">El Fundo POS</span>
+          <div className="w-9 h-9 rounded-lg bg-red-600 flex items-center justify-center font-black text-lg">EF</div>
+          <span className="font-bold text-lg">El Fundo POS</span>
+          <span className="text-xs text-gray-500 ml-2">Local · {new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'short' })}</span>
         </div>
 
         <div className="flex items-center gap-4">
-          {/* Estado de conexión */}
-          <div className={clsx('flex items-center gap-1.5 text-sm font-medium', isOnline ? 'text-green-400' : 'text-red-400')}>
-            {isOnline ? <Wifi className="w-4 h-4" /> : <WifiOff className="w-4 h-4" />}
-            {isOnline ? 'En línea' : 'Sin conexión'}
+          <div className={clsx('flex items-center gap-1.5 text-sm font-medium px-2.5 py-1 rounded-full',
+            isOnline ? 'bg-green-900/40 text-green-400' : 'bg-gray-800 text-gray-400')}>
+            {isOnline ? <Wifi className="w-3.5 h-3.5" /> : <WifiOff className="w-3.5 h-3.5" />}
+            {isOnline ? 'En línea' : 'Modo local'}
           </div>
 
-          {/* Sync */}
-          <button
-            onClick={handleSyncNow}
-            disabled={isSyncing}
-            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors"
-          >
+          <button onClick={handleSyncNow} disabled={isSyncing}
+            className="flex items-center gap-1.5 text-sm text-gray-400 hover:text-white transition-colors px-2 py-1 rounded hover:bg-gray-800"
+            title="Sincronizar ahora">
             <RefreshCw className={clsx('w-4 h-4', isSyncing && 'animate-spin')} />
             {pendingSyncItems > 0 && (
-              <span className="bg-yellow-500 text-black text-xs font-bold px-1.5 py-0.5 rounded-full">
+              <span className="bg-yellow-500 text-black text-xs font-bold px-1.5 py-0.5 rounded-full min-w-5 text-center">
                 {pendingSyncItems}
               </span>
             )}
           </button>
-
-          {/* Alerta pedidos web */}
-          {hasNewOrders && (
-            <button className="flex items-center gap-1.5 text-sm text-green-400 animate-pulse font-semibold">
-              <Bell className="w-4 h-4" />
-              Pedidos web
-            </button>
-          )}
-
-          <span className="text-gray-500 text-sm">
-            {new Date().toLocaleDateString('es-CL', { weekday: 'long', day: 'numeric', month: 'long' })}
-          </span>
         </div>
       </header>
 
-      {/* Contenido principal */}
+      {/* Main */}
       <div className="flex flex-1 overflow-hidden">
-        {/* Barra lateral de navegación */}
-        <nav className="w-16 bg-gray-900 border-r border-gray-800 flex flex-col items-center py-4 gap-4">
-          {[
-            { icon: ShoppingCart, label: 'POS' },
-            { icon: Bell, label: 'Pedidos', badge: hasNewOrders },
-            { icon: Package, label: 'Stock' },
-            { icon: Users, label: 'Clientes' },
-            { icon: BarChart2, label: 'Reportes' },
-            { icon: Settings, label: 'Config' },
-          ].map(({ icon: Icon, label, badge }) => (
+        {/* Sidebar nav */}
+        <nav className="w-20 bg-gray-900 border-r border-gray-800 flex flex-col items-stretch py-3 gap-1 flex-shrink-0">
+          {NAV_ITEMS.map(({ id, icon: Icon, label }) => (
             <button
-              key={label}
-              title={label}
-              className="relative p-3 rounded-xl hover:bg-gray-800 transition-colors group"
-            >
-              <Icon className="w-5 h-5 text-gray-400 group-hover:text-white" />
-              {badge && (
-                <span className="absolute top-1 right-1 w-2 h-2 bg-green-400 rounded-full" />
+              key={id}
+              onClick={() => setView(id)}
+              className={clsx(
+                'flex flex-col items-center gap-1 py-3 mx-2 rounded-lg transition-all',
+                currentView === id
+                  ? 'bg-red-600 text-white'
+                  : 'text-gray-400 hover:bg-gray-800 hover:text-white'
               )}
+            >
+              <Icon className="w-5 h-5" />
+              <span className="text-[10px] font-medium">{label}</span>
             </button>
           ))}
         </nav>
 
-        {/* Grilla de productos */}
-        <main className="flex-1 overflow-hidden flex">
-          <div className="flex-1 overflow-y-auto p-4">
-            <ProductGrid />
-          </div>
-
-          {/* Panel del carrito */}
-          <aside className="w-96 border-l border-gray-800">
-            <CartPanel />
-          </aside>
+        {/* View container */}
+        <main className="flex-1 overflow-hidden">
+          {currentView === 'sales'    && <SalesView />}
+          {currentView === 'products' && <ProductsView />}
+          {currentView === 'stock'    && <StockView />}
+          {currentView === 'cash'     && <CashSessionView />}
+          {currentView === 'history'  && <HistoryView />}
+          {currentView === 'reports'  && <ReportsView />}
+          {currentView === 'settings' && <SettingsView />}
         </main>
       </div>
     </div>

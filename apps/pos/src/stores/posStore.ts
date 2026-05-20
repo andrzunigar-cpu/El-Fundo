@@ -2,6 +2,8 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { Product, Order, Customer, StockLevel } from '../types'
 
+export type POSView = 'sales' | 'products' | 'stock' | 'cash' | 'reports' | 'history' | 'settings'
+
 interface CartItem {
   product: Product
   quantity: number
@@ -10,6 +12,10 @@ interface CartItem {
 }
 
 interface POSStore {
+  // ── Navegación ───────────────────────────────────────────
+  currentView: POSView
+  setView: (v: POSView) => void
+
   // ── Estado de la caja ────────────────────────────────────
   isOnline: boolean
   isSyncing: boolean
@@ -57,6 +63,8 @@ interface POSStore {
 export const usePOSStore = create<POSStore>()(
   persist(
     (set, get) => ({
+      currentView: 'sales' as POSView,
+      setView: (v) => set({ currentView: v }),
       isOnline: false,
       isSyncing: false,
       pendingSyncItems: 0,

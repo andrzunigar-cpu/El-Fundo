@@ -7,6 +7,7 @@ contextBridge.exposeInMainWorld('posAPI', {
     getAll: () => ipcRenderer.invoke('products:getAll'),
     getById: (id: string) => ipcRenderer.invoke('products:getById', id),
     search: (query: string) => ipcRenderer.invoke('products:search', query),
+    create: (data: any) => ipcRenderer.invoke('products:create', data),
     updatePrice: (id: string, price: number) => ipcRenderer.invoke('products:updatePrice', id, price),
   },
 
