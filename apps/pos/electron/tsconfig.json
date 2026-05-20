@@ -1,0 +1,25 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "commonjs",
+    "moduleResolution": "node",
+    "esModuleInterop": true,
+    "allowSyntheticDefaultImports": true,
+    "resolveJsonModule": true,
+    "skipLibCheck": true,
+    "strict": false,
+    "outDir": "../dist-electron",
+    "rootDir": "../",
+    "sourceMap": true,
+    "declaration": false
+  },
+  "include": [
+    "main.ts",
+    "preload.ts",
+    "../src/database/**/*",
+    "../src/ipc/**/*",
+    "../src/sync/**/*",
+    "../src/types/**/*"
+  ],
+  "exclude": ["node_modules", "../dist", "../release", "../dist-electron"]
+}

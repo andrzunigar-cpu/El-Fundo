@@ -15,7 +15,7 @@ function createWindow() {
     minWidth: 1024,
     minHeight: 768,
     title: 'El Fundo POS',
-    icon: path.join(__dirname, '../public/icon.ico'),
+    icon: path.join(__dirname, '../../public/icon.ico'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       contextIsolation: true,
@@ -28,7 +28,7 @@ function createWindow() {
     mainWindow.loadURL('http://localhost:5173')
     mainWindow.webContents.openDevTools()
   } else {
-    mainWindow.loadFile(path.join(__dirname, '../dist/index.html'))
+    mainWindow.loadFile(path.join(__dirname, '../../dist/index.html'))
   }
 
   mainWindow.on('closed', () => { mainWindow = null })
