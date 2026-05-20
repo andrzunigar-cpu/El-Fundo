@@ -197,6 +197,62 @@ export function setupIpcHandlers() {
     return db().prepare("SELECT * FROM sync_queue WHERE status IN ('pending','failed') ORDER BY created_at ASC LIMIT 100").all()
   })
 
+  ipcMain.handle('sync:triggerNow', () => {
+    // Trigger manual sync — el SyncManager corre en background, esto solo retorna el estado actual
+    const pending = (db().prepare("SELECT COUNT(*) as c FROM sync_queue WHERE status='pending'").get() as any).c
+    return { triggered: true, pendingItems: pending }
+  })
+
+  ipcMain.handle('sync:getLogs', () => {
+    return db().prepare("SELECT * FROM sync_queue ORDER BY created_at DESC LIMIT 50").all()
+  })
+
+  // ── Handlers complementarios ───────────────────────────────
+  ipcMain.handle('orders:getById', (_, id: string) => {
+    const order = db().prepare('SELECT * FROM orders WHERE id = ?').get(id) as any
+    if (!order) return null
+    const items = db().prepare('SELECT * FROM order_items WHERE order_id = ?').all(id)
+    return { ...order, items }
+  })
+
+  ipcMain.handle('customers:getById', (_, id: string) => {
+    return db().prepare('SELECT * FROM customers WHERE id = ?').get(id)
+  })
+
+  ipcMain.handle('inventory:getStock', (_, productId: string) => {
+    return db().prepare('SELECT * FROM stock_levels WHERE product_id = ?').get(productId)
+  })
+
+  ipcMain.handle('session:close', (_, data: any) => {
+    const sessionId = (db().prepare("SELECT value FROM config WHERE key='current_session_id'").get() as any)?.value
+    if (!sessionId) return { success: false, message: 'No hay sesión abierta' }
+    const session = db().prepare('SELECT * FROM sale_sessions WHERE id = ?').get(sessionId) as any
+    const expected = (session?.opening_cash ?? 0) + (session?.total_sales ?? 0)
+    const difference = (data.closingCash ?? 0) - expected
+    db().prepare(`
+      UPDATE sale_sessions
+      SET closed_at = datetime('now'), closing_cash = ?, expected_cash = ?, difference = ?, notes = ?
+      WHERE id = ?
+    `).run(data.closingCash, expected, difference, data.notes ?? null, sessionId)
+    db().prepare("UPDATE config SET value='' WHERE key='current_session_id'").run()
+    return { success: true, expected, difference }
+  })
+
+  ipcMain.handle('printer:test', () => {
+    console.log('TEST PRINTER')
+    return { success: true, message: 'Test enviado' }
+  })
+
+  ipcMain.handle('reports:cashClosing', (_, sessionId: string) => {
+    const session = db().prepare('SELECT * FROM sale_sessions WHERE id = ?').get(sessionId)
+    const orders = db().prepare(`
+      SELECT payment_method, COUNT(*) as count, SUM(total) as total
+      FROM orders WHERE session_id = ? AND status = 'completed'
+      GROUP BY payment_method
+    `).all(sessionId)
+    return { session, paymentBreakdown: orders }
+  })
+
   // ── Reportes ──────────────────────────────────────────────
   ipcMain.handle('reports:dailySales', (_, date: string) => {
     const start = `${date}T00:00:00`

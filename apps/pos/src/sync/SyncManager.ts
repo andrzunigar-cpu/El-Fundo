@@ -2,7 +2,7 @@ import { BrowserWindow, ipcMain } from 'electron'
 import { io, Socket } from 'socket.io-client'
 import axios from 'axios'
 import { getDb } from '../database/init'
-import type { SyncQueueItem } from '@elfundo/shared'
+import type { SyncQueueItem } from '../types'
 
 const SYNC_INTERVAL_MS = 5 * 60 * 1000  // 5 minutos
 const BATCH_SIZE = 50

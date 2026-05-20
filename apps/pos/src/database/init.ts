@@ -22,7 +22,74 @@ export async function initDatabase(): Promise<void> {
   db.pragma('mmap_size = 268435456')  // 256MB mmap
 
   runMigrations(db)
+  seedInitialData(db)
   console.log(`SQLite inicializado: ${dbPath}`)
+}
+
+function seedInitialData(db: Database.Database) {
+  const count = (db.prepare('SELECT COUNT(*) as c FROM products').get() as any).c
+  if (count > 0) return
+
+  const now = new Date().toISOString()
+  const cats = [
+    { id: 'cat-vacuno',  name: 'Vacuno',  slug: 'vacuno',  sort: 1 },
+    { id: 'cat-cerdo',   name: 'Cerdo',   slug: 'cerdo',   sort: 2 },
+    { id: 'cat-cordero', name: 'Cordero', slug: 'cordero', sort: 3 },
+    { id: 'cat-pollo',   name: 'Pollo',   slug: 'pollo',   sort: 4 },
+    { id: 'cat-embutidos', name: 'Embutidos', slug: 'embutidos', sort: 5 },
+  ]
+  const insertCat = db.prepare(`
+    INSERT INTO categories (id, name, slug, sort_order, status, sync_status, version, created_at, updated_at)
+    VALUES (?, ?, ?, ?, 'active', 'synced', 1, ?, ?)
+  `)
+  for (const c of cats) insertCat.run(c.id, c.name, c.slug, c.sort, now, now)
+
+  const products = [
+    // Vacuno
+    { sku: 'VAC-001', name: 'Lomo Liso',         cat: 'cat-vacuno',  type: 'vacuno',  cut: 'lomo_liso',       price: 14990, weight: 1 },
+    { sku: 'VAC-002', name: 'Lomo Vetado',       cat: 'cat-vacuno',  type: 'vacuno',  cut: 'lomo_vetado',     price: 12990, weight: 1 },
+    { sku: 'VAC-003', name: 'Posta Negra',       cat: 'cat-vacuno',  type: 'vacuno',  cut: 'posta_negra',     price: 9990,  weight: 1 },
+    { sku: 'VAC-004', name: 'Asado de Tira',     cat: 'cat-vacuno',  type: 'vacuno',  cut: 'asado_carnicero', price: 8990,  weight: 1 },
+    { sku: 'VAC-005', name: 'Entraña',           cat: 'cat-vacuno',  type: 'vacuno',  cut: 'entraña',         price: 11990, weight: 1 },
+    { sku: 'VAC-006', name: 'Plateada',          cat: 'cat-vacuno',  type: 'vacuno',  cut: 'plateada',        price: 7990,  weight: 1 },
+    { sku: 'VAC-007', name: 'Osobuco',           cat: 'cat-vacuno',  type: 'vacuno',  cut: 'osobuco',         price: 5990,  weight: 1 },
+    { sku: 'VAC-008', name: 'Carne Molida',      cat: 'cat-vacuno',  type: 'vacuno',  cut: 'otro',            price: 7490,  weight: 1 },
+    // Cerdo
+    { sku: 'CER-001', name: 'Pulpa de Cerdo',    cat: 'cat-cerdo',   type: 'cerdo',   cut: 'otro',            price: 6990,  weight: 1 },
+    { sku: 'CER-002', name: 'Costillar de Cerdo',cat: 'cat-cerdo',   type: 'cerdo',   cut: 'costilla',        price: 7990,  weight: 1 },
+    { sku: 'CER-003', name: 'Chuleta Centro',    cat: 'cat-cerdo',   type: 'cerdo',   cut: 'chuleta',         price: 5990,  weight: 1 },
+    // Cordero
+    { sku: 'COR-001', name: 'Pierna de Cordero', cat: 'cat-cordero', type: 'cordero', cut: 'otro',            price: 13990, weight: 1 },
+    { sku: 'COR-002', name: 'Costillar Cordero', cat: 'cat-cordero', type: 'cordero', cut: 'costilla',        price: 11990, weight: 1 },
+    // Pollo
+    { sku: 'POL-001', name: 'Pollo Entero',      cat: 'cat-pollo',   type: 'pollo',   cut: 'otro',            price: 3490,  weight: 1 },
+    { sku: 'POL-002', name: 'Pechuga de Pollo',  cat: 'cat-pollo',   type: 'pollo',   cut: 'otro',            price: 5990,  weight: 1 },
+    { sku: 'POL-003', name: 'Trutro de Pollo',   cat: 'cat-pollo',   type: 'pollo',   cut: 'otro',            price: 3990,  weight: 1 },
+    // Embutidos (unidad)
+    { sku: 'EMB-001', name: 'Longaniza Casera',  cat: 'cat-embutidos', type: 'cerdo', cut: 'otro',            price: 2990,  weight: 0 },
+    { sku: 'EMB-002', name: 'Chorizo Parrillero',cat: 'cat-embutidos', type: 'cerdo', cut: 'otro',            price: 3490,  weight: 0 },
+    { sku: 'EMB-003', name: 'Prieta',            cat: 'cat-embutidos', type: 'cerdo', cut: 'otro',            price: 2490,  weight: 0 },
+  ]
+
+  const insertProd = db.prepare(`
+    INSERT INTO products (id, sku, name, category_id, meat_type, cut, price_unit, base_price,
+      requires_weight, is_available_online, is_featured, image_urls, status, sync_status, version, created_at, updated_at)
+    VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 1, 0, '[]', 'active', 'synced', 1, ?, ?)
+  `)
+  const insertStock = db.prepare(`
+    INSERT INTO stock_levels (id, product_id, quantity, reserved_quantity, min_stock, sync_status, updated_at)
+    VALUES (?, ?, ?, 0, ?, 'synced', ?)
+  `)
+  const tx = db.transaction(() => {
+    for (const p of products) {
+      const id = `prod-${p.sku.toLowerCase()}`
+      insertProd.run(id, p.sku, p.name, p.cat, p.type, p.cut, p.weight ? 'kg' : 'unidad', p.price, p.weight, now, now)
+      insertStock.run(`stock-${id}`, id, p.weight ? 20 : 50, p.weight ? 5 : 10, now)
+    }
+  })
+  tx()
+
+  console.log(`Seed: ${cats.length} categorías, ${products.length} productos`)
 }
 
 function runMigrations(db: Database.Database) {

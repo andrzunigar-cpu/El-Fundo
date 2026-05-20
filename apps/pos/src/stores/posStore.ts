@@ -1,6 +1,6 @@
 import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
-import type { Product, Order, Customer, StockLevel } from '@elfundo/shared'
+import type { Product, Order, Customer, StockLevel } from '../types'
 
 interface CartItem {
   product: Product

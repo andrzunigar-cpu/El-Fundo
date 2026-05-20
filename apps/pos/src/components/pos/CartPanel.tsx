@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Trash2, CreditCard, Banknote, User, Printer, ChevronRight } from 'lucide-react'
+import { Trash2, CreditCard, Banknote, User, Printer, ChevronRight, RefreshCw } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { usePOSStore } from '../../stores/posStore'
 import { clsx } from 'clsx'
@@ -192,6 +192,3 @@ function ShoppingBagIcon() {
 function RefreshCwIcon({ className }: { className?: string }) {
   return <RefreshCw className={className} />
 }
-
-// Import faltante
-import { RefreshCw } from 'lucide-react'
