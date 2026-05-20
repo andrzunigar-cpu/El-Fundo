@@ -248,6 +248,67 @@ function runMigrations(db: Database.Database) {
       created_at TEXT NOT NULL
     );
 
+    -- ── Tomas de inventario ──────────────────────────────────
+    CREATE TABLE IF NOT EXISTS inventory_counts (
+      id TEXT PRIMARY KEY,
+      reference TEXT UNIQUE NOT NULL,
+      status TEXT NOT NULL DEFAULT 'draft',  -- draft | completed | cancelled
+      user_id TEXT,
+      notes TEXT,
+      total_products INTEGER DEFAULT 0,
+      total_differences INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL,
+      completed_at TEXT
+    );
+
+    CREATE TABLE IF NOT EXISTS inventory_count_items (
+      id TEXT PRIMARY KEY,
+      count_id TEXT NOT NULL REFERENCES inventory_counts(id) ON DELETE CASCADE,
+      product_id TEXT NOT NULL REFERENCES products(id),
+      product_name TEXT NOT NULL,
+      product_sku TEXT NOT NULL,
+      system_quantity REAL NOT NULL,
+      counted_quantity REAL NOT NULL,
+      difference REAL NOT NULL,
+      notes TEXT
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_count_items_count ON inventory_count_items(count_id);
+
+    -- ── Facturas de compra ───────────────────────────────────
+    CREATE TABLE IF NOT EXISTS purchase_invoices (
+      id TEXT PRIMARY KEY,
+      invoice_number TEXT NOT NULL,
+      supplier_name TEXT NOT NULL,
+      supplier_rut TEXT,
+      invoice_date TEXT NOT NULL,
+      subtotal INTEGER DEFAULT 0,
+      tax INTEGER DEFAULT 0,
+      total INTEGER NOT NULL,
+      status TEXT DEFAULT 'received',  -- received | cancelled
+      notes TEXT,
+      created_at TEXT NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_invoices_date ON purchase_invoices(invoice_date);
+    CREATE INDEX IF NOT EXISTS idx_invoices_supplier ON purchase_invoices(supplier_name);
+
+    CREATE TABLE IF NOT EXISTS purchase_invoice_items (
+      id TEXT PRIMARY KEY,
+      invoice_id TEXT NOT NULL REFERENCES purchase_invoices(id) ON DELETE CASCADE,
+      product_id TEXT NOT NULL REFERENCES products(id),
+      product_name TEXT NOT NULL,
+      quantity REAL NOT NULL,
+      unit_cost INTEGER NOT NULL,
+      subtotal INTEGER NOT NULL
+    );
+
+    CREATE INDEX IF NOT EXISTS idx_invoice_items_invoice ON purchase_invoice_items(invoice_id);
+
+    -- Index movimientos por fecha (para filtros)
+    CREATE INDEX IF NOT EXISTS idx_movements_created ON stock_movements(created_at);
+    CREATE INDEX IF NOT EXISTS idx_movements_type ON stock_movements(type);
+
     -- ── Cola de sincronización ───────────────────────────────
     CREATE TABLE IF NOT EXISTS sync_queue (
       id TEXT PRIMARY KEY,

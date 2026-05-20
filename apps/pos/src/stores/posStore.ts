@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { Product, Order, Customer, StockLevel } from '../types'
 
-export type POSView = 'sales' | 'products' | 'stock' | 'cash' | 'reports' | 'history' | 'settings'
+export type POSView = 'sales' | 'products' | 'inventory' | 'cash' | 'reports' | 'history' | 'settings'
 
 interface CartItem {
   product: Product

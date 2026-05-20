@@ -1,24 +1,24 @@
 import React, { useEffect, useCallback } from 'react'
-import { Wifi, WifiOff, RefreshCw, Bell, ShoppingCart, Package, Boxes, Wallet, BarChart3, History, Settings } from 'lucide-react'
+import { Wifi, WifiOff, RefreshCw, ShoppingCart, Package, Boxes, Wallet, BarChart3, History, Settings } from 'lucide-react'
 import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
 import { usePOSStore, type POSView } from '../../stores/posStore'
 import { SalesView } from '../views/SalesView'
 import { ProductsView } from '../views/ProductsView'
-import { StockView } from '../views/StockView'
+import { InventoryView } from '../views/InventoryView'
 import { CashSessionView } from '../views/CashSessionView'
 import { ReportsView } from '../views/ReportsView'
 import { HistoryView } from '../views/HistoryView'
 import { SettingsView } from '../views/SettingsView'
 
 const NAV_ITEMS: Array<{ id: POSView; icon: any; label: string }> = [
-  { id: 'sales',    icon: ShoppingCart, label: 'Venta' },
-  { id: 'products', icon: Package,      label: 'Productos' },
-  { id: 'stock',    icon: Boxes,        label: 'Stock' },
-  { id: 'cash',     icon: Wallet,       label: 'Caja' },
-  { id: 'history',  icon: History,      label: 'Ventas' },
-  { id: 'reports',  icon: BarChart3,    label: 'Reportes' },
-  { id: 'settings', icon: Settings,     label: 'Config' },
+  { id: 'sales',     icon: ShoppingCart, label: 'Venta' },
+  { id: 'products',  icon: Package,      label: 'Productos' },
+  { id: 'inventory', icon: Boxes,        label: 'Inventario' },
+  { id: 'cash',      icon: Wallet,       label: 'Caja' },
+  { id: 'history',   icon: History,      label: 'Ventas' },
+  { id: 'reports',   icon: BarChart3,    label: 'Reportes' },
+  { id: 'settings',  icon: Settings,     label: 'Config' },
 ]
 
 export function POSLayout() {
@@ -113,13 +113,13 @@ export function POSLayout() {
 
         {/* View container */}
         <main className="flex-1 overflow-hidden">
-          {currentView === 'sales'    && <SalesView />}
-          {currentView === 'products' && <ProductsView />}
-          {currentView === 'stock'    && <StockView />}
-          {currentView === 'cash'     && <CashSessionView />}
-          {currentView === 'history'  && <HistoryView />}
-          {currentView === 'reports'  && <ReportsView />}
-          {currentView === 'settings' && <SettingsView />}
+          {currentView === 'sales'     && <SalesView />}
+          {currentView === 'products'  && <ProductsView />}
+          {currentView === 'inventory' && <InventoryView />}
+          {currentView === 'cash'      && <CashSessionView />}
+          {currentView === 'history'   && <HistoryView />}
+          {currentView === 'reports'   && <ReportsView />}
+          {currentView === 'settings'  && <SettingsView />}
         </main>
       </div>
     </div>

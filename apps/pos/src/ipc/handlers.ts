@@ -85,6 +85,271 @@ export function setupIpcHandlers() {
     `).all()
   })
 
+  // ── Operaciones de Inventario ──────────────────────────────
+
+  // Log unificado de movimientos con filtros
+  ipcMain.handle('inventory:getMovements', (_, filters: any = {}) => {
+    const { from, to, type, productId, limit = 200 } = filters
+    const where: string[] = []
+    const params: any[] = []
+    if (from)      { where.push('m.created_at >= ?'); params.push(from + 'T00:00:00') }
+    if (to)        { where.push('m.created_at <= ?'); params.push(to + 'T23:59:59') }
+    if (type)      { where.push('m.type = ?');        params.push(type) }
+    if (productId) { where.push('m.product_id = ?');  params.push(productId) }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
+    return db().prepare(`
+      SELECT m.*, p.name as product_name, p.sku as product_sku, p.requires_weight
+      FROM stock_movements m
+      LEFT JOIN products p ON p.id = m.product_id
+      ${whereSql}
+      ORDER BY m.created_at DESC
+      LIMIT ${limit}
+    `).all(...params)
+  })
+
+  // Resumen del inventario (KPIs)
+  ipcMain.handle('inventory:getSummary', (_, filters: any = {}) => {
+    const { from, to } = filters
+    const dateFilter = from && to ? `WHERE m.created_at BETWEEN '${from}T00:00:00' AND '${to}T23:59:59'` : ''
+    const products = (db().prepare("SELECT COUNT(*) as c FROM products WHERE status='active'").get() as any).c
+    const outOfStock = (db().prepare("SELECT COUNT(*) as c FROM stock_levels WHERE quantity <= 0").get() as any).c
+    const lowStock = (db().prepare("SELECT COUNT(*) as c FROM stock_levels WHERE quantity > 0 AND quantity < min_stock").get() as any).c
+    const purchases = (db().prepare(`SELECT COUNT(*) as c, COALESCE(SUM(total),0) as t FROM purchase_invoices ${dateFilter ? dateFilter.replace('m.created_at','invoice_date') : ''}`).get() as any)
+    const consumption = (db().prepare(`SELECT COALESCE(SUM(ABS(quantity)),0) as q FROM stock_movements m WHERE type='consumption' ${dateFilter ? 'AND ' + dateFilter.slice(6) : ''}`).get() as any)
+    const counts = (db().prepare("SELECT COUNT(*) as c FROM inventory_counts WHERE status='completed'").get() as any).c
+    return {
+      activeProducts: products,
+      outOfStock,
+      lowStock,
+      purchasesCount: purchases.c,
+      purchasesTotal: purchases.t,
+      consumptionQuantity: consumption.q,
+      completedCounts: counts,
+    }
+  })
+
+  // ── Inventario inicial (bulk set) ─────────────────────────
+  ipcMain.handle('inventory:setInitial', (_, items: any[]) => {
+    const deviceId = (db().prepare("SELECT value FROM config WHERE key='device_id'").get() as any).value
+    const upsertStock = db().prepare(`
+      INSERT INTO stock_levels (id, product_id, quantity, reserved_quantity, min_stock, sync_status, updated_at)
+      VALUES (COALESCE((SELECT id FROM stock_levels WHERE product_id = ?), ?), ?, ?, 0, 0, 'pending', datetime('now'))
+      ON CONFLICT(product_id) DO UPDATE SET quantity = excluded.quantity, sync_status='pending', updated_at=datetime('now')
+    `)
+    const insertMov = db().prepare(`
+      INSERT INTO stock_movements (id, product_id, type, quantity, quantity_before, quantity_after, notes, user_id, sync_status, created_at)
+      VALUES (?, ?, 'initial', ?, ?, ?, ?, 'admin', 'pending', datetime('now'))
+    `)
+    let count = 0
+    const tx = db().transaction(() => {
+      for (const it of items) {
+        const before = (db().prepare('SELECT quantity FROM stock_levels WHERE product_id = ?').get(it.productId) as any)?.quantity ?? 0
+        upsertStock.run(it.productId, randomUUID(), it.productId, it.quantity)
+        insertMov.run(randomUUID(), it.productId, it.quantity - before, before, it.quantity, 'Inventario inicial')
+        count++
+      }
+    })
+    tx()
+    return { success: true, productsUpdated: count }
+  })
+
+  // ── Compras (facturas de proveedor) ───────────────────────
+  ipcMain.handle('inventory:registerPurchase', (_, data: any) => {
+    const invoiceId = randomUUID()
+    const deviceId = (db().prepare("SELECT value FROM config WHERE key='device_id'").get() as any).value
+    const subtotal = data.items.reduce((s: number, i: any) => s + i.subtotal, 0)
+
+    const insertInvoice = db().prepare(`
+      INSERT INTO purchase_invoices (id, invoice_number, supplier_name, supplier_rut, invoice_date, subtotal, tax, total, notes, created_at)
+      VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))
+    `)
+    const insertItem = db().prepare(`
+      INSERT INTO purchase_invoice_items (id, invoice_id, product_id, product_name, quantity, unit_cost, subtotal)
+      VALUES (?, ?, ?, ?, ?, ?, ?)
+    `)
+    const upsertStock = db().prepare(`
+      INSERT INTO stock_levels (id, product_id, quantity, reserved_quantity, min_stock, sync_status, updated_at)
+      VALUES (?, ?, ?, 0, 0, 'pending', datetime('now'))
+      ON CONFLICT(product_id) DO UPDATE SET quantity = quantity + excluded.quantity, sync_status='pending', updated_at=datetime('now')
+    `)
+    const insertMov = db().prepare(`
+      INSERT INTO stock_movements (id, product_id, type, quantity, quantity_before, quantity_after, reference_id, reference_type, notes, user_id, cost_per_unit, sync_status, created_at)
+      VALUES (?, ?, 'purchase', ?, ?, ?, ?, 'purchase_invoice', ?, 'admin', ?, 'pending', datetime('now'))
+    `)
+
+    const tx = db().transaction(() => {
+      insertInvoice.run(invoiceId, data.invoiceNumber, data.supplierName, data.supplierRut || null,
+        data.invoiceDate, subtotal, data.tax || 0, data.total || subtotal + (data.tax || 0), data.notes || null)
+
+      for (const item of data.items) {
+        const itemId = randomUUID()
+        insertItem.run(itemId, invoiceId, item.productId, item.productName, item.quantity, item.unitCost, item.subtotal)
+        const before = (db().prepare('SELECT quantity FROM stock_levels WHERE product_id = ?').get(item.productId) as any)?.quantity ?? 0
+        upsertStock.run(randomUUID(), item.productId, item.quantity)
+        insertMov.run(randomUUID(), item.productId, item.quantity, before, before + item.quantity,
+          invoiceId, `Compra ${data.invoiceNumber} - ${data.supplierName}`, item.unitCost)
+      }
+
+      db().prepare(`
+        INSERT INTO sync_queue (id, entity_type, entity_id, operation, payload, device_id, created_at)
+        VALUES (?, 'purchase_invoice', ?, 'create', ?, ?, datetime('now'))
+      `).run(randomUUID(), invoiceId, JSON.stringify({ id: invoiceId, ...data }), deviceId)
+    })
+    tx()
+
+    return { id: invoiceId, ...data }
+  })
+
+  ipcMain.handle('inventory:listPurchases', (_, filters: any = {}) => {
+    const { from, to, limit = 100 } = filters
+    const where: string[] = []
+    const params: any[] = []
+    if (from) { where.push('invoice_date >= ?'); params.push(from) }
+    if (to)   { where.push('invoice_date <= ?'); params.push(to) }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
+    return db().prepare(`
+      SELECT i.*, (SELECT COUNT(*) FROM purchase_invoice_items WHERE invoice_id = i.id) as item_count
+      FROM purchase_invoices i ${whereSql}
+      ORDER BY invoice_date DESC, created_at DESC LIMIT ${limit}
+    `).all(...params)
+  })
+
+  ipcMain.handle('inventory:getPurchase', (_, id: string) => {
+    const invoice = db().prepare('SELECT * FROM purchase_invoices WHERE id = ?').get(id) as any
+    if (!invoice) return null
+    const items = db().prepare('SELECT * FROM purchase_invoice_items WHERE invoice_id = ?').all(id)
+    return { ...invoice, items }
+  })
+
+  // ── Consumos / Mermas ─────────────────────────────────────
+  ipcMain.handle('inventory:registerConsumption', (_, data: any) => {
+    const deviceId = (db().prepare("SELECT value FROM config WHERE key='device_id'").get() as any).value
+    const upsertStock = db().prepare(`UPDATE stock_levels SET quantity = MAX(0, quantity - ?), sync_status='pending', updated_at=datetime('now') WHERE product_id = ?`)
+    const insertMov = db().prepare(`
+      INSERT INTO stock_movements (id, product_id, type, quantity, quantity_before, quantity_after, notes, user_id, sync_status, created_at)
+      VALUES (?, ?, 'consumption', ?, ?, ?, ?, 'admin', 'pending', datetime('now'))
+    `)
+    let total = 0
+    const tx = db().transaction(() => {
+      for (const item of data.items) {
+        const before = (db().prepare('SELECT quantity FROM stock_levels WHERE product_id = ?').get(item.productId) as any)?.quantity ?? 0
+        const after = Math.max(0, before - item.quantity)
+        upsertStock.run(item.quantity, item.productId)
+        insertMov.run(randomUUID(), item.productId, -item.quantity, before, after, item.reason || data.reason || 'Consumo/merma')
+        total += item.quantity
+      }
+    })
+    tx()
+    return { success: true, totalConsumed: total, items: data.items.length }
+  })
+
+  ipcMain.handle('inventory:listConsumptions', (_, filters: any = {}) => {
+    const { from, to, limit = 200 } = filters
+    const where: string[] = ["m.type = 'consumption'"]
+    const params: any[] = []
+    if (from) { where.push('m.created_at >= ?'); params.push(from + 'T00:00:00') }
+    if (to)   { where.push('m.created_at <= ?'); params.push(to + 'T23:59:59') }
+    return db().prepare(`
+      SELECT m.*, p.name as product_name, p.sku as product_sku, p.requires_weight
+      FROM stock_movements m
+      LEFT JOIN products p ON p.id = m.product_id
+      WHERE ${where.join(' AND ')}
+      ORDER BY m.created_at DESC
+      LIMIT ${limit}
+    `).all(...params)
+  })
+
+  // ── Toma de inventario ────────────────────────────────────
+  ipcMain.handle('inventory:countStart', () => {
+    const id = randomUUID()
+    const count = (db().prepare('SELECT COUNT(*) as c FROM inventory_counts').get() as any).c
+    const reference = `TOMA-${String(count + 1).padStart(4, '0')}`
+    db().prepare(`
+      INSERT INTO inventory_counts (id, reference, status, user_id, created_at)
+      VALUES (?, ?, 'draft', 'admin', datetime('now'))
+    `).run(id, reference)
+
+    // Pre-populate with all active products and current quantity
+    const products = db().prepare(`
+      SELECT p.id, p.name, p.sku, COALESCE(sl.quantity, 0) as quantity
+      FROM products p LEFT JOIN stock_levels sl ON sl.product_id = p.id
+      WHERE p.status = 'active' ORDER BY p.name
+    `).all() as any[]
+
+    const insertItem = db().prepare(`
+      INSERT INTO inventory_count_items (id, count_id, product_id, product_name, product_sku, system_quantity, counted_quantity, difference)
+      VALUES (?, ?, ?, ?, ?, ?, ?, 0)
+    `)
+    const tx = db().transaction(() => {
+      for (const p of products) insertItem.run(randomUUID(), id, p.id, p.name, p.sku, p.quantity, p.quantity)
+    })
+    tx()
+    return { id, reference, productsCount: products.length }
+  })
+
+  ipcMain.handle('inventory:countGetItems', (_, countId: string) => {
+    const count = db().prepare('SELECT * FROM inventory_counts WHERE id = ?').get(countId) as any
+    if (!count) return null
+    const items = db().prepare(`
+      SELECT ci.*, p.requires_weight
+      FROM inventory_count_items ci LEFT JOIN products p ON p.id = ci.product_id
+      WHERE count_id = ? ORDER BY product_name
+    `).all(countId)
+    return { ...count, items }
+  })
+
+  ipcMain.handle('inventory:countUpdateItem', (_, countId: string, productId: string, countedQty: number, notes?: string) => {
+    const item = db().prepare('SELECT * FROM inventory_count_items WHERE count_id = ? AND product_id = ?').get(countId, productId) as any
+    if (!item) throw new Error('Item no encontrado')
+    const diff = countedQty - Number(item.system_quantity)
+    db().prepare(`
+      UPDATE inventory_count_items SET counted_quantity = ?, difference = ?, notes = ? WHERE id = ?
+    `).run(countedQty, diff, notes || null, item.id)
+    return { success: true, difference: diff }
+  })
+
+  ipcMain.handle('inventory:countComplete', (_, countId: string, notes?: string) => {
+    const count = db().prepare('SELECT * FROM inventory_counts WHERE id = ?').get(countId) as any
+    if (!count) throw new Error('Toma no encontrada')
+    if (count.status !== 'draft') throw new Error('Toma ya cerrada')
+    const items = db().prepare('SELECT * FROM inventory_count_items WHERE count_id = ?').all(countId) as any[]
+
+    const itemsWithDiff = items.filter(i => Number(i.difference) !== 0)
+    const upsertStock = db().prepare(`UPDATE stock_levels SET quantity = ?, sync_status='pending', updated_at=datetime('now') WHERE product_id = ?`)
+    const insertMov = db().prepare(`
+      INSERT INTO stock_movements (id, product_id, type, quantity, quantity_before, quantity_after, reference_id, reference_type, notes, user_id, sync_status, created_at)
+      VALUES (?, ?, 'count_adjustment', ?, ?, ?, ?, 'inventory_count', ?, 'admin', 'pending', datetime('now'))
+    `)
+    const tx = db().transaction(() => {
+      for (const it of itemsWithDiff) {
+        upsertStock.run(it.counted_quantity, it.product_id)
+        insertMov.run(randomUUID(), it.product_id, it.difference, it.system_quantity, it.counted_quantity, countId,
+          `Toma ${count.reference}${it.notes ? ' - ' + it.notes : ''}`)
+      }
+      db().prepare(`
+        UPDATE inventory_counts SET status='completed', completed_at=datetime('now'),
+        total_products = ?, total_differences = ?, notes = COALESCE(?, notes) WHERE id = ?
+      `).run(items.length, itemsWithDiff.length, notes || null, countId)
+    })
+    tx()
+    return { success: true, productsAdjusted: itemsWithDiff.length }
+  })
+
+  ipcMain.handle('inventory:countCancel', (_, countId: string) => {
+    db().prepare("UPDATE inventory_counts SET status='cancelled' WHERE id = ?").run(countId)
+    return { success: true }
+  })
+
+  ipcMain.handle('inventory:listCounts', (_, filters: any = {}) => {
+    const { from, to, limit = 100 } = filters
+    const where: string[] = []
+    const params: any[] = []
+    if (from) { where.push('created_at >= ?'); params.push(from + 'T00:00:00') }
+    if (to)   { where.push('created_at <= ?'); params.push(to + 'T23:59:59') }
+    const whereSql = where.length ? `WHERE ${where.join(' AND ')}` : ''
+    return db().prepare(`SELECT * FROM inventory_counts ${whereSql} ORDER BY created_at DESC LIMIT ${limit}`).all(...params)
+  })
+
   ipcMain.handle('inventory:adjust', (_, productId: string, quantity: number, notes: string) => {
     const deviceId = (db().prepare("SELECT value FROM config WHERE key='device_id'").get() as any).value
     const current = db().prepare('SELECT quantity FROM stock_levels WHERE product_id = ?').get(productId) as any

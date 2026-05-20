@@ -20,12 +20,37 @@ contextBridge.exposeInMainWorld('posAPI', {
     getPendingWeb: () => ipcRenderer.invoke('orders:getPendingWeb'),
   },
 
-  // ── Stock ─────────────────────────────────────────────────
+  // ── Stock & Inventario ────────────────────────────────────
   inventory: {
     getStock: (productId: string) => ipcRenderer.invoke('inventory:getStock', productId),
     getAllStock: () => ipcRenderer.invoke('inventory:getAllStock'),
     adjust: (productId: string, quantity: number, reason: string) =>
       ipcRenderer.invoke('inventory:adjust', productId, quantity, reason),
+
+    // Resumen + movimientos
+    getSummary: (filters?: any)  => ipcRenderer.invoke('inventory:getSummary', filters),
+    getMovements: (filters?: any) => ipcRenderer.invoke('inventory:getMovements', filters),
+
+    // Inventario inicial
+    setInitial: (items: any[]) => ipcRenderer.invoke('inventory:setInitial', items),
+
+    // Compras
+    registerPurchase: (data: any) => ipcRenderer.invoke('inventory:registerPurchase', data),
+    listPurchases: (filters?: any) => ipcRenderer.invoke('inventory:listPurchases', filters),
+    getPurchase: (id: string) => ipcRenderer.invoke('inventory:getPurchase', id),
+
+    // Consumos
+    registerConsumption: (data: any) => ipcRenderer.invoke('inventory:registerConsumption', data),
+    listConsumptions: (filters?: any) => ipcRenderer.invoke('inventory:listConsumptions', filters),
+
+    // Tomas de inventario
+    countStart:       () => ipcRenderer.invoke('inventory:countStart'),
+    countGetItems:    (id: string) => ipcRenderer.invoke('inventory:countGetItems', id),
+    countUpdateItem:  (id: string, productId: string, qty: number, notes?: string) =>
+                      ipcRenderer.invoke('inventory:countUpdateItem', id, productId, qty, notes),
+    countComplete:    (id: string, notes?: string) => ipcRenderer.invoke('inventory:countComplete', id, notes),
+    countCancel:      (id: string) => ipcRenderer.invoke('inventory:countCancel', id),
+    listCounts:       (filters?: any) => ipcRenderer.invoke('inventory:listCounts', filters),
   },
 
   // ── Clientes ─────────────────────────────────────────────
