@@ -6,9 +6,9 @@ import { ArrowLeft, Save, ImageIcon, Loader, Plus, Link as LinkIcon } from 'luci
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const getSupabase = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
 )
 
 const CATEGORIES = [
@@ -49,6 +49,7 @@ export default function NuevoProducto() {
     if (!file) return
     setUploading(true)
     try {
+      const supabase = getSupabase()
       const ext = file.name.split('.').pop()
       const fileName = `productos/new-${Date.now()}.${ext}`
       const { error: uploadErr } = await supabase.storage

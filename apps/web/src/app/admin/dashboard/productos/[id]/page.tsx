@@ -6,9 +6,9 @@ import { ArrowLeft, Save, ImageIcon, Loader, Trash2, Plus, Link as LinkIcon } fr
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 
-const supabase = createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || '',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || ''
+const getSupabase = () => createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://placeholder.supabase.co',
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'placeholder'
 )
 
 const CATEGORIES = [
@@ -69,6 +69,7 @@ export default function EditProducto() {
     if (!file || !product) return
     setUploading(true)
     try {
+      const supabase = getSupabase()
       const ext = file.name.split('.').pop()
       const fileName = `productos/${product.id}-${Date.now()}.${ext}`
       const { error: uploadErr } = await supabase.storage
