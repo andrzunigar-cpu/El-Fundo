@@ -1,6 +1,6 @@
 {
   "framework": "nextjs",
-  "buildCommand": "pnpm --filter @elfundo/web build",
-  "installCommand": "pnpm install --filter @elfundo/web --filter @elfundo/shared --no-frozen-lockfile",
-  "outputDirectory": ".next"
+  "buildCommand": "pnpm build",
+  "outputDirectory": ".next",
+  "installCommand": "pnpm install --no-frozen-lockfile"
 }
