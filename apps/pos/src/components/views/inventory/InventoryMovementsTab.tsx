@@ -7,13 +7,13 @@ const TYPES = [
   { id: 'initial',           label: 'Inicial' },
   { id: 'purchase',          label: 'Compra' },
   { id: 'sale',              label: 'Venta' },
-  { id: 'consumption',       label: 'Consumo' },
+  { id: 'consumption',       label: 'Merma' },
   { id: 'adjustment',        label: 'Ajuste manual' },
   { id: 'count_adjustment',  label: 'Toma de inventario' },
 ]
 
 export function InventoryMovementsTab() {
-  const [from, setFrom] = useState(daysAgoISO(7))
+  const [from, setFrom] = useState(todayISO())
   const [to, setTo] = useState(todayISO())
   const [type, setType] = useState('')
   const [search, setSearch] = useState('')

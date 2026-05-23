@@ -4,10 +4,11 @@ import { useEffect } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LayoutDashboard, Package, Tag, LogOut, ChevronRight } from 'lucide-react'
+import { LayoutDashboard, Package, Tag, LogOut, ChevronRight, ShoppingBag } from 'lucide-react'
 
 const NAV = [
   { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/admin/dashboard/pedidos', label: 'Pedidos', icon: ShoppingBag },
   { href: '/admin/dashboard/productos', label: 'Productos', icon: Package },
   { href: '/admin/dashboard/categorias', label: 'Categorías', icon: Tag },
 ]

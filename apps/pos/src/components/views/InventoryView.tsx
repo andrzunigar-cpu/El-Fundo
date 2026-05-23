@@ -1,5 +1,5 @@
 import React, { useState } from 'react'
-import { Boxes, ClipboardList, FileText, Trash2, History, LayoutDashboard } from 'lucide-react'
+import { Boxes, ClipboardList, FileText, Trash2, History, LayoutDashboard, Truck } from 'lucide-react'
 import { clsx } from 'clsx'
 import { InventorySummaryTab } from './inventory/InventorySummaryTab'
 import { InventoryStockTab } from './inventory/InventoryStockTab'
@@ -7,20 +7,27 @@ import { InventoryCountsTab } from './inventory/InventoryCountsTab'
 import { InventoryPurchasesTab } from './inventory/InventoryPurchasesTab'
 import { InventoryConsumptionsTab } from './inventory/InventoryConsumptionsTab'
 import { InventoryMovementsTab } from './inventory/InventoryMovementsTab'
+import { SuppliersTab } from './inventory/SuppliersTab'
 
-type Tab = 'summary' | 'stock' | 'counts' | 'purchases' | 'consumptions' | 'movements'
+type Tab = 'summary' | 'stock' | 'counts' | 'purchases' | 'consumptions' | 'movements' | 'suppliers'
 
 const TABS: Array<{ id: Tab; label: string; icon: any }> = [
   { id: 'summary',      label: 'Resumen',      icon: LayoutDashboard },
   { id: 'stock',        label: 'Stock actual', icon: Boxes },
   { id: 'counts',       label: 'Tomas',        icon: ClipboardList },
   { id: 'purchases',    label: 'Compras',      icon: FileText },
-  { id: 'consumptions', label: 'Consumos',     icon: Trash2 },
+  { id: 'consumptions', label: 'Mermas',        icon: Trash2 },
   { id: 'movements',    label: 'Movimientos',  icon: History },
+  { id: 'suppliers',    label: 'Proveedores',  icon: Truck },
 ]
 
-export function InventoryView() {
-  const [tab, setTab] = useState<Tab>('summary')
+interface InventoryViewProps {
+  initialTab?: Tab
+  autoOpenNew?: boolean
+}
+
+export function InventoryView({ initialTab = 'summary', autoOpenNew = false }: InventoryViewProps) {
+  const [tab, setTab] = useState<Tab>(initialTab)
 
   return (
     <div className="h-full flex flex-col bg-gray-950">
@@ -50,9 +57,10 @@ export function InventoryView() {
         {tab === 'summary'      && <InventorySummaryTab />}
         {tab === 'stock'        && <InventoryStockTab />}
         {tab === 'counts'       && <InventoryCountsTab />}
-        {tab === 'purchases'    && <InventoryPurchasesTab />}
+        {tab === 'purchases'    && <InventoryPurchasesTab autoOpenNew={autoOpenNew} />}
         {tab === 'consumptions' && <InventoryConsumptionsTab />}
         {tab === 'movements'    && <InventoryMovementsTab />}
+        {tab === 'suppliers'    && <SuppliersTab />}
       </div>
     </div>
   )

@@ -16,14 +16,19 @@ export function formatDateShort(iso: string | null | undefined): string {
   return new Date(iso).toLocaleDateString('es-CL', { day: '2-digit', month: '2-digit', year: 'numeric' })
 }
 
+// Usa fecha LOCAL (no UTC) para evitar desfase en Chile UTC-3
+function localISO(d: Date = new Date()): string {
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
+
 export function todayISO(): string {
-  return new Date().toISOString().slice(0, 10)
+  return localISO()
 }
 
 export function daysAgoISO(days: number): string {
   const d = new Date()
   d.setDate(d.getDate() - days)
-  return d.toISOString().slice(0, 10)
+  return localISO(d)
 }
 
 export function DateRangeFilter({ from, to, onChange }: {
@@ -52,7 +57,7 @@ export function DateRangeFilter({ from, to, onChange }: {
         <QuickRange label="30d" onClick={() => onChange(daysAgoISO(30), todayISO())} />
         <QuickRange label="Mes" onClick={() => {
           const now = new Date()
-          const first = new Date(now.getFullYear(), now.getMonth(), 1).toISOString().slice(0, 10)
+          const first = localISO(new Date(now.getFullYear(), now.getMonth(), 1))
           onChange(first, todayISO())
         }} />
       </div>
@@ -72,7 +77,7 @@ const MOVEMENT_LABELS: Record<string, { label: string; color: string }> = {
   initial:          { label: 'Inicial',     color: 'bg-blue-900/40 text-blue-400' },
   purchase:         { label: 'Compra',      color: 'bg-green-900/40 text-green-400' },
   sale:             { label: 'Venta',       color: 'bg-red-900/40 text-red-400' },
-  consumption:      { label: 'Consumo',     color: 'bg-orange-900/40 text-orange-400' },
+  consumption:      { label: 'Merma',       color: 'bg-orange-900/40 text-orange-400' },
   adjustment:       { label: 'Ajuste',      color: 'bg-yellow-900/40 text-yellow-400' },
   count_adjustment: { label: 'Toma',        color: 'bg-purple-900/40 text-purple-400' },
   transfer:         { label: 'Traslado',    color: 'bg-cyan-900/40 text-cyan-400' },

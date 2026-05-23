@@ -32,11 +32,14 @@ function seedInitialData(db: Database.Database) {
 
   const now = new Date().toISOString()
   const cats = [
-    { id: 'cat-vacuno',  name: 'Vacuno',  slug: 'vacuno',  sort: 1 },
-    { id: 'cat-cerdo',   name: 'Cerdo',   slug: 'cerdo',   sort: 2 },
-    { id: 'cat-cordero', name: 'Cordero', slug: 'cordero', sort: 3 },
-    { id: 'cat-pollo',   name: 'Pollo',   slug: 'pollo',   sort: 4 },
-    { id: 'cat-embutidos', name: 'Embutidos', slug: 'embutidos', sort: 5 },
+    { id: 'cat-vacuno',     name: 'Vacuno',     slug: 'vacuno',     sort: 1 },
+    { id: 'cat-cerdo',      name: 'Cerdo',      slug: 'cerdo',      sort: 2 },
+    { id: 'cat-pollo',      name: 'Pollo',      slug: 'pollo',      sort: 3 },
+    { id: 'cat-embutidos',  name: 'Embutidos',  slug: 'embutidos',  sort: 4 },
+    { id: 'cat-parrilla',   name: 'Parrilla',   slug: 'parrilla',   sort: 5 },
+    { id: 'cat-congelados', name: 'Congelados', slug: 'congelados', sort: 6 },
+    { id: 'cat-bebidas',    name: 'Bebidas',    slug: 'bebidas',    sort: 7 },
+    { id: 'cat-otros',      name: 'Otros',      slug: 'otros',      sort: 8 },
   ]
   const insertCat = db.prepare(`
     INSERT INTO categories (id, name, slug, sort_order, status, sync_status, version, created_at, updated_at)
@@ -58,18 +61,40 @@ function seedInitialData(db: Database.Database) {
     { sku: 'CER-001', name: 'Pulpa de Cerdo',    cat: 'cat-cerdo',   type: 'cerdo',   cut: 'otro',            price: 6990,  weight: 1 },
     { sku: 'CER-002', name: 'Costillar de Cerdo',cat: 'cat-cerdo',   type: 'cerdo',   cut: 'costilla',        price: 7990,  weight: 1 },
     { sku: 'CER-003', name: 'Chuleta Centro',    cat: 'cat-cerdo',   type: 'cerdo',   cut: 'chuleta',         price: 5990,  weight: 1 },
-    // Cordero
-    { sku: 'COR-001', name: 'Pierna de Cordero', cat: 'cat-cordero', type: 'cordero', cut: 'otro',            price: 13990, weight: 1 },
-    { sku: 'COR-002', name: 'Costillar Cordero', cat: 'cat-cordero', type: 'cordero', cut: 'costilla',        price: 11990, weight: 1 },
     // Pollo
     { sku: 'POL-001', name: 'Pollo Entero',      cat: 'cat-pollo',   type: 'pollo',   cut: 'otro',            price: 3490,  weight: 1 },
     { sku: 'POL-002', name: 'Pechuga de Pollo',  cat: 'cat-pollo',   type: 'pollo',   cut: 'otro',            price: 5990,  weight: 1 },
     { sku: 'POL-003', name: 'Trutro de Pollo',   cat: 'cat-pollo',   type: 'pollo',   cut: 'otro',            price: 3990,  weight: 1 },
     // Embutidos (unidad)
-    { sku: 'EMB-001', name: 'Longaniza Casera',  cat: 'cat-embutidos', type: 'cerdo', cut: 'otro',            price: 2990,  weight: 0 },
-    { sku: 'EMB-002', name: 'Chorizo Parrillero',cat: 'cat-embutidos', type: 'cerdo', cut: 'otro',            price: 3490,  weight: 0 },
-    { sku: 'EMB-003', name: 'Prieta',            cat: 'cat-embutidos', type: 'cerdo', cut: 'otro',            price: 2490,  weight: 0 },
+    { sku: 'EMB-001', name: 'Longaniza Casera',   cat: 'cat-embutidos',   type: 'cerdo', cut: 'otro', price: 2990, weight: 0 },
+    { sku: 'EMB-002', name: 'Chorizo Parrillero', cat: 'cat-embutidos',   type: 'cerdo', cut: 'otro', price: 3490, weight: 0 },
+    { sku: 'EMB-003', name: 'Prieta',             cat: 'cat-embutidos',   type: 'cerdo', cut: 'otro', price: 2490, weight: 0 },
   ]
+
+  // ── Seed formatos por defecto ──────────────────────────────
+  const fmtCount = (db.prepare('SELECT COUNT(*) as c FROM product_formats').get() as any).c
+  if (fmtCount === 0) {
+    const insertFmt = db.prepare(`
+      INSERT INTO product_formats (id, name, unit, weight_kg, is_variable, is_active, sort_order, created_at)
+      VALUES (?, ?, ?, ?, ?, 1, ?, ?)
+    `)
+    const formats = [
+      { id: 'fmt-granel',   name: 'Granel',        unit: 'kg', weight: 0,    variable: 1, sort: 1 },
+      { id: 'fmt-caja5',    name: 'Caja 5 kg',     unit: 'kg', weight: 5.0,  variable: 0, sort: 2 },
+      { id: 'fmt-caja10',   name: 'Caja 10 kg',    unit: 'kg', weight: 10.0, variable: 0, sort: 3 },
+      { id: 'fmt-bolsa1',   name: 'Bolsa 1 kg',    unit: 'kg', weight: 1.0,  variable: 0, sort: 4 },
+      { id: 'fmt-bolsa500', name: 'Bolsa 500 g',   unit: 'kg', weight: 0.5,  variable: 0, sort: 5 },
+      { id: 'fmt-unidad',   name: 'Unidad',        unit: 'un', weight: 0,    variable: 0, sort: 6 },
+      { id: 'fmt-bot1',     name: 'Botella 1 L',   unit: 'L',  weight: 1.0,  variable: 0, sort: 7 },
+      { id: 'fmt-bot15',    name: 'Botella 1.5 L', unit: 'L',  weight: 1.5,  variable: 0, sort: 8 },
+      { id: 'fmt-lata',     name: 'Lata 355 ml',   unit: 'ml', weight: 355,  variable: 0, sort: 9 },
+    ]
+    const txFmt = db.transaction(() => {
+      for (const f of formats)
+        insertFmt.run(f.id, f.name, f.unit, f.weight, f.variable, f.sort, now)
+    })
+    txFmt()
+  }
 
   const insertProd = db.prepare(`
     INSERT INTO products (id, sku, name, category_id, meat_type, cut, price_unit, base_price,
@@ -84,7 +109,7 @@ function seedInitialData(db: Database.Database) {
     for (const p of products) {
       const id = `prod-${p.sku.toLowerCase()}`
       insertProd.run(id, p.sku, p.name, p.cat, p.type, p.cut, p.weight ? 'kg' : 'unidad', p.price, p.weight, now, now)
-      insertStock.run(`stock-${id}`, id, p.weight ? 20 : 50, p.weight ? 5 : 10, now)
+      insertStock.run(`stock-${id}`, id, 0, 0, now)
     }
   })
   tx()
@@ -107,6 +132,18 @@ function runMigrations(db: Database.Database) {
       updated_at TEXT NOT NULL
     );
 
+    -- ── Formatos de producto ─────────────────────────────────
+    CREATE TABLE IF NOT EXISTS product_formats (
+      id TEXT PRIMARY KEY,
+      name TEXT UNIQUE NOT NULL,        -- "Caja 5kg", "Bolsa 1kg", "Granel", "Botella 1.5L"
+      unit TEXT NOT NULL DEFAULT 'kg',  -- kg | L | un | g
+      weight_kg REAL NOT NULL DEFAULT 0,-- peso/contenido en kg (0 = variable/granel)
+      is_variable INTEGER DEFAULT 0,    -- 1 = pedir peso en cada venta (granel)
+      is_active INTEGER DEFAULT 1,
+      sort_order INTEGER DEFAULT 0,
+      created_at TEXT NOT NULL
+    );
+
     -- ── Productos ────────────────────────────────────────────
     CREATE TABLE IF NOT EXISTS products (
       id TEXT PRIMARY KEY,
@@ -120,6 +157,9 @@ function runMigrations(db: Database.Database) {
       base_price INTEGER NOT NULL,
       online_price INTEGER,
       requires_weight INTEGER DEFAULT 0,
+      format_id TEXT REFERENCES product_formats(id),
+      format_label TEXT,                -- cached: "Caja 5kg"
+      format_weight_kg REAL,            -- cached del formato
       is_available_online INTEGER DEFAULT 1,
       is_featured INTEGER DEFAULT 0,
       image_urls TEXT DEFAULT '[]',
@@ -340,5 +380,246 @@ function runMigrations(db: Database.Database) {
     INSERT OR IGNORE INTO config VALUES ('branch_id', 'main', datetime('now'));
     INSERT OR IGNORE INTO config VALUES ('last_sync_at', '2024-01-01T00:00:00.000Z', datetime('now'));
     INSERT OR IGNORE INTO config VALUES ('api_url', 'http://localhost:3001', datetime('now'));
+    INSERT OR IGNORE INTO config VALUES ('current_session_id', '', datetime('now'));
+
+    -- ── Medios de pago ───────────────────────────────────────
+    CREATE TABLE IF NOT EXISTS payment_method_settings (
+      method         TEXT PRIMARY KEY,
+      label          TEXT NOT NULL,
+      commission_pct REAL DEFAULT 0,
+      is_active      INTEGER DEFAULT 1
+    );
+    -- Métodos base (4 columnas — compatibles con DB existente y nueva)
+    INSERT OR IGNORE INTO payment_method_settings (method, label, commission_pct, is_active)
+      VALUES ('cash',        'Efectivo',       0,   1);
+    INSERT OR IGNORE INTO payment_method_settings (method, label, commission_pct, is_active)
+      VALUES ('debit_card',  'Débito',         0.8, 1);
+    INSERT OR IGNORE INTO payment_method_settings (method, label, commission_pct, is_active)
+      VALUES ('credit_card', 'Crédito',        1.5, 1);
+    INSERT OR IGNORE INTO payment_method_settings (method, label, commission_pct, is_active)
+      VALUES ('transfer',    'Transferencia',  0,   1);
+    INSERT OR IGNORE INTO payment_method_settings (method, label, commission_pct, is_active)
+      VALUES ('amipass',     'Amipass',        3.5, 1);
+    INSERT OR IGNORE INTO payment_method_settings (method, label, commission_pct, is_active)
+      VALUES ('edenred',     'Edenred',        3.5, 1);
+    INSERT OR IGNORE INTO payment_method_settings (method, label, commission_pct, is_active)
+      VALUES ('pluxee',      'Pluxee',         3.5, 1);
+    INSERT OR IGNORE INTO payment_method_settings (method, label, commission_pct, is_active)
+      VALUES ('webpay',      'Webpay',         1.2, 1);
+
+    -- ── Control de vencimientos ───────────────────────────────
+    CREATE TABLE IF NOT EXISTS product_expiry (
+      id          TEXT PRIMARY KEY,
+      product_id  TEXT NOT NULL REFERENCES products(id),
+      quantity    REAL NOT NULL DEFAULT 0,
+      expiry_date TEXT NOT NULL,
+      lot_number  TEXT,
+      supplier_name TEXT,
+      notes       TEXT,
+      created_at  TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_expiry_date      ON product_expiry(expiry_date);
+    CREATE INDEX IF NOT EXISTS idx_expiry_product   ON product_expiry(product_id);
+
+    -- ── Pagos por orden (multipago) ───────────────────────────
+    CREATE TABLE IF NOT EXISTS order_payments (
+      id             TEXT PRIMARY KEY,
+      order_id       TEXT NOT NULL REFERENCES orders(id) ON DELETE CASCADE,
+      payment_method TEXT NOT NULL,
+      amount         INTEGER NOT NULL,
+      created_at     TEXT NOT NULL
+    );
+    CREATE INDEX IF NOT EXISTS idx_order_payments_order ON order_payments(order_id);
   `)
+
+  // ── Migraciones incrementales (idempotentes) ──────────────
+  const migrations: Array<[string, string]> = [
+    ['cost_per_unit en stock_movements',
+     'ALTER TABLE stock_movements ADD COLUMN cost_per_unit INTEGER DEFAULT 0'],
+    ['format_id en products',
+     'ALTER TABLE products ADD COLUMN format_id TEXT REFERENCES product_formats(id)'],
+    ['format_label en products',
+     'ALTER TABLE products ADD COLUMN format_label TEXT'],
+    ['format_weight_kg en products',
+     'ALTER TABLE products ADD COLUMN format_weight_kg REAL'],
+    ['cost_price en products',
+     'ALTER TABLE products ADD COLUMN cost_price INTEGER DEFAULT 0'],
+    ['category en payment_method_settings',
+     "ALTER TABLE payment_method_settings ADD COLUMN category TEXT DEFAULT 'offline'"],
+    ['channel en payment_method_settings',
+     'ALTER TABLE payment_method_settings ADD COLUMN channel TEXT DEFAULT NULL'],
+    ['sort_order en payment_method_settings',
+     'ALTER TABLE payment_method_settings ADD COLUMN sort_order INTEGER DEFAULT 0'],
+    ['show_online en payment_method_settings',
+     'ALTER TABLE payment_method_settings ADD COLUMN show_online INTEGER DEFAULT 0'],
+    ['change_given en orders',
+     'ALTER TABLE orders ADD COLUMN change_given INTEGER DEFAULT 0'],
+    ['document_type en purchase_invoices',
+     "ALTER TABLE purchase_invoices ADD COLUMN document_type TEXT DEFAULT 'factura'"],
+    ['ila_amount en products',
+     'ALTER TABLE products ADD COLUMN ila_amount INTEGER DEFAULT 0'],
+    ['flete_amount en products',
+     'ALTER TABLE products ADD COLUMN flete_amount INTEGER DEFAULT 0'],
+    ['tax_type en products',
+     "ALTER TABLE products ADD COLUMN tax_type TEXT DEFAULT 'afecto_iva'"],
+    ['additional_tax_pct en products',
+     'ALTER TABLE products ADD COLUMN additional_tax_pct REAL DEFAULT 0'],
+  ]
+  for (const [, sql] of migrations) {
+    try { db.exec(sql) } catch { /* columna ya existe */ }
+  }
+
+  // ── Seed nuevas categorías (idempotente) ──────────────────
+  const now2 = new Date().toISOString()
+  const newCats = [
+    { id: 'cat-congelados', name: 'Congelados', slug: 'congelados', sort: 8  },
+    { id: 'cat-bebidas',    name: 'Bebidas',    slug: 'bebidas',    sort: 9  },
+    { id: 'cat-parrilla',   name: 'Parrilla',   slug: 'parrilla',   sort: 10 },
+  ]
+  const insertCatMig = db.prepare(`
+    INSERT OR IGNORE INTO categories (id, name, slug, sort_order, status, sync_status, version, created_at, updated_at)
+    VALUES (?, ?, ?, ?, 'active', 'synced', 1, ?, ?)
+  `)
+  for (const c of newCats) insertCatMig.run(c.id, c.name, c.slug, c.sort, now2, now2)
+
+  // ── Seed nuevos medios de pago online (idempotente, post-migración) ──
+  const newMethods = [
+    ['uber_reparto',      'Uber Eats Reparto',  30,  1, 'online_delivery', 'reparto', 20],
+    ['uber_local',        'Uber Eats Local',    15,  1, 'online_delivery', 'local',   21],
+    ['rappi_reparto',     'Rappi Reparto',      28,  1, 'online_delivery', 'reparto', 22],
+    ['rappi_local',       'Rappi Local',        15,  1, 'online_delivery', 'local',   23],
+    ['pedidosya_reparto', 'Pedidos Ya Reparto', 30,  1, 'online_delivery', 'reparto', 24],
+    ['pedidosya_local',   'Pedidos Ya Local',   15,  1, 'online_delivery', 'local',   25],
+  ]
+  const insertMethod = db.prepare(`
+    INSERT OR IGNORE INTO payment_method_settings (method, label, commission_pct, is_active, category, channel, sort_order)
+    VALUES (?, ?, ?, ?, ?, ?, ?)
+  `)
+  for (const m of newMethods) insertMethod.run(...(m as any))
+
+  // Actualizar categoría/sort de métodos existentes que no tienen categoría asignada
+  db.exec(`
+    UPDATE payment_method_settings SET category = 'offline',    sort_order = 1  WHERE method = 'cash'        AND (category IS NULL OR category = '');
+    UPDATE payment_method_settings SET category = 'offline',    sort_order = 2  WHERE method = 'debit_card'  AND (category IS NULL OR category = '');
+    UPDATE payment_method_settings SET category = 'offline',    sort_order = 3  WHERE method = 'credit_card' AND (category IS NULL OR category = '');
+    UPDATE payment_method_settings SET category = 'offline',    sort_order = 4  WHERE method = 'transfer'    AND (category IS NULL OR category = '');
+    UPDATE payment_method_settings SET category = 'offline',    sort_order = 5  WHERE method = 'amipass'     AND (category IS NULL OR category = '');
+    UPDATE payment_method_settings SET category = 'offline',    sort_order = 6  WHERE method = 'edenred'     AND (category IS NULL OR category = '');
+    UPDATE payment_method_settings SET category = 'offline',    sort_order = 7  WHERE method = 'pluxee'      AND (category IS NULL OR category = '');
+    UPDATE payment_method_settings SET category = 'online_web', sort_order = 10 WHERE method = 'webpay';
+    -- Amipass, Edenred, Pluxee también aparecen en el tab Online
+    UPDATE payment_method_settings SET show_online = 1 WHERE method IN ('amipass','edenred','pluxee');
+  `)
+
+  // ── v2: orden definitivo de medios de pago (fuerza actualización) ──
+  db.exec(`
+    UPDATE payment_method_settings SET sort_order = 1  WHERE method = 'cash';
+    UPDATE payment_method_settings SET sort_order = 2  WHERE method = 'debit_card';
+    UPDATE payment_method_settings SET sort_order = 3  WHERE method = 'credit_card';
+    UPDATE payment_method_settings SET sort_order = 4  WHERE method = 'pluxee';
+    UPDATE payment_method_settings SET sort_order = 5  WHERE method = 'edenred';
+    UPDATE payment_method_settings SET sort_order = 6  WHERE method = 'amipass';
+    UPDATE payment_method_settings SET sort_order = 99 WHERE method = 'transfer';
+    UPDATE payment_method_settings SET sort_order = 10 WHERE method = 'webpay';
+    UPDATE payment_method_settings SET sort_order = 11 WHERE method = 'uber_local';
+    UPDATE payment_method_settings SET sort_order = 12 WHERE method = 'uber_reparto';
+    UPDATE payment_method_settings SET sort_order = 13 WHERE method = 'rappi_local';
+    UPDATE payment_method_settings SET sort_order = 14 WHERE method = 'rappi_reparto';
+    UPDATE payment_method_settings SET sort_order = 15 WHERE method = 'pedidosya_local';
+    UPDATE payment_method_settings SET sort_order = 16 WHERE method = 'pedidosya_reparto';
+  `)
+
+  // ── Tabla gastos mensuales (idempotente) ─────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS monthly_expenses (
+      id              TEXT PRIMARY KEY,
+      year            INTEGER NOT NULL,
+      month           INTEGER NOT NULL,
+      rent            INTEGER DEFAULT 0,
+      common_expenses INTEGER DEFAULT 0,
+      electricity     INTEGER DEFAULT 0,
+      water           INTEGER DEFAULT 0,
+      advertising     INTEGER DEFAULT 0,
+      maintenance     INTEGER DEFAULT 0,
+      other           INTEGER DEFAULT 0,
+      notes           TEXT,
+      updated_at      TEXT NOT NULL,
+      UNIQUE(year, month)
+    )
+  `)
+
+  // Migraciones monthly_expenses
+  try { db.exec("ALTER TABLE monthly_expenses ADD COLUMN invoices TEXT DEFAULT '{}'") } catch {}
+  try { db.exec("ALTER TABLE monthly_expenses ADD COLUMN salaries TEXT DEFAULT '[]'") } catch {}
+
+  // ── Tabla proveedores (idempotente) ──────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS suppliers (
+      id         TEXT PRIMARY KEY,
+      name       TEXT NOT NULL,
+      rut        TEXT,
+      phone      TEXT,
+      email      TEXT,
+      address    TEXT,
+      notes      TEXT,
+      status     TEXT DEFAULT 'active',
+      created_at TEXT NOT NULL,
+      updated_at TEXT NOT NULL
+    )
+  `)
+
+  // ── Migraciones: promociones en productos ───────────────────
+  try { db.exec("ALTER TABLE products ADD COLUMN promotion_pct REAL DEFAULT 0") } catch {}
+  try { db.exec("ALTER TABLE products ADD COLUMN promotion_active INTEGER DEFAULT 0") } catch {}
+  try { db.exec("ALTER TABLE products ADD COLUMN promotion_name TEXT DEFAULT ''") } catch {}
+
+  // ── Migraciones: campos extra en orders ─────────────────────
+  try { db.exec("ALTER TABLE orders ADD COLUMN voided INTEGER DEFAULT 0") } catch {}
+  try { db.exec("ALTER TABLE orders ADD COLUMN discount_code TEXT") } catch {}
+  try { db.exec("ALTER TABLE orders ADD COLUMN discount_amount INTEGER DEFAULT 0") } catch {}
+
+  // ── Tabla códigos de descuento ───────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS discount_codes (
+      id               TEXT PRIMARY KEY,
+      code             TEXT UNIQUE NOT NULL COLLATE NOCASE,
+      name             TEXT,
+      type             TEXT NOT NULL,
+      value            REAL DEFAULT 0,
+      free_product_id  TEXT,
+      free_product_name TEXT,
+      active           INTEGER DEFAULT 1,
+      uses_count       INTEGER DEFAULT 0,
+      max_uses         INTEGER DEFAULT 0,
+      created_at       TEXT NOT NULL,
+      expires_at       TEXT
+    )
+  `)
+
+  // ── Garantizar registro stock_levels para productos nuevos (NO resetea stock) ──
+  db.prepare(`
+    INSERT OR IGNORE INTO stock_levels
+      (id, product_id, quantity, reserved_quantity, min_stock, sync_status, updated_at)
+    SELECT 'stock-' || p.id, p.id, 0, 0, 0, 'pending', datetime('now')
+    FROM products p WHERE p.status = 'active'
+  `).run()
+
+  // ── Tabla usuarios POS ───────────────────────────────────────
+  db.exec(`
+    CREATE TABLE IF NOT EXISTS pos_users (
+      id           TEXT PRIMARY KEY,
+      username     TEXT UNIQUE NOT NULL,
+      display_name TEXT NOT NULL,
+      password     TEXT NOT NULL,
+      role         TEXT NOT NULL DEFAULT 'cajero',
+      is_active    INTEGER NOT NULL DEFAULT 1,
+      created_at   TEXT DEFAULT (datetime('now','localtime'))
+    )
+  `)
+  // Seed admin por defecto (solo si no existe)
+  const adminExists = db.prepare("SELECT id FROM pos_users WHERE username = 'admin'").get()
+  if (!adminExists) {
+    db.prepare(`INSERT INTO pos_users (id, username, display_name, password, role) VALUES (?, ?, ?, ?, ?)`)
+      .run('user-admin', 'admin', 'Administrador', '1091', 'admin')
+  }
 }

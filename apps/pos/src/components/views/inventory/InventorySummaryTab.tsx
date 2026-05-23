@@ -3,7 +3,7 @@ import { Package, AlertTriangle, FileText, Trash2, ClipboardList, TrendingUp } f
 import { DateRangeFilter, todayISO, daysAgoISO, formatCLP } from './shared'
 
 export function InventorySummaryTab() {
-  const [from, setFrom] = useState(daysAgoISO(30))
+  const [from, setFrom] = useState(todayISO())
   const [to, setTo] = useState(todayISO())
   const [data, setData] = useState<any>(null)
   const [recentMovements, setRecentMovements] = useState<any[]>([])
@@ -46,7 +46,7 @@ export function InventorySummaryTab() {
           color="green"
         />
         <PeriodKpi
-          label="Consumos / Mermas del período"
+          label="Mermas del período"
           subLabel="kg / unidades dadas de baja"
           value={Number(data.consumptionQuantity || 0).toFixed(2)}
           icon={Trash2}

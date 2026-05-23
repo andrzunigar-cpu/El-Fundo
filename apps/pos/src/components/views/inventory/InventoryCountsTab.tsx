@@ -4,9 +4,26 @@ import toast from 'react-hot-toast'
 import { clsx } from 'clsx'
 import { DateRangeFilter, formatDate, todayISO, daysAgoISO } from './shared'
 
+const CAT_LABELS: Record<string, string> = {
+  'cat-vacuno':     'Vacuno',
+  'cat-cerdo':      'Cerdo',
+  'cat-pollo':      'Pollo',
+  'cat-embutidos':  'Embutidos',
+  'cat-parrilla':   'Parrilla',
+  'cat-congelados': 'Congelados',
+  'cat-bebidas':    'Bebidas',
+  'cat-otros':      'Otros',
+}
+
+const CAT_ORDER = [
+  'cat-vacuno','cat-cerdo','cat-pollo',
+  'cat-embutidos','cat-parrilla','cat-congelados',
+  'cat-bebidas','cat-otros',
+]
+
 export function InventoryCountsTab() {
   const [counts, setCounts] = useState<any[]>([])
-  const [from, setFrom] = useState(daysAgoISO(90))
+  const [from, setFrom] = useState(todayISO())
   const [to, setTo] = useState(todayISO())
   const [loading, setLoading] = useState(true)
   const [activeCountId, setActiveCountId] = useState<string | null>(null)
@@ -159,6 +176,21 @@ function CountEditor({ countId, onClose }: { countId: string; onClose: () => voi
   const totalAdded = itemsWithDiff.filter(i => i.difference > 0).reduce((s, i) => s + Number(i.difference), 0)
   const totalRemoved = Math.abs(itemsWithDiff.filter(i => i.difference < 0).reduce((s, i) => s + Number(i.difference), 0))
 
+  // Agrupar por categoría
+  const grouped = (() => {
+    const groups: { catId: string; label: string; items: any[] }[] = []
+    const seen = new Set<string>()
+    // Primero en el orden definido
+    for (const catId of CAT_ORDER) {
+      const catItems = filtered.filter(i => i.category_id === catId)
+      if (catItems.length > 0) { groups.push({ catId, label: CAT_LABELS[catId] ?? catId, items: catItems }); seen.add(catId) }
+    }
+    // Luego cualquier categoría no contemplada
+    const rest = filtered.filter(i => !seen.has(i.category_id ?? ''))
+    if (rest.length > 0) groups.push({ catId: 'otros', label: 'Sin categoría', items: rest })
+    return groups
+  })()
+
   return (
     <div className="h-full flex flex-col">
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
@@ -198,28 +230,49 @@ function CountEditor({ countId, onClose }: { countId: string; onClose: () => voi
             </tr>
           </thead>
           <tbody>
-            {filtered.map(item => {
-              const diff = Number(item.difference)
-              return (
-                <tr key={item.id} className={clsx('border-b border-gray-800/40', diff !== 0 && 'bg-orange-950/10')}>
-                  <td className="py-2 px-2 font-mono text-xs text-gray-400">{item.product_sku}</td>
-                  <td className="py-2 px-2">{item.product_name}</td>
-                  <td className="py-2 px-2 text-right text-gray-400">{Number(item.system_quantity).toFixed(item.requires_weight ? 2 : 0)}</td>
-                  <td className="py-2 px-2 text-right">
-                    <input
-                      type="number"
-                      step={item.requires_weight ? '0.01' : '1'}
-                      defaultValue={item.counted_quantity}
-                      onBlur={e => updateQty(item.product_id, e.target.value)}
-                      className="w-24 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-right text-sm focus:outline-none focus:border-red-500"
-                    />
-                  </td>
-                  <td className={clsx('py-2 px-2 text-right font-medium', diff > 0 ? 'text-green-400' : diff < 0 ? 'text-red-400' : 'text-gray-500')}>
-                    {diff > 0 ? '+' : ''}{diff.toFixed(item.requires_weight ? 2 : 0)}
+            {grouped.map(group => (
+              <React.Fragment key={group.catId}>
+                {/* Cabecera de categoría */}
+                <tr>
+                  <td colSpan={5} className="pt-4 pb-1 px-2">
+                    <div className="flex items-center gap-2">
+                      <span className="text-xs font-bold uppercase tracking-widest text-gray-400">{group.label}</span>
+                      <span className="text-xs text-gray-600">({group.items.length} productos)</span>
+                      <div className="flex-1 border-t border-gray-800" />
+                    </div>
                   </td>
                 </tr>
-              )
-            })}
+                {group.items.map(item => {
+                  const diff = Number(item.difference)
+                  return (
+                    <tr key={item.id} className={clsx('border-b border-gray-800/30', diff !== 0 && 'bg-orange-950/10')}>
+                      <td className="py-2 px-2 font-mono text-xs text-gray-400">{item.product_sku}</td>
+                      <td className="py-2 px-2">{item.product_name}</td>
+                      <td className="py-2 px-2 text-right text-gray-400">
+                        {Number(item.system_quantity).toFixed(item.requires_weight ? 2 : 0)}
+                        <span className="text-gray-600 text-xs ml-1">{item.requires_weight ? 'kg' : 'un'}</span>
+                      </td>
+                      <td className="py-2 px-2 text-right">
+                        <div className="flex items-center justify-end gap-1">
+                          <input
+                            type="number"
+                            step={item.requires_weight ? '0.01' : '1'}
+                            defaultValue={item.counted_quantity}
+                            onBlur={e => updateQty(item.product_id, e.target.value)}
+                            className="w-24 bg-gray-800 border border-gray-700 rounded px-2 py-1 text-right text-sm focus:outline-none focus:border-red-500"
+                          />
+                          <span className="text-gray-600 text-xs w-5 text-left">{item.requires_weight ? 'kg' : 'un'}</span>
+                        </div>
+                      </td>
+                      <td className={clsx('py-2 px-2 text-right font-medium', diff > 0 ? 'text-green-400' : diff < 0 ? 'text-red-400' : 'text-gray-500')}>
+                        {diff > 0 ? '+' : ''}{diff.toFixed(item.requires_weight ? 2 : 0)}
+                        <span className="text-xs opacity-50 ml-1">{item.requires_weight ? 'kg' : 'un'}</span>
+                      </td>
+                    </tr>
+                  )
+                })}
+              </React.Fragment>
+            ))}
           </tbody>
         </table>
       </div>

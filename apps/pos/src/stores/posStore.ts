@@ -2,7 +2,7 @@ import { create } from 'zustand'
 import { persist, createJSONStorage } from 'zustand/middleware'
 import type { Product, Order, Customer, StockLevel } from '../types'
 
-export type POSView = 'sales' | 'products' | 'inventory' | 'cash' | 'reports' | 'history' | 'settings'
+export type POSView = 'sales' | 'products' | 'inventory' | 'cash' | 'reports' | 'history' | 'settings' | 'resultado' | 'new-purchase'
 
 interface CartItem {
   product: Product
@@ -36,6 +36,15 @@ interface POSStore {
   // ── Alertas de stock bajo ────────────────────────────────
   lowStockAlerts: Array<{ productId: string; name: string; current: number; minimum: number }>
 
+  // ── Descuento aplicado ───────────────────────────────────
+  appliedDiscount: any | null
+  discountAmount: number
+
+  // ── Estado cobro (para panel cliente izquierdo) ──────────
+  checkoutVuelto: number
+  checkoutTotalPaid: number
+  setCheckoutState: (vuelto: number, paid: number) => void
+
   // ── Acciones carrito ─────────────────────────────────────
   addToCart: (product: Product, quantity: number, weightKg?: number) => void
   removeFromCart: (productId: string) => void
@@ -44,6 +53,7 @@ interface POSStore {
   setCustomer: (customer: Customer | null) => void
   setPaymentMethod: (method: string) => void
   setNotes: (notes: string) => void
+  setAppliedDiscount: (discount: any | null, rawTotal: number) => void
 
   // ── Acciones sincronización ──────────────────────────────
   setOnlineStatus: (online: boolean) => void
@@ -77,6 +87,10 @@ export const usePOSStore = create<POSStore>()(
       pendingWebOrders: [],
       hasNewOrders: false,
       lowStockAlerts: [],
+      appliedDiscount: null,
+      discountAmount: 0,
+      checkoutVuelto: 0,
+      checkoutTotalPaid: 0,
 
       addToCart: (product, quantity, weightKg) => {
         set((state) => {
@@ -114,10 +128,18 @@ export const usePOSStore = create<POSStore>()(
           }),
         })),
 
-      clearCart: () => set({ cart: [], selectedCustomer: null, notes: '', paymentMethod: 'cash' }),
+      clearCart: () => set({ cart: [], selectedCustomer: null, notes: '', paymentMethod: 'cash', appliedDiscount: null, discountAmount: 0, checkoutVuelto: 0, checkoutTotalPaid: 0 }),
+      setCheckoutState: (vuelto, paid) => set({ checkoutVuelto: vuelto, checkoutTotalPaid: paid }),
       setCustomer: (customer) => set({ selectedCustomer: customer }),
       setPaymentMethod: (method) => set({ paymentMethod: method }),
       setNotes: (notes) => set({ notes }),
+      setAppliedDiscount: (discount, rawTotal) => {
+        if (!discount) { set({ appliedDiscount: null, discountAmount: 0 }); return }
+        const amt = discount.type === 'pct'        ? Math.round(rawTotal * (discount.value / 100))
+                  : discount.type === 'free_order' ? rawTotal
+                  : 0
+        set({ appliedDiscount: discount, discountAmount: amt })
+      },
 
       setOnlineStatus: (online) => set({ isOnline: online }),
       setSyncStatus: (syncing, pending) => set({ isSyncing: syncing, pendingSyncItems: pending }),

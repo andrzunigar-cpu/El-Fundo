@@ -15,7 +15,7 @@ const REASONS = [
 
 export function InventoryConsumptionsTab() {
   const [consumptions, setConsumptions] = useState<any[]>([])
-  const [from, setFrom] = useState(daysAgoISO(30))
+  const [from, setFrom] = useState(todayISO())
   const [to, setTo] = useState(todayISO())
   const [loading, setLoading] = useState(true)
   const [showNew, setShowNew] = useState(false)
@@ -37,7 +37,7 @@ export function InventoryConsumptionsTab() {
       <div className="flex items-center justify-between p-4 border-b border-gray-800">
         <DateRangeFilter from={from} to={to} onChange={(f, t) => { setFrom(f); setTo(t) }} />
         <button onClick={() => setShowNew(true)} className="flex items-center gap-2 bg-red-600 hover:bg-red-500 px-4 py-2 rounded-lg text-sm font-medium">
-          <Plus className="w-4 h-4" /> Registrar consumo
+          <Plus className="w-4 h-4" /> Registrar merma
         </button>
       </div>
 
@@ -52,7 +52,7 @@ export function InventoryConsumptionsTab() {
         ) : consumptions.length === 0 ? (
           <div className="text-center text-gray-500 py-16">
             <Trash2 className="w-12 h-12 mx-auto mb-3 opacity-30" />
-            <p>Sin consumos en el período</p>
+            <p>Sin mermas en el período</p>
           </div>
         ) : (
           <table className="w-full text-sm">
@@ -120,7 +120,7 @@ function NewConsumptionModal({ onClose, onSaved }: any) {
           reason: finalReason,
         })),
       })
-      toast.success(`${result.items} consumos registrados`)
+      toast.success(`${result.items} merma${result.items !== 1 ? 's' : ''} registrada${result.items !== 1 ? 's' : ''}`)
       onSaved()
     } catch (err: any) {
       toast.error(err.message)
@@ -131,7 +131,7 @@ function NewConsumptionModal({ onClose, onSaved }: any) {
     <div className="fixed inset-0 bg-black/70 flex items-center justify-center z-50 p-6">
       <div className="bg-gray-900 rounded-xl w-[700px] max-h-[85vh] border border-gray-700 flex flex-col">
         <div className="flex justify-between items-center p-5 border-b border-gray-800">
-          <h2 className="text-xl font-bold">Registrar consumo / merma</h2>
+          <h2 className="text-xl font-bold">Registrar merma</h2>
           <button onClick={onClose}><X className="w-5 h-5 text-gray-500 hover:text-white" /></button>
         </div>
 
@@ -176,10 +176,15 @@ function NewConsumptionModal({ onClose, onSaved }: any) {
                         </select>
                       </td>
                       <td className="py-2 pr-2">
-                        <input type="number" step="0.01" value={it.quantity}
-                          onChange={e => updateItem(idx, { quantity: e.target.value })}
-                          max={stock}
-                          className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-right focus:outline-none focus:border-red-500" />
+                        <div className="flex items-center gap-1">
+                          <input type="number" step="0.01" value={it.quantity}
+                            onChange={e => updateItem(idx, { quantity: e.target.value })}
+                            max={stock}
+                            className="w-full bg-gray-800 border border-gray-700 rounded px-2 py-1 text-sm text-right focus:outline-none focus:border-red-500" />
+                          <span className="text-xs text-gray-500 whitespace-nowrap w-5 text-left">
+                            {product ? (product.requires_weight ? 'kg' : 'un') : ''}
+                          </span>
+                        </div>
                       </td>
                       <td className="text-center">
                         <button onClick={() => removeItem(idx)} className="text-gray-500 hover:text-red-400">
