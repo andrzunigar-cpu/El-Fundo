@@ -102,60 +102,77 @@ export default function ProductsPage() {
     const promoLabel = (product as any).promo_label
     const img = getProductImage(product)
     const isCombo = product.category_id === 'cat-combos'
+    const inCart = isInCart(product.id)
+    const precio = product.online_price || product.base_price
+    const discount = promoPrice ? Math.round((1 - promoPrice / precio) * 100) : 0
 
     return (
-      <div className="group bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100">
-        <div className="relative h-48 overflow-hidden bg-gray-100">
+      <div className="group bg-white rounded-2xl overflow-hidden hover:shadow-xl transition-all duration-300 border border-gray-100 flex flex-col">
+        {/* Imagen */}
+        <div className="relative h-44 overflow-hidden bg-gray-100 flex-shrink-0">
           <img
             src={img}
             alt={product.name}
-            className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500"
             onError={e => { (e.target as HTMLImageElement).src = CATEGORY_IMAGES[product.category_id?.replace('cat-','') || 'default'] || CATEGORY_IMAGES.default }}
           />
+          {/* Badge promo */}
           {promoPrice && (
-            <span className="absolute top-3 left-3 bg-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-              {promoLabel || 'Oferta'}
-            </span>
+            <div className="absolute top-0 left-0 right-0 flex justify-between items-start p-2">
+              <span className="bg-orange-500 text-white text-xs font-black px-2 py-1 rounded-lg">
+                {promoLabel || 'Oferta'} -{discount}%
+              </span>
+            </div>
           )}
           {!promoPrice && product.is_featured && (
-            <span className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">
-              Destacado
+            <span className="absolute top-2 left-2 bg-red-600 text-white text-xs font-bold px-2 py-1 rounded-lg">
+              ⭐ Destacado
             </span>
           )}
           {isCombo && (
-            <span className="absolute top-3 right-3 bg-gray-900 text-white text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1">
-              <Package className="w-3 h-3" /> Combo
+            <span className="absolute top-2 right-2 bg-gray-900 text-white text-xs font-bold px-2 py-1 rounded-lg">
+              📦 Combo
             </span>
           )}
         </div>
 
-        <div className="p-4">
-          <h3 className="font-bold text-gray-900 mb-0.5 line-clamp-1">{product.name}</h3>
+        {/* Info */}
+        <div className="p-4 flex flex-col flex-1">
+          <h3 className="font-bold text-gray-900 text-sm leading-tight mb-1 line-clamp-2">{product.name}</h3>
           <p className="text-xs text-gray-400 uppercase tracking-wide mb-3">
             {product.category_id?.replace('cat-', '')}
           </p>
-          <div className="flex items-center justify-between">
-            <div>
-              {promoPrice ? (
-                <>
-                  <span className="text-xl font-black text-orange-600">${promoPrice.toLocaleString('es-CL')}</span>
-                  <span className="text-xs text-gray-400 line-through ml-2">${(product.online_price || product.base_price).toLocaleString('es-CL')}</span>
-                </>
-              ) : (
-                <span className="text-xl font-black text-gray-900">${(product.online_price || product.base_price).toLocaleString('es-CL')}</span>
-              )}
-              <span className="text-xs text-gray-400 ml-1">{isCombo ? '' : '/ kg'}</span>
-            </div>
-            <button
-              onClick={() => addItem({ id: product.id, name: product.name, price: getPrice(product), quantity: 1 })}
-              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition ${
-                isInCart(product.id) ? 'bg-green-100 text-green-700' : 'bg-red-600 text-white hover:bg-red-700'
-              }`}
-            >
-              <ShoppingCart className="w-4 h-4" />
-              {isInCart(product.id) ? '✓' : 'Agregar'}
-            </button>
+
+          {/* Precio */}
+          <div className="mb-3 mt-auto">
+            {promoPrice ? (
+              <div>
+                <div className="flex items-baseline gap-2">
+                  <span className="text-2xl font-black text-orange-600">${promoPrice.toLocaleString('es-CL')}</span>
+                  <span className="text-sm text-gray-400 line-through">${precio.toLocaleString('es-CL')}</span>
+                </div>
+                <p className="text-xs text-orange-500 font-semibold">Ahorras ${(precio - promoPrice).toLocaleString('es-CL')}{isCombo ? '' : '/kg'}</p>
+              </div>
+            ) : (
+              <div className="flex items-baseline gap-1">
+                <span className="text-2xl font-black text-gray-900">${precio.toLocaleString('es-CL')}</span>
+                {!isCombo && <span className="text-xs text-gray-400">/kg</span>}
+              </div>
+            )}
           </div>
+
+          {/* Botón agregar */}
+          <button
+            onClick={() => addItem({ id: product.id, name: product.name, price: getPrice(product), quantity: 1 })}
+            className={`w-full flex items-center justify-center gap-2 py-2.5 rounded-xl font-bold text-sm transition-all ${
+              inCart
+                ? 'bg-green-500 text-white'
+                : 'bg-red-600 text-white hover:bg-red-700 active:scale-95'
+            }`}
+          >
+            <ShoppingCart className="w-4 h-4" />
+            {inCart ? '✓ Agregado' : 'Agregar al carrito'}
+          </button>
         </div>
       </div>
     )
@@ -175,28 +192,34 @@ export default function ProductsPage() {
                 <h2 className="text-2xl font-black text-white">Promoción de la semana</h2>
               </div>
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {promos.map(p => (
-                  <div key={p.id} className="bg-white rounded-2xl overflow-hidden shadow-lg">
-                    <div className="h-36 overflow-hidden">
-                      <img src={getProductImage(p)} alt={p.name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).src = CATEGORY_IMAGES.default }} />
-                    </div>
-                    <div className="p-3">
-                      <p className="font-bold text-gray-900 text-sm line-clamp-1">{p.name}</p>
-                      <div className="flex items-center justify-between mt-2">
-                        <div>
-                          <p className="text-lg font-black text-orange-600">${((p as any).promotional_price).toLocaleString('es-CL')}</p>
-                          <p className="text-xs text-gray-400 line-through">${(p.online_price || p.base_price).toLocaleString('es-CL')}/kg</p>
+                {promos.map(p => {
+                  const pp = (p as any).promotional_price
+                  const normal = p.online_price || p.base_price
+                  const disc = Math.round((1 - pp / normal) * 100)
+                  const inCart = isInCart(p.id)
+                  return (
+                    <div key={p.id} className="bg-white rounded-2xl overflow-hidden shadow-lg flex flex-col">
+                      <div className="relative h-40 overflow-hidden">
+                        <img src={getProductImage(p)} alt={p.name} className="w-full h-full object-cover" onError={e => { (e.target as HTMLImageElement).src = CATEGORY_IMAGES.default }} />
+                        <span className="absolute top-2 left-2 bg-orange-500 text-white text-xs font-black px-2 py-1 rounded-lg">-{disc}%</span>
+                      </div>
+                      <div className="p-3 flex flex-col flex-1">
+                        <p className="font-bold text-gray-900 text-sm line-clamp-1 mb-2">{p.name}</p>
+                        <div className="mb-3">
+                          <p className="text-xl font-black text-orange-600">${pp.toLocaleString('es-CL')}<span className="text-xs font-normal text-gray-400">/kg</span></p>
+                          <p className="text-xs text-gray-400 line-through">${normal.toLocaleString('es-CL')}/kg</p>
                         </div>
                         <button
-                          onClick={() => addItem({ id: p.id, name: p.name, price: (p as any).promotional_price, quantity: 1 })}
-                          className="p-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition"
+                          onClick={() => addItem({ id: p.id, name: p.name, price: pp, quantity: 1 })}
+                          className={`mt-auto w-full flex items-center justify-center gap-1.5 py-2 rounded-xl text-sm font-bold transition ${inCart ? 'bg-green-500 text-white' : 'bg-red-600 text-white hover:bg-red-700'}`}
                         >
                           <ShoppingCart className="w-4 h-4" />
+                          {inCart ? '✓ Agregado' : 'Agregar'}
                         </button>
                       </div>
                     </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             </div>
           </section>
