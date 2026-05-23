@@ -1,6 +1,6 @@
 {
     "version": "1.0.0",
-    "name": "carniceria-web",
+    "name": "@elfundo/web",
     "scripts": {
         "type-check": "tsc --noEmit",
         "lint": "next lint",
