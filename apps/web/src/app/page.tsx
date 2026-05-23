@@ -39,8 +39,13 @@ export default function Home() {
 
         {/* Hero */}
         <section className="relative h-[600px] flex items-center justify-center overflow-hidden">
-          <div className="absolute inset-0 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=1600&q=90')" }} />
-          <div className="absolute inset-0 bg-gradient-to-r from-black/80 via-black/60 to-transparent" />
+          {/* Split background — izquierda: asado, derecha: cazuela */}
+          <div className="absolute inset-y-0 left-0 w-1/2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1558030006-450675393462?w=900&q=85')" }} />
+          <div className="absolute inset-y-0 right-0 w-1/2 bg-cover bg-center" style={{ backgroundImage: "url('https://images.unsplash.com/photo-1547592180-85f173990554?w=900&q=85')" }} />
+          {/* Overlay oscuro uniforme */}
+          <div className="absolute inset-0 bg-black/65" />
+          {/* Línea divisoria central sutil */}
+          <div className="absolute inset-y-0 left-1/2 w-px bg-white/10" />
           <div className="relative z-10 max-w-5xl mx-auto px-4">
             <p className="text-red-400 font-semibold text-sm uppercase tracking-widest mb-4">🇨🇱 Santiago de Chile</p>
             <h1 className="text-5xl md:text-7xl font-black text-white mb-6 leading-tight">
