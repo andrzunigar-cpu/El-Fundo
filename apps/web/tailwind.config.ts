@@ -1,33 +1,22 @@
-import type { Config } from 'tailwindcss'
+﻿import type { Config } from 'tailwindcss'
 
 const config: Config = {
-  content: ['./src/**/*.{js,ts,jsx,tsx,mdx}'],
+  content: [
+    './src/pages/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/components/**/*.{js,ts,jsx,tsx,mdx}',
+    './src/app/**/*.{js,ts,jsx,tsx,mdx}',
+  ],
   theme: {
     extend: {
       colors: {
-        brand: {
-          50: '#fff1f1',
-          100: '#ffdfdf',
-          500: '#ef4444',
-          600: '#dc2626',
-          700: '#b91c1c',
-          900: '#7f1d1d',
-        },
-        meat: {
-          raw: '#c0392b',
-          cooked: '#8b4513',
-        },
+        primary: '#C7302F',
+        dark: '#1a1a1a',
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-      },
-      borderRadius: {
-        '2xl': '1rem',
-        '3xl': '1.5rem',
+        sans: ['Inter', 'system-ui', '-apple-system', 'sans-serif'],
       },
     },
   },
-  plugins: [],
+  plugins: [require('@tailwindcss/forms')],
 }
-
 export default config
