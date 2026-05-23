@@ -27,16 +27,8 @@ const CATEGORIES = [
   { id: 'cat-embutidos', label: 'Embutidos' },
   { id: 'cat-parrilla', label: 'Parrilla' },
   { id: 'cat-congelados', label: 'Congelados' },
+  { id: 'cat-bebidas', label: 'Bebidas' },
   { id: 'cat-quesos', label: 'Quesos' },
-]
-
-const QUESOS_EJEMPLO = [
-  { id: 'q1', name: 'Queso Mantecoso', base_price: 4990, online_price: 4990, category_id: 'cat-quesos', image_urls: ['https://images.unsplash.com/photo-1552767059-ce182ead6c1b?w=400&q=80'], meat_type: 'queso', is_featured: false },
-  { id: 'q2', name: 'Queso Gouda', base_price: 5990, online_price: 5990, category_id: 'cat-quesos', image_urls: ['https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&q=80'], meat_type: 'queso', is_featured: false },
-  { id: 'q3', name: 'Queso Chanco', base_price: 3990, online_price: 3990, category_id: 'cat-quesos', image_urls: ['https://images.unsplash.com/photo-1559561853-08451507cbe7?w=400&q=80'], meat_type: 'queso', is_featured: false },
-  { id: 'q4', name: 'Queso Brie', base_price: 7990, online_price: 7990, category_id: 'cat-quesos', image_urls: ['https://images.unsplash.com/photo-1618164436241-4473940d1f5c?w=400&q=80'], meat_type: 'queso', is_featured: true },
-  { id: 'q5', name: 'Queso Parmesano', base_price: 8990, online_price: 8990, category_id: 'cat-quesos', image_urls: ['https://images.unsplash.com/photo-1634487359989-3e90c9432133?w=400&q=80'], meat_type: 'queso', is_featured: false },
-  { id: 'q6', name: 'Queso Mozzarella', base_price: 4490, online_price: 4490, category_id: 'cat-quesos', image_urls: ['https://images.unsplash.com/photo-1587132137056-bfbf0166836e?w=400&q=80'], meat_type: 'queso', is_featured: false },
 ]
 
 export default function ProductsPage() {
@@ -47,18 +39,13 @@ export default function ProductsPage() {
   const { addItem, items } = useCart()
 
   useEffect(() => {
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
-    fetch(`${apiUrl}/api/products`)
+    fetch('/api/products')
       .then(r => r.json())
       .then(data => {
-        const apiProducts = Array.isArray(data) ? data : []
-        setProducts([...apiProducts, ...QUESOS_EJEMPLO])
+        setProducts(Array.isArray(data) ? data : [])
         setLoading(false)
       })
-      .catch(() => {
-        setProducts([...QUESOS_EJEMPLO])
-        setLoading(false)
-      })
+      .catch(() => setLoading(false))
   }, [])
 
   const getProductImage = (product: Product) => {
@@ -153,7 +140,12 @@ export default function ProductsPage() {
                         alt={product.name}
                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                       />
-                      {product.is_featured && (
+                      {(product as any).promotional_price && (
+                        <span className="absolute top-3 left-3 bg-orange-500 text-white text-xs font-bold px-2.5 py-1 rounded-full">
+                          {(product as any).promo_label || 'Oferta'}
+                        </span>
+                      )}
+                      {!(product as any).promotional_price && product.is_featured && (
                         <span className="absolute top-3 left-3 bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">
                           Destacado
                         </span>
@@ -168,13 +160,27 @@ export default function ProductsPage() {
                       </p>
                       <div className="flex items-center justify-between">
                         <div>
-                          <span className="text-xl font-black text-gray-900">
-                            ${(product.online_price || product.base_price)?.toLocaleString('es-CL')}
-                          </span>
-                          <span className="text-xs text-gray-400 ml-1">/ kg</span>
+                          {(product as any).promotional_price ? (
+                            <>
+                              <span className="text-xl font-black text-orange-600">
+                                ${(product as any).promotional_price?.toLocaleString('es-CL')}
+                              </span>
+                              <span className="text-xs text-gray-400 line-through ml-2">
+                                ${(product.online_price || product.base_price)?.toLocaleString('es-CL')}
+                              </span>
+                              <span className="text-xs text-gray-400 ml-1">/ kg</span>
+                            </>
+                          ) : (
+                            <>
+                              <span className="text-xl font-black text-gray-900">
+                                ${(product.online_price || product.base_price)?.toLocaleString('es-CL')}
+                              </span>
+                              <span className="text-xs text-gray-400 ml-1">/ kg</span>
+                            </>
+                          )}
                         </div>
                         <button
-                          onClick={() => addItem({ id: product.id, name: product.name, price: product.online_price || product.base_price, quantity: 1 })}
+                          onClick={() => addItem({ id: product.id, name: product.name, price: (product as any).promotional_price || product.online_price || product.base_price, quantity: 1 })}
                           className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition ${
                             isInCart(product.id)
                               ? 'bg-green-100 text-green-700'
