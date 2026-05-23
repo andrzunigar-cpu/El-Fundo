@@ -2,15 +2,18 @@
 
 import { useEffect, useState } from 'react'
 import Link from 'next/link'
-import { Plus, Search, Edit2, ImageIcon, Package } from 'lucide-react'
+import { Plus, Search, Edit2, ImageIcon, Package, Percent } from 'lucide-react'
 
 interface Product {
   id: string
   name: string
   base_price: number
+  online_price: number
+  promotional_price?: number
+  promo_label?: string
   meat_type: string
   status: string
-  image_urls: string[]
+  image_urls: string | string[]
   category_id: string
 }
 
@@ -37,6 +40,14 @@ export default function ProductosAdmin() {
         <div>
           <h1 className="text-2xl font-bold text-gray-900">Productos</h1>
           <p className="text-gray-500 text-sm mt-1">{products.length} productos en total</p>
+        </div>
+        <div className="flex gap-2">
+          <Link href="/admin/dashboard/promociones" className="flex items-center gap-2 px-4 py-2 border border-orange-300 text-orange-600 rounded-xl text-sm font-semibold hover:bg-orange-50 transition">
+            <Percent className="w-4 h-4" /> Promociones
+          </Link>
+          <Link href="/admin/dashboard/productos/nuevo" className="flex items-center gap-2 px-4 py-2 bg-red-600 text-white rounded-xl text-sm font-semibold hover:bg-red-700 transition">
+            <Plus className="w-4 h-4" /> Nuevo producto
+          </Link>
         </div>
       </div>
 
@@ -70,13 +81,13 @@ export default function ProductosAdmin() {
             </thead>
             <tbody className="divide-y divide-gray-50">
               {filtered.map(product => {
-                const hasImage = product.image_urls && product.image_urls.length > 0
+                const hasImage = !!product.image_urls && product.image_urls.length > 2
                 return (
                   <tr key={product.id} className="hover:bg-gray-50 transition">
                     <td className="px-4 py-3">
                       <div className="w-12 h-12 rounded-lg overflow-hidden bg-gray-100 flex items-center justify-center">
                         {hasImage ? (
-                          <img src={product.image_urls[0]} alt={product.name} className="w-full h-full object-cover" />
+                          <img src={(() => { try { const u = typeof product.image_urls === 'string' ? JSON.parse(product.image_urls) : product.image_urls; return Array.isArray(u) ? u[0] : '' } catch { return '' } })()} alt={product.name} className="w-full h-full object-cover" />
                         ) : (
                           <ImageIcon className="w-5 h-5 text-gray-300" />
                         )}
@@ -88,9 +99,17 @@ export default function ProductosAdmin() {
                     </td>
                     <td className="px-4 py-3 text-sm text-gray-600">{product.category_id?.replace('cat-', '')}</td>
                     <td className="px-4 py-3">
-                      <span className="font-semibold text-gray-900 text-sm">
-                        ${product.base_price?.toLocaleString('es-CL')}
-                      </span>
+                      {product.promotional_price ? (
+                        <div>
+                          <span className="font-semibold text-orange-600 text-sm">${product.promotional_price?.toLocaleString('es-CL')}</span>
+                          <span className="ml-1 line-through text-xs text-gray-400">${(product.online_price || product.base_price)?.toLocaleString('es-CL')}</span>
+                          {product.promo_label && <span className="ml-1 text-xs bg-orange-100 text-orange-700 px-1 rounded">{product.promo_label}</span>}
+                        </div>
+                      ) : (
+                        <span className="font-semibold text-gray-900 text-sm">
+                          ${(product.online_price || product.base_price)?.toLocaleString('es-CL')}
+                        </span>
+                      )}
                     </td>
                     <td className="px-4 py-3">
                       <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-medium ${
