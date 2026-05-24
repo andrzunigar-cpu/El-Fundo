@@ -6,6 +6,7 @@
   meat_type?: string
   cut?: string
   price_unit?: string
+  unit?: 'kg' | 'un'
   base_price: number
   online_price?: number
   requires_weight?: boolean

@@ -35,6 +35,7 @@ interface Product {
   status: string
   image_urls: string | string[]
   category_id: string
+  unit?: string
   is_featured: boolean
   description?: string
 }
@@ -111,6 +112,7 @@ export default function EditProducto() {
         name: product.name,
         base_price: Number(product.base_price),
         online_price: Number(product.online_price || product.base_price),
+        unit: product.unit || 'kg',
         status: product.status,
         is_featured: product.is_featured,
         category_id: product.category_id,
@@ -264,15 +266,28 @@ export default function EditProducto() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-              <select
-                value={product.category_id}
-                onChange={e => set('category_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                <select
+                  value={product.category_id}
+                  onChange={e => set('category_id', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Se vende por</label>
+                <select
+                  value={product.unit || 'kg'}
+                  onChange={e => set('unit', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="kg">Kilogramo (kg)</option>
+                  <option value="un">Unidad (un)</option>
+                </select>
+              </div>
             </div>
 
             <div>
@@ -311,7 +326,7 @@ export default function EditProducto() {
 
           {/* Precios */}
           <div className="bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-            <h2 className="font-semibold text-gray-900">Precios (por kg)</h2>
+            <h2 className="font-semibold text-gray-900">Precios (por {product.unit || 'kg'})</h2>
 
             <div className="grid grid-cols-2 gap-3">
               <div>
@@ -352,7 +367,7 @@ export default function EditProducto() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Precio promocional (por kg)</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1">Precio promocional (por {product.unit || 'kg'})</label>
               <div className="relative">
                 <span className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-sm">$</span>
                 <input

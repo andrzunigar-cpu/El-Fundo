@@ -31,6 +31,7 @@ export default function NuevoProducto() {
   const [form, setForm] = useState({
     name: '',
     category_id: 'cat-vacuno',
+    unit: 'kg',
     base_price: '',
     online_price: '',
     description: '',
@@ -85,6 +86,7 @@ export default function NuevoProducto() {
           id,
           name: form.name.trim(),
           category_id: form.category_id,
+          unit: form.unit,
           base_price: Number(form.base_price),
           online_price: Number(form.online_price || form.base_price),
           description: form.description,
@@ -185,15 +187,28 @@ export default function NuevoProducto() {
               />
             </div>
 
-            <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
-              <select
-                value={form.category_id}
-                onChange={e => set('category_id', e.target.value)}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-              >
-                {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
-              </select>
+            <div className="grid grid-cols-2 gap-3">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Categoría</label>
+                <select
+                  value={form.category_id}
+                  onChange={e => set('category_id', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  {CATEGORIES.map(c => <option key={c.id} value={c.id}>{c.label}</option>)}
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Se vende por</label>
+                <select
+                  value={form.unit}
+                  onChange={e => set('unit', e.target.value)}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                >
+                  <option value="kg">Kilogramo (kg)</option>
+                  <option value="un">Unidad (un)</option>
+                </select>
+              </div>
             </div>
 
             <div>

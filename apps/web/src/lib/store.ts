@@ -5,6 +5,7 @@ interface CartItem {
   name: string
   price: number
   quantity: number
+  unit?: 'kg' | 'un'
   image?: string
 }
 
