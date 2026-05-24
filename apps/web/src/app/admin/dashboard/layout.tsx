@@ -4,8 +4,10 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LayoutDashboard, Package, Tag, LogOut, ChevronRight, ShoppingBag, Percent, Settings } from 'lucide-react'
+import { LayoutDashboard, Package, Tag, LogOut, ChevronRight, ShoppingBag, Percent, Settings, Menu, X } from 'lucide-react'
 import NewOrderNotifier from '@/components/NewOrderNotifier'
+
+const LOGIN_URL = '/gestion-elfundo'
 
 const NAV = [
   { href: '/admin/dashboard',               label: 'Dashboard',      icon: LayoutDashboard, exact: true },
@@ -17,11 +19,9 @@ const NAV = [
 ]
 
 function isAuthed() {
-  // Revisar cookie
   if (typeof document !== 'undefined') {
     if (document.cookie.includes('admin_auth=true')) return true
   }
-  // Revisar localStorage como fallback
   try {
     if (localStorage.getItem('admin_auth') === 'true') return true
   } catch {}
@@ -31,20 +31,24 @@ function isAuthed() {
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router   = useRouter()
   const pathname = usePathname()
-  const [ready, setReady] = useState(false)
+  const [ready,       setReady]       = useState(false)
+  const [sidebarOpen, setSidebarOpen] = useState(false)
 
   useEffect(() => {
     if (!isAuthed()) {
-      router.replace('/admin')
+      router.replace(LOGIN_URL)
     } else {
       setReady(true)
     }
   }, [router])
 
+  // Cierra sidebar al cambiar de ruta (móvil)
+  useEffect(() => { setSidebarOpen(false) }, [pathname])
+
   const handleLogout = () => {
     try { localStorage.removeItem('admin_auth') } catch {}
     document.cookie = 'admin_auth=; path=/; max-age=0'
-    router.replace('/admin')
+    router.replace(LOGIN_URL)
   }
 
   if (!ready) {
@@ -55,65 +59,91 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     )
   }
 
-  return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
-        <div className="p-5 border-b border-gray-100 bg-gray-950">
-          <Image
-            src="/logo.png"
-            alt="Carnicería El Fundo"
-            width={160}
-            height={54}
-            className="h-10 w-auto object-contain"
-            priority
-          />
+  const SidebarContent = () => (
+    <>
+      <div className="p-5 border-b border-gray-100 bg-gray-950 flex items-center justify-between">
+        <div>
+          <Image src="/logo.png" alt="Carnicería El Fundo" width={160} height={54} className="h-10 w-auto object-contain" priority />
           <p className="text-xs text-gray-400 mt-1 pl-0.5">Panel Administrador</p>
         </div>
+        <button onClick={() => setSidebarOpen(false)} className="lg:hidden p-1 text-gray-400 hover:text-white transition">
+          <X className="w-5 h-5" />
+        </button>
+      </div>
 
-        <nav className="flex-1 p-4 space-y-1">
-          {NAV.map(item => {
-            const Icon = item.icon
-            // Exact match para Dashboard, startsWith para el resto
-            const active = item.exact
-              ? pathname === item.href
-              : pathname === item.href || pathname.startsWith(item.href + '/')
+      <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
+        {NAV.map(item => {
+          const Icon = item.icon
+          const active = item.exact
+            ? pathname === item.href
+            : pathname === item.href || pathname.startsWith(item.href + '/')
+          return (
+            <Link
+              key={item.href}
+              href={item.href}
+              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
+                active ? 'bg-red-50 text-red-600' : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
+              }`}
+            >
+              <Icon className="w-4 h-4 shrink-0" />
+              {item.label}
+              {active && <ChevronRight className="w-3 h-3 ml-auto" />}
+            </Link>
+          )
+        })}
+      </nav>
 
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={`flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium transition ${
-                  active
-                    ? 'bg-red-50 text-red-600'
-                    : 'text-gray-700 hover:bg-gray-50 hover:text-gray-900'
-                }`}
-              >
-                <Icon className="w-4 h-4" />
-                {item.label}
-                {active && <ChevronRight className="w-3 h-3 ml-auto" />}
-              </Link>
-            )
-          })}
-        </nav>
+      <div className="p-4 border-t border-gray-100">
+        <button
+          onClick={handleLogout}
+          className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-600 transition w-full"
+        >
+          <LogOut className="w-4 h-4" />
+          Cerrar sesión
+        </button>
+      </div>
+    </>
+  )
 
-        <div className="p-4 border-t border-gray-100">
-          <button
-            onClick={handleLogout}
-            className="flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-600 transition w-full"
-          >
-            <LogOut className="w-4 h-4" />
-            Cerrar sesión
-          </button>
-        </div>
+  return (
+    <div className="min-h-screen bg-gray-50 flex">
+
+      {/* ── Sidebar desktop (fija) ── */}
+      <aside className="hidden lg:flex w-64 bg-white border-r border-gray-200 flex-col shrink-0">
+        <SidebarContent />
       </aside>
 
-      {/* Main */}
-      <main className="flex-1 overflow-auto">
-        {children}
-      </main>
+      {/* ── Sidebar móvil (overlay) ── */}
+      {sidebarOpen && (
+        <div className="lg:hidden fixed inset-0 z-50 flex">
+          {/* Backdrop */}
+          <div className="absolute inset-0 bg-black/40" onClick={() => setSidebarOpen(false)} />
+          {/* Drawer */}
+          <aside className="relative w-72 bg-white flex flex-col shadow-2xl">
+            <SidebarContent />
+          </aside>
+        </div>
+      )}
 
-      {/* Notificador de pedidos nuevos */}
+      {/* ── Main ── */}
+      <div className="flex-1 flex flex-col min-w-0">
+
+        {/* Top bar móvil */}
+        <div className="lg:hidden flex items-center gap-3 px-4 py-3 bg-white border-b border-gray-200 sticky top-0 z-40">
+          <button
+            onClick={() => setSidebarOpen(true)}
+            className="p-2 hover:bg-gray-100 rounded-lg transition"
+          >
+            <Menu className="w-5 h-5 text-gray-700" />
+          </button>
+          <Image src="/logo.png" alt="El Fundo" width={120} height={40} className="h-8 w-auto object-contain" />
+        </div>
+
+        <main className="flex-1 overflow-auto">
+          {children}
+        </main>
+      </div>
+
       <NewOrderNotifier />
     </div>
   )
