@@ -8,10 +8,17 @@ import { ArrowLeft, Save, ImageIcon, Loader, Trash2, Plus, Link as LinkIcon } fr
 import Link from 'next/link'
 import { createClient } from '@supabase/supabase-js'
 
-const getSupabase = () => createClient(
-  process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://tubrjgkzookemtnvpvdg.supabase.co',
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1YnJqZ2t6b29rZW10bnZwdmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MzIxMzYsImV4cCI6MjA5NTEwODEzNn0.qJ8sLl0g0U6q58pFtRelt8fQAOdkXG_mirknJPLkW0I'
-)
+const SB_URL  = 'https://tubrjgkzookemtnvpvdg.supabase.co'
+const SB_ANON = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InR1YnJqZ2t6b29rZW10bnZwdmRnIiwicm9sZSI6ImFub24iLCJpYXQiOjE3Nzk1MzIxMzYsImV4cCI6MjA5NTEwODEzNn0.qJ8sLl0g0U6q58pFtRelt8fQAOdkXG_mirknJPLkW0I'
+const getSupabase = () => {
+  const url = process.env.NEXT_PUBLIC_SUPABASE_URL
+  const key = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+  try { if (url) new URL(url) } catch { /* invalid, use fallback */ }
+  return createClient(
+    (url && url.startsWith('http')) ? url : SB_URL,
+    (key && key.length > 20) ? key : SB_ANON
+  )
+}
 
 const CATEGORIES = [
   { id: 'cat-vacuno',    label: 'Vacuno' },
