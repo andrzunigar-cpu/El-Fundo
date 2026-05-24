@@ -12,12 +12,37 @@ const CATEGORIES: Record<string, { name: string; image: string; desc: string }> 
   vacuno:    { name: 'Vacuno',    image: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=800&q=80', desc: 'Cortes premium de res' },
   cerdo:     { name: 'Cerdo',     image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=800&q=80', desc: 'Carnes selectas de cerdo' },
   pollo:     { name: 'Aves',      image: 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=800&q=80', desc: 'Pollo fresco y pavo' },
-  embutidos: { name: 'Embutidos', image: 'https://images.unsplash.com/photo-1623428187969-5da2dcea5ebf?w=800&q=80', desc: 'Longanizas y chorizos' },
-  parrilla:  { name: 'Parrilla',  image: 'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=800&q=80', desc: 'Para tu asado perfecto' },
+  embutidos: { name: 'Embutidos', image: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=800&q=80', desc: 'Longanizas y chorizos' },
+  parrilla:  { name: 'Parrilla',  image: 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=800&q=80', desc: 'Para tu asado perfecto' },
   congelados:{ name: 'Congelados',image: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=800&q=80', desc: 'Listos para cocinar' },
   bebidas:   { name: 'Bebidas',   image: 'https://images.unsplash.com/photo-1546173159-315724a31696?w=800&q=80', desc: 'Para acompañar tu comida' },
   quesos:    { name: 'Quesos',    image: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=800&q=80', desc: 'Selección artesanal de quesos' },
 }
+
+// Catálogo de respaldo — se muestra inmediatamente mientras carga la API
+const CATALOGO_FALLBACK: Product[] = [
+  { id: 'prod-vac-001', name: 'Lomo Liso',         base_price: 14990, online_price: 14990, category_id: 'cat-vacuno',    is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80'] },
+  { id: 'prod-vac-002', name: 'Lomo Vetado',        base_price: 12990, online_price: 12990, category_id: 'cat-vacuno',    is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&q=80'] },
+  { id: 'prod-vac-003', name: 'Posta Negra',        base_price:  9990, online_price:  9990, category_id: 'cat-vacuno',    is_featured: false, image_urls: ['https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=600&q=80'] },
+  { id: 'prod-vac-004', name: 'Asado de Tira',      base_price: 10000, online_price: 10000, category_id: 'cat-vacuno',    is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1633237308525-cd587cf71926?w=600&q=80'] },
+  { id: 'prod-vac-005', name: 'Entraña',            base_price: 11990, online_price: 11990, category_id: 'cat-vacuno',    is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=600&q=80'] },
+  { id: 'prod-vac-006', name: 'Plateada',           base_price:  7990, online_price:  7990, category_id: 'cat-vacuno',    is_featured: false, image_urls: ['https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=600&q=80'] },
+  { id: 'prod-vac-007', name: 'Osobuco',            base_price:  5990, online_price:  5990, category_id: 'cat-vacuno',    is_featured: false, image_urls: ['https://images.unsplash.com/photo-1615937691194-97dbd3f3dc29?w=600&q=80'] },
+  { id: 'prod-vac-008', name: 'Carne Molida',       base_price: 10000, online_price: 10000, category_id: 'cat-vacuno',    is_featured: false, image_urls: ['https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80'] },
+  { id: 'prod-cer-001', name: 'Pulpa de Cerdo',     base_price:  6990, online_price:  6990, category_id: 'cat-cerdo',     is_featured: false, image_urls: ['https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80'] },
+  { id: 'prod-cer-002', name: 'Costillar de Cerdo', base_price:  7990, online_price:  7990, category_id: 'cat-cerdo',     is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&q=80'] },
+  { id: 'prod-cer-003', name: 'Chuleta Centro',     base_price:  5990, online_price:  5990, category_id: 'cat-cerdo',     is_featured: false, image_urls: ['https://images.unsplash.com/photo-1432139509613-5c4255815697?w=600&q=80'] },
+  { id: 'prod-pol-001', name: 'Pollo Entero',       base_price:  3490, online_price:  3490, category_id: 'cat-pollo',     is_featured: false, image_urls: ['https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=600&q=80'] },
+  { id: 'prod-pol-002', name: 'Pechuga de Pollo',   base_price:  5990, online_price:  5990, category_id: 'cat-pollo',     is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80'] },
+  { id: 'prod-pol-003', name: 'Trutro de Pollo',    base_price:  3990, online_price:  3990, category_id: 'cat-pollo',     is_featured: false, image_urls: ['https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=600&q=80'] },
+  { id: 'prod-emb-001', name: 'Longaniza Casera',   base_price:  2990, online_price:  2990, category_id: 'cat-embutidos', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&q=80'] },
+  { id: 'prod-emb-002', name: 'Chorizo Parrillero', base_price: 10000, online_price: 10000, category_id: 'cat-embutidos', is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80'] },
+  { id: 'prod-emb-003', name: 'Prieta',             base_price:  2490, online_price:  2490, category_id: 'cat-embutidos', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=600&q=80'] },
+  { id: 'prod-cor-001', name: 'Pierna de Cordero',  base_price: 13990, online_price: 13990, category_id: 'cat-parrilla',  is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1615937722923-67f6deaf2cc9?w=600&q=80'] },
+  { id: 'prod-cor-002', name: 'Costillar Cordero',  base_price: 11990, online_price: 11990, category_id: 'cat-parrilla',  is_featured: false, image_urls: ['https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&q=80'] },
+  { id: 'prod-beb-1',   name: 'Coca Cola 1.5L',     base_price:  1500, online_price:  1500, category_id: 'cat-bebidas',   is_featured: false, image_urls: ['https://images.unsplash.com/photo-1554866585-cd94860890b7?w=600&q=80'] },
+  { id: 'prod-beb-2',   name: 'Fanta 1.5L',         base_price:  2000, online_price:  2000, category_id: 'cat-bebidas',   is_featured: false, image_urls: ['https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=600&q=80'] },
+]
 
 const QUESOS_EJEMPLO = [
   {
@@ -68,30 +93,25 @@ export default function CategoryPage() {
   const categoryId = params.id as string
   const category = CATEGORIES[categoryId]
 
-  const [products, setProducts] = useState<Product[]>([])
-  const [loading, setLoading] = useState(true)
+  const fallback = categoryId === 'quesos'
+    ? QUESOS_EJEMPLO.map(q => ({ id: q.id, name: q.name, base_price: q.price, online_price: q.price, image_urls: [q.image] }))
+    : CATALOGO_FALLBACK.filter(p => p.category_id === `cat-${categoryId}`)
+
+  const [products, setProducts] = useState<Product[]>(fallback)
+  const [loading, setLoading] = useState(fallback.length === 0)
   const { addItem, items } = useCart()
 
   const isInCart = (id: string) => items.some(i => i.id === id)
 
   useEffect(() => {
-    if (categoryId === 'quesos') {
-      setProducts(QUESOS_EJEMPLO.map(q => ({
-        id: q.id,
-        name: q.name,
-        base_price: q.price,
-        online_price: q.price,
-        image_urls: [q.image],
-      })))
-      setLoading(false)
-      return
-    }
+    if (categoryId === 'quesos') return // quesos usa datos locales
 
     const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
     fetch(`${apiUrl}/api/products?category_id=cat-${categoryId}`)
       .then(r => r.json())
-      .then(data => { setProducts(Array.isArray(data) ? data : []); setLoading(false) })
-      .catch(() => setLoading(false))
+      .then(data => { if (Array.isArray(data) && data.length > 0) setProducts(data) })
+      .catch(() => {/* mantener fallback */})
+      .finally(() => setLoading(false))
   }, [categoryId])
 
   const getImage = (product: Product) => {
