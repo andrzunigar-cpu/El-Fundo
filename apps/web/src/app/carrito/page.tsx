@@ -3,19 +3,18 @@
 import { useCart } from '@/lib/store'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, Loader, Lock, Clock, Calendar, Zap, Truck, Store } from 'lucide-react'
+import {
+  Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight,
+  Loader, Lock, Clock, Calendar, Zap, Truck, Store,
+  Banknote, CreditCard, Building2, CheckCircle2,
+} from 'lucide-react'
 import Link from 'next/link'
 import { useState, useMemo, useEffect } from 'react'
 
-// Formatear fecha YYYY-MM-DD a partir de un Date
+// ── helpers ────────────────────────────────────────────────────────────────
 function toDateStr(d: Date) {
-  const y = d.getFullYear()
-  const m = String(d.getMonth() + 1).padStart(2, '0')
-  const day = String(d.getDate()).padStart(2, '0')
-  return `${y}-${m}-${day}`
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
 }
-
-// Generar slots horarios (cada 30 min entre 9:00 y 19:30)
 function generateTimeSlots(): string[] {
   const slots: string[] = []
   for (let h = 9; h < 20; h++) {
@@ -24,7 +23,43 @@ function generateTimeSlots(): string[] {
   }
   return slots
 }
+function fmtQty(qty: number, unit?: string) {
+  if (unit === 'kg') return qty < 1 ? `${qty * 1000} g` : `${qty} kg`
+  return `${qty} un`
+}
+function fmt(n: number) { return n.toLocaleString('es-CL') }
 
+// ── tipos de pago ──────────────────────────────────────────────────────────
+type PayMethod = 'webpay' | 'efectivo' | 'transferencia' | 'tarjeta_local'
+
+const PAY_OPTIONS: { id: PayMethod; label: string; sub: string; icon: React.ReactNode; onlineOnly?: boolean }[] = [
+  {
+    id: 'webpay',
+    label: 'WebPay',
+    sub: 'Débito, crédito o prepago',
+    icon: <Lock className="w-5 h-5" />,
+  },
+  {
+    id: 'efectivo',
+    label: 'Efectivo',
+    sub: 'Pago al recibir o en local',
+    icon: <Banknote className="w-5 h-5" />,
+  },
+  {
+    id: 'transferencia',
+    label: 'Transferencia',
+    sub: 'Te enviamos los datos por WhatsApp',
+    icon: <Building2 className="w-5 h-5" />,
+  },
+  {
+    id: 'tarjeta_local',
+    label: 'Tarjeta en local',
+    sub: 'Débito o crédito al retirar',
+    icon: <CreditCard className="w-5 h-5" />,
+  },
+]
+
+// ── componente principal ───────────────────────────────────────────────────
 export default function CartPage() {
   const { items, removeItem, updateQuantity, clearCart, total } = useCart()
 
@@ -33,94 +68,71 @@ export default function CartPage() {
   const [address, setAddress] = useState('')
   const [notes,   setNotes]   = useState('')
 
-  // Programación de pedido
   const [scheduleMode, setScheduleMode] = useState<'asap' | 'scheduled'>('asap')
   const [schedDate, setSchedDate] = useState('')
   const [schedTime, setSchedTime] = useState('')
 
-  // Despacho vs Retiro
-  const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery')
+  const [deliveryMode,  setDeliveryMode]  = useState<'delivery' | 'pickup'>('delivery')
   const [deliveryPrice, setDeliveryPrice] = useState(2990)
-  const [minOrder, setMinOrder] = useState(0)
-  const [storeAddress, setStoreAddress] = useState('Santiago, Chile')
+  const [minOrder,      setMinOrder]      = useState(0)
+  const [storeAddress,  setStoreAddress]  = useState('Santiago, Chile')
 
-  // Cargar config (precio despacho, dirección local)
+  const [payMethod, setPayMethod] = useState<PayMethod>('webpay')
+
+  const [ordering,      setOrdering]      = useState(false)
+  const [ordered,       setOrdered]       = useState(false)
+  const [webpayLoading, setWebpayLoading] = useState(false)
+  const [webpayError,   setWebpayError]   = useState('')
+
   useEffect(() => {
     fetch('/api/settings')
       .then(r => r.json())
-      .then(data => {
-        if (typeof data.delivery_price === 'number') setDeliveryPrice(data.delivery_price)
-        if (typeof data.min_order === 'number')       setMinOrder(data.min_order)
-        if (data.store_address)                       setStoreAddress(data.store_address)
-        if (data.delivery_active === false)           setDeliveryMode('pickup')
+      .then(d => {
+        if (typeof d.delivery_price === 'number') setDeliveryPrice(d.delivery_price)
+        if (typeof d.min_order     === 'number')  setMinOrder(d.min_order)
+        if (d.store_address)                      setStoreAddress(d.store_address)
+        if (d.delivery_active === false)           setDeliveryMode('pickup')
       })
-      .catch(() => {/* defaults */})
+      .catch(() => {})
   }, [])
 
   const shippingCost = deliveryMode === 'delivery' ? deliveryPrice : 0
   const grandTotal   = total() + shippingCost
 
-  // Opciones de fecha: hoy + próximos 6 días
   const dateOptions = useMemo(() => {
-    const opts: { value: string; label: string }[] = []
-    const today = new Date()
     const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
-    for (let i = 0; i < 7; i++) {
-      const d = new Date(today)
-      d.setDate(today.getDate() + i)
-      const value = toDateStr(d)
-      const label = i === 0 ? 'Hoy'
-                  : i === 1 ? 'Mañana'
-                  : `${days[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`
-      opts.push({ value, label })
-    }
-    return opts
+    return Array.from({ length: 7 }, (_, i) => {
+      const d = new Date(); d.setDate(d.getDate() + i)
+      return {
+        value: toDateStr(d),
+        label: i === 0 ? 'Hoy' : i === 1 ? 'Mañana' : `${days[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`,
+      }
+    })
   }, [])
 
-  // Filtrar horarios: si es HOY, solo mostrar slots futuros (mínimo +1h)
   const timeOptions = useMemo(() => {
     const all = generateTimeSlots()
-    if (!schedDate) return all
-    const today = toDateStr(new Date())
-    if (schedDate !== today) return all
-    const now = new Date()
-    const minMins = now.getHours() * 60 + now.getMinutes() + 60 // +1h de margen
-    return all.filter(slot => {
-      const [h, m] = slot.split(':').map(Number)
-      return h * 60 + m >= minMins
-    })
+    if (!schedDate || schedDate !== toDateStr(new Date())) return all
+    const minMins = new Date().getHours() * 60 + new Date().getMinutes() + 60
+    return all.filter(s => { const [h, m] = s.split(':').map(Number); return h * 60 + m >= minMins })
   }, [schedDate])
 
-  // Calcular el ISO scheduled_for combinando fecha + hora
   const scheduledFor = useMemo(() => {
     if (scheduleMode !== 'scheduled' || !schedDate || !schedTime) return null
     return `${schedDate}T${schedTime}:00`
   }, [scheduleMode, schedDate, schedTime])
 
-  // Validación de programación
-  const scheduleValid = scheduleMode === 'asap' || (schedDate && schedTime && timeOptions.length > 0)
-  // Validación pedido mínimo
-  const meetsMinOrder = !minOrder || total() >= minOrder
-  // Validación dirección (solo para despacho)
-  const addressValid = deliveryMode === 'pickup' || !!address.trim()
-  // Todo válido para checkout
-  const canCheckout = !!name && !!phone && scheduleValid && meetsMinOrder && addressValid
+  const scheduleValid  = scheduleMode === 'asap' || (!!schedDate && !!schedTime && timeOptions.length > 0)
+  const meetsMinOrder  = !minOrder || total() >= minOrder
+  const addressValid   = deliveryMode === 'pickup' || !!address.trim()
+  const canCheckout    = !!name && !!phone && scheduleValid && meetsMinOrder && addressValid
 
-  // Pago normal (sin webpay)
-  const [ordering, setOrdering] = useState(false)
-  const [ordered,  setOrdered]  = useState(false)
-
-  // WebPay
-  const [webpayLoading, setWebpayLoading] = useState(false)
-  const [webpayError,   setWebpayError]   = useState('')
-
-  // ── Pedido sin pago online ───────────────────────────────────
+  // ── pedido sin webpay ────────────────────────────────────────────────────
   const handleOrder = async () => {
-    if (!name || !phone) return
+    if (!canCheckout) return
     setOrdering(true)
     try {
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
-      await fetch(`${apiUrl}/api/orders`, {
+      await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -128,8 +140,9 @@ export default function CartPage() {
           customer_phone:   phone,
           customer_address: address,
           notes,
+          payment_method:   payMethod,
           items: items.map(i => ({ product_id: i.id, product_name: i.name, quantity: i.quantity, unit_price: i.price })),
-          total_amount: grandTotal,
+          total_amount:  grandTotal,
           shipping_cost: shippingCost,
           delivery_type: deliveryMode,
           scheduled_for: scheduledFor,
@@ -144,76 +157,54 @@ export default function CartPage() {
     }
   }
 
-  // ── WebPay Plus ──────────────────────────────────────────────
+  // ── webpay ───────────────────────────────────────────────────────────────
   const handleWebpay = async () => {
-    if (!name || !phone) {
-      setWebpayError('Completa tu nombre y teléfono antes de pagar.')
-      return
-    }
     setWebpayError('')
     setWebpayLoading(true)
-
     try {
-      const orderId = `${Date.now()}`
-
-      // Guardar datos del pedido en sessionStorage para recuperarlos en /webpay/return
       sessionStorage.setItem('webpay_order', JSON.stringify({
-        customer_name:    name,
-        customer_phone:   phone,
-        customer_address: address,
-        notes,
-        items: items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price, unit: i.unit })),
-        scheduled_for:    scheduledFor,
-        delivery_type:    deliveryMode,
-        shipping_cost:    shippingCost,
+        customer_name: name, customer_phone: phone, customer_address: address,
+        notes, items: items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price, unit: i.unit })),
+        scheduled_for: scheduledFor, delivery_type: deliveryMode, shipping_cost: shippingCost,
       }))
-
-      const res = await fetch('/api/webpay/create', {
+      const res  = await fetch('/api/webpay/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          amount:    grandTotal,
-          orderId,
-          returnUrl: `${window.location.origin}/webpay/return`,
-        }),
+        body: JSON.stringify({ amount: grandTotal, orderId: `${Date.now()}`, returnUrl: `${window.location.origin}/webpay/return` }),
       })
-
       const data = await res.json()
-
-      if (!res.ok || !data.token) {
-        throw new Error(data.error || 'No se pudo iniciar el pago')
-      }
-
-      // Redirigir a Transbank: el formulario debe hacer POST con token_ws
-      // Creamos un formulario y lo enviamos programáticamente
-      const form = document.createElement('form')
-      form.method = 'POST'
-      form.action = data.url
-
-      const input = document.createElement('input')
-      input.type  = 'hidden'
-      input.name  = 'token_ws'
-      input.value = data.token
-
-      form.appendChild(input)
-      document.body.appendChild(form)
-      form.submit()
+      if (!res.ok || !data.token) throw new Error(data.error || 'No se pudo iniciar el pago')
+      const form  = document.createElement('form')
+      form.method = 'POST'; form.action = data.url
+      const inp   = document.createElement('input')
+      inp.type    = 'hidden'; inp.name = 'token_ws'; inp.value = data.token
+      form.appendChild(inp); document.body.appendChild(form); form.submit()
     } catch (err: unknown) {
       setWebpayError(err instanceof Error ? err.message : 'Error al iniciar WebPay')
       setWebpayLoading(false)
     }
   }
 
-  // ── Pantalla de éxito ────────────────────────────────────────
+  const handleConfirm = () => payMethod === 'webpay' ? handleWebpay() : handleOrder()
+
+  // ── pantalla éxito ───────────────────────────────────────────────────────
   if (ordered) {
     return (
       <>
         <Header />
         <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
           <div className="text-center max-w-md">
-            <div className="text-6xl mb-6">🎉</div>
+            <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
+              <CheckCircle2 className="w-10 h-10 text-green-600" />
+            </div>
             <h1 className="text-3xl font-black text-gray-900 mb-3">¡Pedido recibido!</h1>
-            <p className="text-gray-500 mb-8">Te contactaremos pronto para confirmar y coordinar la entrega.</p>
+            <p className="text-gray-500 mb-2">Hola <strong>{name}</strong>, recibimos tu pedido correctamente.</p>
+            {payMethod === 'transferencia' && (
+              <p className="text-sm text-blue-700 bg-blue-50 rounded-xl px-4 py-3 mb-4">
+                📲 Te enviaremos los datos de transferencia por WhatsApp al {phone}.
+              </p>
+            )}
+            <p className="text-gray-400 text-sm mb-8">Te contactaremos pronto para confirmar.</p>
             <Link href="/productos" className="inline-flex items-center gap-2 bg-red-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-red-700 transition">
               Seguir comprando <ArrowRight className="w-4 h-4" />
             </Link>
@@ -224,332 +215,331 @@ export default function CartPage() {
     )
   }
 
-  // ── Helpers visuales ─────────────────────────────────────────
-  const fmtQty = (qty: number, unit?: string) => {
-    if (unit === 'kg') {
-      if (qty < 1) return `${qty * 1000} g`
-      return `${qty % 1 === 0 ? qty : qty} kg`
-    }
-    return `${qty} ${unit || 'un'}`
+  // ── carrito vacío ────────────────────────────────────────────────────────
+  if (items.length === 0) {
+    return (
+      <>
+        <Header />
+        <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
+          <div className="text-center max-w-md">
+            <ShoppingBag className="w-16 h-16 text-gray-200 mx-auto mb-4" />
+            <p className="text-gray-400 text-lg mb-6">Tu carrito está vacío</p>
+            <Link href="/productos" className="inline-flex items-center gap-2 bg-red-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-red-700 transition">
+              Ver productos <ArrowRight className="w-4 h-4" />
+            </Link>
+          </div>
+        </main>
+        <Footer />
+      </>
+    )
   }
 
+  // ── checkout layout ──────────────────────────────────────────────────────
   return (
     <>
       <Header />
-      <main className="min-h-screen bg-gray-50">
-        <div className="max-w-6xl mx-auto px-4 py-10">
+      <main className="min-h-screen bg-gray-100">
+        <div className="max-w-6xl mx-auto px-4 py-8">
 
-          <div className="mb-8">
-            <Link href="/productos" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 transition mb-4">
-              <ArrowLeft className="w-4 h-4" /> Volver al catálogo
-            </Link>
-            <h1 className="text-3xl font-black text-gray-900">Tu carrito</h1>
-          </div>
+          <Link href="/productos" className="inline-flex items-center gap-2 text-sm text-gray-500 hover:text-red-600 transition mb-6">
+            <ArrowLeft className="w-4 h-4" /> Volver al catálogo
+          </Link>
 
-          {items.length === 0 ? (
-            <div className="text-center py-24">
-              <ShoppingBag className="w-16 h-16 text-gray-200 mx-auto mb-4" />
-              <p className="text-gray-400 text-lg mb-6">Tu carrito está vacío</p>
-              <Link href="/productos" className="inline-flex items-center gap-2 bg-red-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-red-700 transition">
-                Ver productos <ArrowRight className="w-4 h-4" />
-              </Link>
-            </div>
-          ) : (
-            <div className="grid lg:grid-cols-3 gap-8">
+          <div className="grid lg:grid-cols-[1fr_380px] gap-6 items-start">
 
-              {/* ── Lista de items ── */}
-              <div className="lg:col-span-2 space-y-3">
-                {items.map(item => (
-                  <div key={item.id} className="bg-white rounded-2xl p-5 flex items-center gap-4 border border-gray-100">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 truncate">{item.name}</h3>
-                      <p className="text-sm text-gray-400">
-                        ${item.price.toLocaleString('es-CL')} / {item.unit || 'kg'}
-                      </p>
-                    </div>
-                    {/* Cantidad */}
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          const step = item.unit === 'kg' ? 0.25 : 1
-                          const next = parseFloat((item.quantity - step).toFixed(2))
-                          if (next >= (item.unit === 'kg' ? 0.25 : 1)) updateQuantity(item.id, next)
-                        }}
-                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
-                      >
-                        <Minus className="w-3 h-3" />
-                      </button>
-                      <span className="min-w-[64px] text-center font-semibold text-gray-900 text-sm">
-                        {fmtQty(item.quantity, item.unit)}
+            {/* ═══ COLUMNA IZQUIERDA ═══ */}
+            <div className="space-y-4">
+
+              {/* Productos */}
+              <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+                <div className="px-6 py-4 border-b border-gray-100 flex items-center justify-between">
+                  <h2 className="font-bold text-gray-900">Tus productos <span className="text-gray-400 font-normal text-sm">({items.length})</span></h2>
+                  <button onClick={clearCart} className="text-xs text-gray-400 hover:text-red-500 transition">Vaciar</button>
+                </div>
+                <div className="divide-y divide-gray-50">
+                  {items.map(item => (
+                    <div key={item.id} className="px-6 py-4 flex items-center gap-4">
+                      <div className="flex-1 min-w-0">
+                        <p className="font-semibold text-gray-900 text-sm truncate">{item.name}</p>
+                        <p className="text-xs text-gray-400">${fmt(item.price)} / {item.unit || 'kg'}</p>
+                      </div>
+                      <div className="flex items-center gap-1.5">
+                        <button
+                          onClick={() => { const s = item.unit === 'kg' ? 0.25 : 1; const n = parseFloat((item.quantity - s).toFixed(2)); if (n >= s) updateQuantity(item.id, n) }}
+                          className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-red-600 flex items-center justify-center transition"
+                        ><Minus className="w-3 h-3" /></button>
+                        <span className="min-w-[56px] text-center text-sm font-semibold text-gray-900">{fmtQty(item.quantity, item.unit)}</span>
+                        <button
+                          onClick={() => { const s = item.unit === 'kg' ? 0.25 : 1; updateQuantity(item.id, parseFloat((item.quantity + s).toFixed(2))) }}
+                          className="w-7 h-7 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-red-600 flex items-center justify-center transition"
+                        ><Plus className="w-3 h-3" /></button>
+                      </div>
+                      <span className="font-bold text-gray-900 text-sm min-w-[80px] text-right">
+                        ${fmt(item.price * item.quantity)}
                       </span>
-                      <button
-                        onClick={() => {
-                          const step = item.unit === 'kg' ? 0.25 : 1
-                          updateQuantity(item.id, parseFloat((item.quantity + step).toFixed(2)))
-                        }}
-                        className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
-                      >
-                        <Plus className="w-3 h-3" />
+                      <button onClick={() => removeItem(item.id)} className="text-gray-300 hover:text-red-500 transition">
+                        <Trash2 className="w-4 h-4" />
                       </button>
                     </div>
-                    {/* Subtotal */}
-                    <div className="text-right min-w-[90px]">
-                      <p className="font-black text-gray-900">${(item.price * item.quantity).toLocaleString('es-CL')}</p>
-                    </div>
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="p-2 text-gray-300 hover:text-red-500 transition"
-                    >
-                      <Trash2 className="w-4 h-4" />
-                    </button>
-                  </div>
-                ))}
-                <button onClick={clearCart} className="text-xs text-gray-400 hover:text-red-500 transition mt-2">
-                  Vaciar carrito
-                </button>
+                  ))}
+                </div>
               </div>
 
-              {/* ── Resumen + Formulario + Pago ── */}
-              <div className="space-y-4">
+              {/* Tipo de entrega */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="font-bold text-gray-900 mb-4">¿Cómo lo recibes?</h2>
+                <div className="grid grid-cols-2 gap-3">
+                  {[
+                    { mode: 'delivery' as const, icon: <Truck className="w-5 h-5" />, label: 'Despacho a domicilio', sub: deliveryPrice > 0 ? `+ $${fmt(deliveryPrice)}` : 'Gratis' },
+                    { mode: 'pickup'   as const, icon: <Store className="w-5 h-5" />, label: 'Retiro en local',       sub: 'Sin costo extra' },
+                  ].map(opt => (
+                    <button
+                      key={opt.mode}
+                      onClick={() => setDeliveryMode(opt.mode)}
+                      className={`flex items-center gap-3 px-4 py-4 rounded-xl border-2 text-left transition ${
+                        deliveryMode === opt.mode
+                          ? 'border-red-500 bg-red-50 text-red-700'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className={deliveryMode === opt.mode ? 'text-red-600' : 'text-gray-400'}>{opt.icon}</span>
+                      <div>
+                        <p className="text-sm font-bold leading-tight">{opt.label}</p>
+                        <p className="text-xs opacity-70 mt-0.5">{opt.sub}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {deliveryMode === 'pickup' && (
+                  <p className="mt-3 text-xs text-gray-500 bg-gray-50 px-4 py-3 rounded-xl">
+                    📍 <span className="font-semibold text-gray-700">{storeAddress}</span>
+                  </p>
+                )}
+              </div>
 
-                {/* ── DESPACHO O RETIRO ── */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-3">
-                  <h2 className="font-bold text-gray-900 mb-1">¿Cómo lo quieres recibir?</h2>
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => setDeliveryMode('delivery')}
-                      className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 transition ${
-                        deliveryMode === 'delivery'
-                          ? 'border-red-500 bg-red-50 text-red-700'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Truck className="w-5 h-5" />
-                      <span className="text-sm font-bold">Despacho a domicilio</span>
-                      <span className="text-xs">
-                        {deliveryPrice > 0
-                          ? `+ $${deliveryPrice.toLocaleString('es-CL')}`
-                          : 'Gratis'}
-                      </span>
-                    </button>
-                    <button
-                      onClick={() => setDeliveryMode('pickup')}
-                      className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 transition ${
-                        deliveryMode === 'pickup'
-                          ? 'border-red-500 bg-red-50 text-red-700'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Store className="w-5 h-5" />
-                      <span className="text-sm font-bold">Retiro en local</span>
-                      <span className="text-xs">Sin costo</span>
-                    </button>
+              {/* Datos de contacto */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="font-bold text-gray-900 mb-4">Datos de contacto</h2>
+                <div className="space-y-3">
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">Nombre *</label>
+                      <input
+                        type="text"
+                        placeholder="Tu nombre"
+                        value={name}
+                        onChange={e => setName(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">Teléfono *</label>
+                      <input
+                        type="tel"
+                        placeholder="+56 9 0000 0000"
+                        value={phone}
+                        onChange={e => setPhone(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    </div>
                   </div>
-                  {deliveryMode === 'pickup' && (
-                    <p className="text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
-                      📍 Retiro en: <span className="font-semibold text-gray-700">{storeAddress}</span>
+                  {deliveryMode === 'delivery' && (
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">Dirección de entrega *</label>
+                      <input
+                        type="text"
+                        placeholder="Calle, número, ciudad"
+                        value={address}
+                        onChange={e => setAddress(e.target.value)}
+                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                      />
+                    </div>
+                  )}
+                  <div>
+                    <label className="text-xs font-medium text-gray-500 mb-1 block">Notas adicionales</label>
+                    <textarea
+                      placeholder="Instrucciones especiales, cortes, etc."
+                      value={notes}
+                      onChange={e => setNotes(e.target.value)}
+                      rows={2}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent resize-none"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Cuándo */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="font-bold text-gray-900 mb-4 flex items-center gap-2">
+                  <Calendar className="w-4 h-4 text-red-600" /> ¿Cuándo lo quieres?
+                </h2>
+                <div className="grid grid-cols-2 gap-3 mb-3">
+                  {[
+                    { mode: 'asap' as const,      icon: <Zap className="w-5 h-5" />,   label: 'Lo antes posible', sub: '~45 min' },
+                    { mode: 'scheduled' as const, icon: <Clock className="w-5 h-5" />, label: 'Programar',        sub: 'Elegir día y hora' },
+                  ].map(opt => (
+                    <button
+                      key={opt.mode}
+                      onClick={() => setScheduleMode(opt.mode)}
+                      className={`flex items-center gap-3 px-4 py-4 rounded-xl border-2 text-left transition ${
+                        scheduleMode === opt.mode
+                          ? 'border-red-500 bg-red-50 text-red-700'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      <span className={scheduleMode === opt.mode ? 'text-red-600' : 'text-gray-400'}>{opt.icon}</span>
+                      <div>
+                        <p className="text-sm font-bold leading-tight">{opt.label}</p>
+                        <p className="text-xs opacity-70 mt-0.5">{opt.sub}</p>
+                      </div>
+                    </button>
+                  ))}
+                </div>
+                {scheduleMode === 'scheduled' && (
+                  <div className="grid grid-cols-2 gap-3 animate-in fade-in">
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">Día</label>
+                      <select
+                        value={schedDate}
+                        onChange={e => { setSchedDate(e.target.value); setSchedTime('') }}
+                        className="w-full px-3 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
+                      >
+                        <option value="">Selecciona...</option>
+                        {dateOptions.map(o => <option key={o.value} value={o.value}>{o.label}</option>)}
+                      </select>
+                    </div>
+                    <div>
+                      <label className="text-xs font-medium text-gray-500 mb-1 block">Hora</label>
+                      <select
+                        value={schedTime}
+                        onChange={e => setSchedTime(e.target.value)}
+                        disabled={!schedDate}
+                        className="w-full px-3 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                      >
+                        <option value="">{!schedDate ? 'Elige día primero' : 'Selecciona...'}</option>
+                        {timeOptions.map(t => <option key={t} value={t}>{t} hrs</option>)}
+                      </select>
+                    </div>
+                    {schedDate && timeOptions.length === 0 && (
+                      <p className="col-span-2 text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-xl">
+                        ⚠️ Sin horarios disponibles hoy. Elige otro día.
+                      </p>
+                    )}
+                    {scheduledFor && (
+                      <p className="col-span-2 text-xs text-green-700 bg-green-50 px-3 py-2.5 rounded-xl flex items-center gap-2">
+                        <Clock className="w-3.5 h-3.5 shrink-0" />
+                        Entrega: <strong>{dateOptions.find(o => o.value === schedDate)?.label}</strong> a las <strong>{schedTime} hrs</strong>
+                      </p>
+                    )}
+                  </div>
+                )}
+              </div>
+
+            </div>
+
+            {/* ═══ COLUMNA DERECHA — sticky ═══ */}
+            <div className="space-y-4 lg:sticky lg:top-6">
+
+              {/* Resumen */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="font-bold text-gray-900 mb-4">Resumen</h2>
+                <div className="space-y-2 mb-3">
+                  {items.map(item => (
+                    <div key={item.id} className="flex justify-between text-sm">
+                      <span className="text-gray-500 truncate mr-2 max-w-[160px]">{item.name} × {fmtQty(item.quantity, item.unit)}</span>
+                      <span className="text-gray-800 shrink-0">${fmt(item.price * item.quantity)}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="border-t border-gray-100 pt-3 space-y-2">
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">Subtotal</span>
+                    <span className="text-gray-800">${fmt(total())}</span>
+                  </div>
+                  <div className="flex justify-between text-sm">
+                    <span className="text-gray-500">{deliveryMode === 'delivery' ? 'Despacho' : 'Retiro'}</span>
+                    <span className={shippingCost === 0 ? 'text-green-600 font-semibold' : 'text-gray-800'}>
+                      {shippingCost > 0 ? `$${fmt(shippingCost)}` : 'Gratis'}
+                    </span>
+                  </div>
+                  <div className="border-t border-gray-100 pt-2 flex justify-between items-center">
+                    <span className="font-bold text-gray-900">Total</span>
+                    <span className="font-black text-2xl text-gray-900">${fmt(grandTotal)}</span>
+                  </div>
+                  {minOrder > 0 && total() < minOrder && (
+                    <p className="text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-xl">
+                      ⚠️ Mínimo ${fmt(minOrder)} — faltan ${fmt(minOrder - total())}
                     </p>
                   )}
                 </div>
-
-                {/* Resumen */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100">
-                  <h2 className="font-bold text-gray-900 mb-4">Resumen</h2>
-                  <div className="space-y-2 mb-4">
-                    {items.map(item => (
-                      <div key={item.id} className="flex justify-between text-sm text-gray-600">
-                        <span className="truncate mr-2">{item.name} × {fmtQty(item.quantity, item.unit)}</span>
-                        <span className="shrink-0">${(item.price * item.quantity).toLocaleString('es-CL')}</span>
-                      </div>
-                    ))}
-                  </div>
-                  <div className="border-t border-gray-100 pt-3 space-y-1.5">
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">Subtotal</span>
-                      <span className="text-gray-800">${total().toLocaleString('es-CL')}</span>
-                    </div>
-                    <div className="flex justify-between text-sm">
-                      <span className="text-gray-600">
-                        {deliveryMode === 'delivery' ? 'Despacho' : 'Retiro en local'}
-                      </span>
-                      <span className="text-gray-800">
-                        {shippingCost > 0 ? `$${shippingCost.toLocaleString('es-CL')}` : 'Gratis'}
-                      </span>
-                    </div>
-                    <div className="border-t border-gray-100 pt-2 flex justify-between">
-                      <span className="font-bold text-gray-900">Total</span>
-                      <span className="font-black text-xl text-gray-900">${grandTotal.toLocaleString('es-CL')}</span>
-                    </div>
-                    {minOrder > 0 && total() < minOrder && (
-                      <p className="text-xs text-orange-600 bg-orange-50 px-2 py-1.5 rounded-lg mt-1">
-                        ⚠️ Pedido mínimo: ${minOrder.toLocaleString('es-CL')}. Te faltan ${(minOrder - total()).toLocaleString('es-CL')}.
-                      </p>
-                    )}
-                  </div>
-                </div>
-
-                {/* Datos de contacto */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-3">
-                  <h2 className="font-bold text-gray-900 mb-1">Datos de contacto</h2>
-                  <input
-                    type="text"
-                    placeholder="Nombre *"
-                    value={name}
-                    onChange={e => setName(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                  />
-                  <input
-                    type="tel"
-                    placeholder="Teléfono *"
-                    value={phone}
-                    onChange={e => setPhone(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                  />
-                  {deliveryMode === 'delivery' && (
-                    <input
-                      type="text"
-                      placeholder="Dirección de entrega *"
-                      value={address}
-                      onChange={e => setAddress(e.target.value)}
-                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                    />
-                  )}
-                  <textarea
-                    placeholder="Notas adicionales"
-                    value={notes}
-                    onChange={e => setNotes(e.target.value)}
-                    rows={2}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
-                  />
-                </div>
-
-                {/* ── PROGRAMAR PEDIDO ── */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-3">
-                  <h2 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
-                    <Calendar className="w-4 h-4 text-red-600" />
-                    ¿Cuándo lo quieres?
-                  </h2>
-
-                  {/* Toggle ASAP vs Programado */}
-                  <div className="grid grid-cols-2 gap-2">
-                    <button
-                      onClick={() => setScheduleMode('asap')}
-                      className={`flex flex-col items-center gap-1 py-3 rounded-xl border-2 transition ${
-                        scheduleMode === 'asap'
-                          ? 'border-red-500 bg-red-50 text-red-700'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Zap className="w-5 h-5" />
-                      <span className="text-sm font-bold">Lo antes posible</span>
-                      <span className="text-xs opacity-70">~45 min</span>
-                    </button>
-                    <button
-                      onClick={() => setScheduleMode('scheduled')}
-                      className={`flex flex-col items-center gap-1 py-3 rounded-xl border-2 transition ${
-                        scheduleMode === 'scheduled'
-                          ? 'border-red-500 bg-red-50 text-red-700'
-                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
-                      }`}
-                    >
-                      <Clock className="w-5 h-5" />
-                      <span className="text-sm font-bold">Programar</span>
-                      <span className="text-xs opacity-70">Día y hora</span>
-                    </button>
-                  </div>
-
-                  {/* Selector de fecha y hora */}
-                  {scheduleMode === 'scheduled' && (
-                    <div className="grid grid-cols-2 gap-2 pt-2 animate-in fade-in">
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Día</label>
-                        <select
-                          value={schedDate}
-                          onChange={e => { setSchedDate(e.target.value); setSchedTime('') }}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
-                        >
-                          <option value="">Selecciona...</option>
-                          {dateOptions.map(o => (
-                            <option key={o.value} value={o.value}>{o.label}</option>
-                          ))}
-                        </select>
-                      </div>
-                      <div>
-                        <label className="block text-xs font-medium text-gray-500 mb-1">Hora</label>
-                        <select
-                          value={schedTime}
-                          onChange={e => setSchedTime(e.target.value)}
-                          disabled={!schedDate}
-                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white disabled:bg-gray-50 disabled:text-gray-400"
-                        >
-                          <option value="">{!schedDate ? 'Elige día primero' : 'Selecciona...'}</option>
-                          {timeOptions.map(t => (
-                            <option key={t} value={t}>{t} hrs</option>
-                          ))}
-                        </select>
-                      </div>
-                      {schedDate && timeOptions.length === 0 && (
-                        <p className="col-span-2 text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-lg">
-                          ⚠️ No hay horarios disponibles hoy. Elige otro día.
-                        </p>
-                      )}
-                      {scheduledFor && (
-                        <p className="col-span-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg flex items-center gap-1.5">
-                          <Clock className="w-3 h-3" />
-                          Entrega programada para {dateOptions.find(o => o.value === schedDate)?.label.toLowerCase()} a las {schedTime} hrs
-                        </p>
-                      )}
-                    </div>
-                  )}
-                </div>
-
-                {/* Botones de pago */}
-                <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-3">
-                  <h2 className="font-bold text-gray-900 mb-2">Forma de pago</h2>
-
-                  {webpayError && (
-                    <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{webpayError}</p>
-                  )}
-
-                  {/* WebPay */}
-                  <button
-                    onClick={handleWebpay}
-                    disabled={webpayLoading || !canCheckout}
-                    className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#0f3460] hover:bg-[#162447] text-white"
-                  >
-                    {webpayLoading ? (
-                      <><Loader className="w-5 h-5 animate-spin" /> Redirigiendo a WebPay...</>
-                    ) : (
-                      <><Lock className="w-4 h-4" /> Pagar con WebPay</>
-                    )}
-                  </button>
-                  <p className="text-xs text-gray-400 text-center">
-                    Débito, crédito y prepago — pago seguro con Transbank
-                  </p>
-
-                  {/* Separador */}
-                  <div className="flex items-center gap-3 py-1">
-                    <div className="flex-1 h-px bg-gray-100" />
-                    <span className="text-xs text-gray-400">o paga al recibir</span>
-                    <div className="flex-1 h-px bg-gray-100" />
-                  </div>
-
-                  {/* Confirmar sin pago online */}
-                  <button
-                    onClick={handleOrder}
-                    disabled={ordering || !canCheckout}
-                    className="w-full border-2 border-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    {ordering ? 'Enviando...' : 'Pedir sin pago online'}
-                  </button>
-                  <p className="text-xs text-gray-400 text-center">
-                    Efectivo · Transferencia · Débito en local
-                  </p>
-                </div>
-
               </div>
+
+              {/* Método de pago */}
+              <div className="bg-white rounded-2xl p-6 shadow-sm">
+                <h2 className="font-bold text-gray-900 mb-4">Método de pago</h2>
+                <div className="space-y-2">
+                  {PAY_OPTIONS.filter(p => !(p.id === 'tarjeta_local' && deliveryMode === 'delivery')).map(opt => (
+                    <button
+                      key={opt.id}
+                      onClick={() => setPayMethod(opt.id)}
+                      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left transition ${
+                        payMethod === opt.id
+                          ? 'border-red-500 bg-red-50'
+                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                      }`}
+                    >
+                      <span className={`shrink-0 ${payMethod === opt.id ? 'text-red-600' : 'text-gray-400'}`}>
+                        {opt.icon}
+                      </span>
+                      <div className="flex-1">
+                        <p className={`text-sm font-bold ${payMethod === opt.id ? 'text-red-700' : 'text-gray-800'}`}>{opt.label}</p>
+                        <p className="text-xs text-gray-400">{opt.sub}</p>
+                      </div>
+                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                        payMethod === opt.id ? 'border-red-500 bg-red-500' : 'border-gray-300'
+                      }`}>
+                        {payMethod === opt.id && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                      </div>
+                    </button>
+                  ))}
+                </div>
+
+                {webpayError && (
+                  <p className="mt-3 text-xs text-red-600 bg-red-50 rounded-xl px-3 py-2">{webpayError}</p>
+                )}
+              </div>
+
+              {/* Botón confirmar */}
+              <button
+                onClick={handleConfirm}
+                disabled={!canCheckout || webpayLoading || ordering}
+                className="w-full py-4 rounded-2xl font-black text-base transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2"
+              >
+                {(webpayLoading || ordering) ? (
+                  <><Loader className="w-5 h-5 animate-spin" /> {payMethod === 'webpay' ? 'Redirigiendo...' : 'Enviando...'}</>
+                ) : (
+                  <>
+                    {payMethod === 'webpay' ? <Lock className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
+                    Confirmar pedido — ${fmt(grandTotal)}
+                  </>
+                )}
+              </button>
+
+              {!canCheckout && (
+                <p className="text-xs text-center text-gray-400">
+                  {!name || !phone ? 'Completa nombre y teléfono' :
+                   !addressValid   ? 'Ingresa dirección de entrega' :
+                   !scheduleValid  ? 'Selecciona día y hora' :
+                   !meetsMinOrder  ? `Mínimo $${fmt(minOrder)}` : ''}
+                </p>
+              )}
+
+              <p className="text-xs text-gray-400 text-center flex items-center justify-center gap-1">
+                <Lock className="w-3 h-3" /> Compra segura · El Fundo Carnicería
+              </p>
+
             </div>
-          )}
+          </div>
         </div>
       </main>
       <Footer />
