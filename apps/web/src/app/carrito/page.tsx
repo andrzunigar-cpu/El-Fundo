@@ -3,9 +3,27 @@
 import { useCart } from '@/lib/store'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, Loader, Lock } from 'lucide-react'
+import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, Loader, Lock, Clock, Calendar, Zap } from 'lucide-react'
 import Link from 'next/link'
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
+
+// Formatear fecha YYYY-MM-DD a partir de un Date
+function toDateStr(d: Date) {
+  const y = d.getFullYear()
+  const m = String(d.getMonth() + 1).padStart(2, '0')
+  const day = String(d.getDate()).padStart(2, '0')
+  return `${y}-${m}-${day}`
+}
+
+// Generar slots horarios (cada 30 min entre 9:00 y 19:30)
+function generateTimeSlots(): string[] {
+  const slots: string[] = []
+  for (let h = 9; h < 20; h++) {
+    slots.push(`${String(h).padStart(2, '0')}:00`)
+    if (h < 19) slots.push(`${String(h).padStart(2, '0')}:30`)
+  }
+  return slots
+}
 
 export default function CartPage() {
   const { items, removeItem, updateQuantity, clearCart, total } = useCart()
@@ -14,6 +32,51 @@ export default function CartPage() {
   const [phone,   setPhone]   = useState('')
   const [address, setAddress] = useState('')
   const [notes,   setNotes]   = useState('')
+
+  // Programación de pedido
+  const [scheduleMode, setScheduleMode] = useState<'asap' | 'scheduled'>('asap')
+  const [schedDate, setSchedDate] = useState('')
+  const [schedTime, setSchedTime] = useState('')
+
+  // Opciones de fecha: hoy + próximos 6 días
+  const dateOptions = useMemo(() => {
+    const opts: { value: string; label: string }[] = []
+    const today = new Date()
+    const days = ['Domingo', 'Lunes', 'Martes', 'Miércoles', 'Jueves', 'Viernes', 'Sábado']
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(today)
+      d.setDate(today.getDate() + i)
+      const value = toDateStr(d)
+      const label = i === 0 ? 'Hoy'
+                  : i === 1 ? 'Mañana'
+                  : `${days[d.getDay()]} ${d.getDate()}/${d.getMonth() + 1}`
+      opts.push({ value, label })
+    }
+    return opts
+  }, [])
+
+  // Filtrar horarios: si es HOY, solo mostrar slots futuros (mínimo +1h)
+  const timeOptions = useMemo(() => {
+    const all = generateTimeSlots()
+    if (!schedDate) return all
+    const today = toDateStr(new Date())
+    if (schedDate !== today) return all
+    const now = new Date()
+    const minMins = now.getHours() * 60 + now.getMinutes() + 60 // +1h de margen
+    return all.filter(slot => {
+      const [h, m] = slot.split(':').map(Number)
+      return h * 60 + m >= minMins
+    })
+  }, [schedDate])
+
+  // Calcular el ISO scheduled_for combinando fecha + hora
+  const scheduledFor = useMemo(() => {
+    if (scheduleMode !== 'scheduled' || !schedDate || !schedTime) return null
+    return `${schedDate}T${schedTime}:00`
+  }, [scheduleMode, schedDate, schedTime])
+
+  // Validación de programación
+  const scheduleValid = scheduleMode === 'asap' || (schedDate && schedTime && timeOptions.length > 0)
 
   // Pago normal (sin webpay)
   const [ordering, setOrdering] = useState(false)
@@ -37,8 +100,9 @@ export default function CartPage() {
           customer_phone:   phone,
           customer_address: address,
           notes,
-          items: items.map(i => ({ product_id: i.id, quantity: i.quantity, unit_price: i.price })),
+          items: items.map(i => ({ product_id: i.id, product_name: i.name, quantity: i.quantity, unit_price: i.price })),
           total_amount: total(),
+          scheduled_for: scheduledFor,
         }),
       })
       setOrdered(true)
@@ -69,6 +133,7 @@ export default function CartPage() {
         customer_address: address,
         notes,
         items: items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price, unit: i.unit })),
+        scheduled_for:    scheduledFor,
       }))
 
       const res = await fetch('/api/webpay/create', {
@@ -265,6 +330,86 @@ export default function CartPage() {
                   />
                 </div>
 
+                {/* ── PROGRAMAR PEDIDO ── */}
+                <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-3">
+                  <h2 className="font-bold text-gray-900 mb-1 flex items-center gap-2">
+                    <Calendar className="w-4 h-4 text-red-600" />
+                    ¿Cuándo lo quieres?
+                  </h2>
+
+                  {/* Toggle ASAP vs Programado */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setScheduleMode('asap')}
+                      className={`flex flex-col items-center gap-1 py-3 rounded-xl border-2 transition ${
+                        scheduleMode === 'asap'
+                          ? 'border-red-500 bg-red-50 text-red-700'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Zap className="w-5 h-5" />
+                      <span className="text-sm font-bold">Lo antes posible</span>
+                      <span className="text-xs opacity-70">~45 min</span>
+                    </button>
+                    <button
+                      onClick={() => setScheduleMode('scheduled')}
+                      className={`flex flex-col items-center gap-1 py-3 rounded-xl border-2 transition ${
+                        scheduleMode === 'scheduled'
+                          ? 'border-red-500 bg-red-50 text-red-700'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Clock className="w-5 h-5" />
+                      <span className="text-sm font-bold">Programar</span>
+                      <span className="text-xs opacity-70">Día y hora</span>
+                    </button>
+                  </div>
+
+                  {/* Selector de fecha y hora */}
+                  {scheduleMode === 'scheduled' && (
+                    <div className="grid grid-cols-2 gap-2 pt-2 animate-in fade-in">
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Día</label>
+                        <select
+                          value={schedDate}
+                          onChange={e => { setSchedDate(e.target.value); setSchedTime('') }}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white"
+                        >
+                          <option value="">Selecciona...</option>
+                          {dateOptions.map(o => (
+                            <option key={o.value} value={o.value}>{o.label}</option>
+                          ))}
+                        </select>
+                      </div>
+                      <div>
+                        <label className="block text-xs font-medium text-gray-500 mb-1">Hora</label>
+                        <select
+                          value={schedTime}
+                          onChange={e => setSchedTime(e.target.value)}
+                          disabled={!schedDate}
+                          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 bg-white disabled:bg-gray-50 disabled:text-gray-400"
+                        >
+                          <option value="">{!schedDate ? 'Elige día primero' : 'Selecciona...'}</option>
+                          {timeOptions.map(t => (
+                            <option key={t} value={t}>{t} hrs</option>
+                          ))}
+                        </select>
+                      </div>
+                      {schedDate && timeOptions.length === 0 && (
+                        <p className="col-span-2 text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-lg">
+                          ⚠️ No hay horarios disponibles hoy. Elige otro día.
+                        </p>
+                      )}
+                      {scheduledFor && (
+                        <p className="col-span-2 text-xs text-green-700 bg-green-50 px-3 py-2 rounded-lg flex items-center gap-1.5">
+                          <Clock className="w-3 h-3" />
+                          Entrega programada para {dateOptions.find(o => o.value === schedDate)?.label.toLowerCase()} a las {schedTime} hrs
+                        </p>
+                      )}
+                    </div>
+                  )}
+                </div>
+
                 {/* Botones de pago */}
                 <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-3">
                   <h2 className="font-bold text-gray-900 mb-2">Forma de pago</h2>
@@ -276,7 +421,7 @@ export default function CartPage() {
                   {/* WebPay */}
                   <button
                     onClick={handleWebpay}
-                    disabled={webpayLoading || !name || !phone}
+                    disabled={webpayLoading || !name || !phone || !scheduleValid}
                     className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#0f3460] hover:bg-[#162447] text-white"
                   >
                     {webpayLoading ? (
@@ -299,7 +444,7 @@ export default function CartPage() {
                   {/* Confirmar sin pago online */}
                   <button
                     onClick={handleOrder}
-                    disabled={ordering || !name || !phone}
+                    disabled={ordering || !name || !phone || !scheduleValid}
                     className="w-full border-2 border-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {ordering ? 'Enviando...' : 'Pedir sin pago online'}

@@ -57,22 +57,32 @@ export async function POST(req: NextRequest) {
         const supabase  = getSupabase()
         const orderNum  = `EF-${Date.now().toString().slice(-8)}`
 
-        const { data: order } = await supabase
+        const orderPayload: Record<string, unknown> = {
+          order_number:     orderNum,
+          customer_name:    orderData.customer_name,
+          customer_phone:   orderData.customer_phone,
+          customer_address: orderData.customer_address || '',
+          notes:            orderData.notes || '',
+          total_amount:     result.amount,
+          payment_method:   'webpay',
+          payment_status:   'paid',
+          channel:          'web',
+          status:           'confirmed',
+        }
+        if (orderData.scheduled_for) orderPayload.scheduled_for = orderData.scheduled_for
+
+        let { data: order } = await supabase
           .from('orders')
-          .insert({
-            order_number:     orderNum,
-            customer_name:    orderData.customer_name,
-            customer_phone:   orderData.customer_phone,
-            customer_address: orderData.customer_address || '',
-            notes:            orderData.notes || '',
-            total_amount:     result.amount,
-            payment_method:   'webpay',
-            payment_status:   'paid',
-            channel:          'web',
-            status:           'confirmed',
-          })
+          .insert(orderPayload)
           .select('id')
           .single()
+
+        // Fallback si scheduled_for no existe
+        if (!order && orderData.scheduled_for) {
+          delete orderPayload.scheduled_for
+          const retry = await supabase.from('orders').insert(orderPayload).select('id').single()
+          order = retry.data
+        }
 
         if (order?.id && orderData.items?.length) {
           await supabase.from('order_items').insert(

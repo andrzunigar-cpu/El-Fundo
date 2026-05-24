@@ -6,32 +6,44 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { customer_name, customer_phone, customer_address, notes, items, total_amount } = body
+    const { customer_name, customer_phone, customer_address, notes, items, total_amount, scheduled_for } = body
 
     if (!customer_name || !customer_phone) {
       return NextResponse.json({ error: 'Nombre y teléfono son requeridos' }, { status: 400 })
     }
 
-    const { data: order, error: orderError } = await getSupabase()
+    const orderPayload: Record<string, unknown> = {
+      customer_name,
+      customer_phone,
+      customer_address: customer_address || '',
+      notes: notes || '',
+      total_amount,
+      status: 'pending',
+      channel: 'web',
+    }
+    if (scheduled_for) orderPayload.scheduled_for = scheduled_for
+
+    let { data: order, error: orderError } = await getSupabase()
       .from('orders')
-      .insert({
-        customer_name,
-        customer_phone,
-        customer_address: customer_address || '',
-        notes: notes || '',
-        total_amount,
-        status: 'pending',
-        channel: 'web',
-      })
+      .insert(orderPayload)
       .select()
       .single()
+
+    // Si la columna scheduled_for no existe, reintentar sin ella
+    if (orderError && orderError.message?.includes('scheduled_for')) {
+      delete orderPayload.scheduled_for
+      const retry = await getSupabase().from('orders').insert(orderPayload).select().single()
+      order = retry.data
+      orderError = retry.error
+    }
 
     if (orderError) throw orderError
 
     if (items?.length) {
-      const orderItems = items.map((item: { product_id: string; quantity: number; unit_price: number }) => ({
+      const orderItems = items.map((item: { product_id: string; product_name?: string; quantity: number; unit_price: number }) => ({
         order_id: order.id,
         product_id: item.product_id,
+        product_name: item.product_name || item.product_id,
         quantity: item.quantity,
         unit_price: item.unit_price,
         subtotal: item.quantity * item.unit_price,

@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { ShoppingBag, Phone, MapPin, Clock, RefreshCw, ChevronDown } from 'lucide-react'
+import { ShoppingBag, Phone, MapPin, Clock, RefreshCw, ChevronDown, Calendar, Zap } from 'lucide-react'
 
 interface OrderItem {
   id: string
@@ -22,7 +22,21 @@ interface Order {
   status: string
   channel: string
   created_at: string
+  scheduled_for?: string | null
   order_items: OrderItem[]
+}
+
+function formatScheduled(iso: string): string {
+  const d = new Date(iso)
+  const today = new Date()
+  const tomorrow = new Date(); tomorrow.setDate(today.getDate() + 1)
+  const isToday    = d.toDateString() === today.toDateString()
+  const isTomorrow = d.toDateString() === tomorrow.toDateString()
+  const hh = String(d.getHours()).padStart(2, '0')
+  const mm = String(d.getMinutes()).padStart(2, '0')
+  if (isToday)    return `Hoy ${hh}:${mm}`
+  if (isTomorrow) return `Mañana ${hh}:${mm}`
+  return `${d.getDate()}/${d.getMonth() + 1} ${hh}:${mm}`
 }
 
 const STATUS_CONFIG: Record<string, { label: string; color: string; bg: string }> = {
@@ -148,11 +162,22 @@ export default function PedidosAdmin() {
                         <ShoppingBag className="w-5 h-5 text-red-600" />
                       </div>
                       <div>
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-2 flex-wrap">
                           <p className="font-bold text-gray-900">{order.customer_name}</p>
                           <span className={`px-2 py-0.5 rounded-full text-xs font-semibold ${cfg.bg} ${cfg.color}`}>
                             {cfg.label}
                           </span>
+                          {order.scheduled_for ? (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-purple-100 text-purple-700 flex items-center gap-1">
+                              <Calendar className="w-3 h-3" />
+                              Programado: {formatScheduled(order.scheduled_for)}
+                            </span>
+                          ) : (
+                            <span className="px-2 py-0.5 rounded-full text-xs font-semibold bg-orange-100 text-orange-700 flex items-center gap-1">
+                              <Zap className="w-3 h-3" />
+                              Lo antes posible
+                            </span>
+                          )}
                         </div>
                         <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
                           <span className="flex items-center gap-1">
