@@ -20,10 +20,100 @@ const CATEGORIES = [
 ]
 
 const COMBOS = [
-  { id: "parrilla",  name: "Pack Asado Clásico",      desc: "Asado de tira, chorizos y longaniza. El combo favorito para el fin de semana.", precio: "Desde $12.990/kg", badge: "🔥 Más vendido", image: "https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80", color: "from-red-900/80" },
-  { id: "parrilla",  name: "Pack Parrillero Pro",     desc: "Entraña, lomo vetado, costillar y chorizos. Para los maestros del fuego.", precio: "Desde $14.990/kg", badge: "⭐ Premium", image: "https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80", color: "from-orange-900/80" },
-  { id: "vacuno",    name: "Pack Familiar Económico", desc: "Molida, posta y plateada. Rinde para toda la semana a precio justo.", precio: "Desde $7.990/kg", badge: "💰 Ahorro", image: "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=600&q=80", color: "from-gray-900/80" },
-  { id: "vacuno",    name: "Pack Cazuela Completa",   desc: "Osobuco, palanca y verduras. Todo lo que necesitas para una cazuela perfecta.", precio: "Desde $8.990/kg", badge: "🍲 Casero", image: "https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80", color: "from-amber-900/80" },
+  {
+    nombre: "Pack Gym para Dos",
+    badge: "💪 Fitness",
+    badgeColor: "bg-blue-600",
+    headerColor: "bg-gradient-to-br from-blue-700 to-blue-900",
+    items: [
+      { emoji: "🐔", producto: "Pechuga de Pollo", cantidad: "10 kg" },
+      { emoji: "🥩", producto: "Posta Rosada",      cantidad: "4 kg"  },
+      { emoji: "🥚", producto: "Huevos",            cantidad: "12 un" },
+    ],
+    precio: "$89.990",
+    ahorro: "Ahorras $12.000",
+    personas: "Para 2 personas · 2 semanas",
+    wa: "Hola%2C%20quiero%20el%20Pack%20Gym%20para%20Dos%3A%2010kg%20pechuga%2C%204kg%20posta%20rosada%2C%2012%20huevos.",
+  },
+  {
+    nombre: "Pack Asado Familiar",
+    badge: "🔥 Más vendido",
+    badgeColor: "bg-red-600",
+    headerColor: "bg-gradient-to-br from-red-700 to-red-900",
+    items: [
+      { emoji: "🥩", producto: "Asado de Tira",      cantidad: "2 kg"  },
+      { emoji: "🌭", producto: "Longaniza Casera",    cantidad: "6 un"  },
+      { emoji: "🌭", producto: "Chorizo Parrillero",  cantidad: "6 un"  },
+      { emoji: "🫀", producto: "Prieta",              cantidad: "4 un"  },
+    ],
+    precio: "$34.990",
+    ahorro: "Ahorras $6.000",
+    personas: "Para 6–8 personas",
+    wa: "Hola%2C%20quiero%20el%20Pack%20Asado%20Familiar%3A%202kg%20asado%20de%20tira%2C%206%20longanizas%2C%206%20chorizos%2C%204%20prietas.",
+  },
+  {
+    nombre: "Pack Parrillero Premium",
+    badge: "⭐ Premium",
+    badgeColor: "bg-yellow-600",
+    headerColor: "bg-gradient-to-br from-gray-800 to-gray-950",
+    items: [
+      { emoji: "🥩", producto: "Lomo Vetado",         cantidad: "1 kg"  },
+      { emoji: "🥩", producto: "Entraña",             cantidad: "1 kg"  },
+      { emoji: "🐷", producto: "Costillar de Cerdo",  cantidad: "1.5 kg"},
+      { emoji: "🌭", producto: "Chorizo Parrillero",  cantidad: "6 un"  },
+    ],
+    precio: "$54.990",
+    ahorro: "Ahorras $9.000",
+    personas: "Para 4–5 personas",
+    wa: "Hola%2C%20quiero%20el%20Pack%20Parrillero%20Premium%3A%201kg%20lomo%20vetado%2C%201kg%20entra%C3%B1a%2C%201.5kg%20costillar%2C%206%20chorizos.",
+  },
+  {
+    nombre: "Pack Familiar Semanal",
+    badge: "🏠 Hogar",
+    badgeColor: "bg-green-600",
+    headerColor: "bg-gradient-to-br from-green-700 to-green-900",
+    items: [
+      { emoji: "🥩", producto: "Carne Molida",        cantidad: "2 kg"  },
+      { emoji: "🥩", producto: "Posta Negra",         cantidad: "1.5 kg"},
+      { emoji: "🐔", producto: "Pollo Entero",        cantidad: "2 un"  },
+      { emoji: "🌭", producto: "Longaniza Casera",    cantidad: "6 un"  },
+    ],
+    precio: "$29.990",
+    ahorro: "Ahorras $7.000",
+    personas: "Para 4 personas · 1 semana",
+    wa: "Hola%2C%20quiero%20el%20Pack%20Familiar%20Semanal%3A%202kg%20molida%2C%201.5kg%20posta%20negra%2C%202%20pollos%2C%206%20longanizas.",
+  },
+  {
+    nombre: "Pack Cazuela Completa",
+    badge: "🍲 Casero",
+    badgeColor: "bg-amber-600",
+    headerColor: "bg-gradient-to-br from-amber-700 to-amber-900",
+    items: [
+      { emoji: "🦴", producto: "Osobuco",             cantidad: "1.5 kg"},
+      { emoji: "🥩", producto: "Posta Negra",         cantidad: "500 g" },
+      { emoji: "🐔", producto: "Pechuga de Pollo",    cantidad: "500 g" },
+    ],
+    precio: "$19.990",
+    ahorro: "Ahorras $3.500",
+    personas: "Para 4–6 personas",
+    wa: "Hola%2C%20quiero%20el%20Pack%20Cazuela%20Completa%3A%201.5kg%20osobuco%2C%20500g%20posta%20negra%2C%20500g%20pechuga.",
+  },
+  {
+    nombre: "Pack Cerdo BBQ",
+    badge: "🐷 Cerdo",
+    badgeColor: "bg-orange-600",
+    headerColor: "bg-gradient-to-br from-orange-700 to-orange-900",
+    items: [
+      { emoji: "🐷", producto: "Costillar de Cerdo",  cantidad: "2 kg"  },
+      { emoji: "🥩", producto: "Pulpa de Cerdo",      cantidad: "1 kg"  },
+      { emoji: "🌭", producto: "Longaniza Casera",    cantidad: "6 un"  },
+      { emoji: "🌭", producto: "Chorizo Parrillero",  cantidad: "4 un"  },
+    ],
+    precio: "$32.990",
+    ahorro: "Ahorras $5.500",
+    personas: "Para 5–6 personas",
+    wa: "Hola%2C%20quiero%20el%20Pack%20Cerdo%20BBQ%3A%202kg%20costillar%2C%201kg%20pulpa%2C%206%20longanizas%2C%204%20chorizos.",
+  },
 ]
 
 const BENEFITS = [
@@ -140,33 +230,68 @@ export default function Home() {
             <div>
               <p className="text-red-600 font-semibold text-sm uppercase tracking-widest mb-2">🔥 Ofertas especiales</p>
               <h2 className="text-4xl font-black text-gray-900">Combos y Promociones</h2>
+              <p className="text-gray-500 mt-2 text-sm">Packs armados con los mejores cortes · Precios especiales</p>
             </div>
-            <Link href="/categoria/parrilla" className="hidden md:flex items-center gap-2 text-red-600 font-semibold hover:gap-3 transition-all text-sm">
-              Ver todo <ArrowRight className="w-4 h-4" />
-            </Link>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
             {COMBOS.map((combo, i) => (
-              <Link
-                key={i}
-                href={`/categoria/${combo.id}`}
-                className="group relative overflow-hidden rounded-2xl h-64 cursor-pointer"
-              >
-                <img src={combo.image} alt={combo.name}
-                  className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
-                <div className={`absolute inset-0 bg-gradient-to-t ${combo.color} to-transparent`} />
-                <div className="absolute inset-0 p-4 flex flex-col justify-between">
-                  <span className="self-start bg-red-600 text-white text-xs font-bold px-2.5 py-1 rounded-full">{combo.badge}</span>
-                  <div>
-                    <h3 className="text-white font-black text-base leading-tight mb-1">{combo.name}</h3>
-                    <p className="text-gray-300 text-xs leading-snug mb-2 line-clamp-2">{combo.desc}</p>
-                    <span className="text-red-300 text-xs font-bold">{combo.precio}</span>
+              <div key={i} className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
+                {/* Header */}
+                <div className={`${combo.headerColor} p-5`}>
+                  <div className="flex items-start justify-between gap-2">
+                    <h3 className="text-white font-black text-lg leading-tight">{combo.nombre}</h3>
+                    <span className={`shrink-0 ${combo.badgeColor} text-white text-xs font-bold px-2.5 py-1 rounded-full whitespace-nowrap`}>
+                      {combo.badge}
+                    </span>
+                  </div>
+                  <p className="text-white/70 text-xs mt-1.5">{combo.personas}</p>
+                </div>
+
+                {/* Contenido */}
+                <div className="p-5 flex-1 flex flex-col">
+                  <ul className="space-y-2 mb-5 flex-1">
+                    {combo.items.map((item, j) => (
+                      <li key={j} className="flex items-center justify-between gap-3">
+                        <div className="flex items-center gap-2.5">
+                          <span className="text-xl">{item.emoji}</span>
+                          <span className="text-sm font-medium text-gray-800">{item.producto}</span>
+                        </div>
+                        <span className="text-sm font-black text-gray-900 bg-gray-100 px-2.5 py-0.5 rounded-lg shrink-0">
+                          {item.cantidad}
+                        </span>
+                      </li>
+                    ))}
+                  </ul>
+
+                  {/* Precio + ahorro */}
+                  <div className="border-t border-gray-100 pt-4">
+                    <div className="flex items-end justify-between mb-3">
+                      <div>
+                        <p className="text-xs text-gray-400">Precio del pack</p>
+                        <p className="text-2xl font-black text-gray-900">{combo.precio}</p>
+                      </div>
+                      <span className="text-xs font-bold text-green-600 bg-green-50 border border-green-200 px-2.5 py-1 rounded-lg">
+                        {combo.ahorro}
+                      </span>
+                    </div>
+                    <a
+                      href={`https://wa.me/${WA_NUMBER}?text=${combo.wa}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className="w-full flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold text-sm transition"
+                    >
+                      <span>📲</span> Pedir por WhatsApp
+                    </a>
                   </div>
                 </div>
-              </Link>
+              </div>
             ))}
           </div>
+
+          <p className="text-center text-xs text-gray-400 mt-6">
+            * Precios de referencia. Contáctanos para confirmar disponibilidad y precio final.
+          </p>
         </section>
 
         {/* ── CATEGORÍAS ── */}
