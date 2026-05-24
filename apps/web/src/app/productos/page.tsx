@@ -92,7 +92,7 @@ function fmtQty(qty: number, unit: 'kg' | 'un') {
 
 export default function ProductsPage() {
   const [products, setProducts] = useState<Product[]>(CATALOGO)
-  const [loading, setLoading]   = useState(true)
+  const [syncing, setSyncing] = useState(true) // indicador sutil mientras carga API
   const [search, setSearch]     = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
   const [quantities, setQuantities] = useState<Record<string, number>>({})
@@ -103,9 +103,9 @@ export default function ProductsPage() {
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0) setProducts(data)
-        setLoading(false)
       })
-      .catch(() => setLoading(false))
+      .catch(() => {/* mantener CATALOGO */})
+      .finally(() => setSyncing(false))
   }, [])
 
   const getProductImage = (product: Product) => {
@@ -266,7 +266,7 @@ export default function ProductsPage() {
       <main className="min-h-screen bg-gray-50">
 
         {/* ── Promoción de la semana ── */}
-        {!loading && promos.length > 0 && (
+        {promos.length > 0 && (
           <section className="bg-gradient-to-r from-orange-600 to-red-600 py-10">
             <div className="max-w-7xl mx-auto px-4">
               <div className="flex items-center gap-3 mb-6">
@@ -320,7 +320,7 @@ export default function ProductsPage() {
         )}
 
         {/* ── Combos ── */}
-        {!loading && (activeCategory === 'all' || activeCategory === 'cat-combos') && (
+        {(activeCategory === 'all' || activeCategory === 'cat-combos') && (
           (() => {
             const combos = products.filter(p => p.category_id === 'cat-combos')
             if (combos.length === 0) return null
@@ -432,27 +432,21 @@ export default function ProductsPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 py-10">
-          {loading && (
-            <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-5">
-              {[...Array(8)].map((_, i) => (
-                <div key={i} className="bg-white rounded-2xl overflow-hidden animate-pulse">
-                  <div className="h-48 bg-gray-200" />
-                  <div className="p-4 space-y-2">
-                    <div className="h-4 bg-gray-200 rounded w-3/4" />
-                    <div className="h-3 bg-gray-200 rounded w-1/2" />
-                  </div>
-                </div>
-              ))}
+          {/* Indicador sutil de sincronización con Supabase */}
+          {syncing && (
+            <div className="flex items-center gap-2 text-xs text-gray-400 mb-4">
+              <div className="w-3 h-3 rounded-full border-2 border-gray-300 border-t-red-500 animate-spin" />
+              Actualizando precios...
             </div>
           )}
 
-          {!loading && filtered.length === 0 && activeCategory !== 'cat-combos' && (
+          {filtered.length === 0 && activeCategory !== 'cat-combos' && (
             <div className="text-center py-20">
               <p className="text-gray-400 text-lg">No hay productos en esta categoría</p>
             </div>
           )}
 
-          {!loading && filtered.length > 0 && (
+          {filtered.length > 0 && (
             <>
               <p className="text-sm text-gray-500 mb-6">{filtered.length} productos</p>
               <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-5">
