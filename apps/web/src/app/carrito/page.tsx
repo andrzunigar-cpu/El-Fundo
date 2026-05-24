@@ -3,30 +3,27 @@
 import { useCart } from '@/lib/store'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight } from 'lucide-react'
+import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, Loader, Lock } from 'lucide-react'
 import Link from 'next/link'
 import { useState } from 'react'
 
-const PAYMENT_METHODS = [
-  { name: 'Efectivo', icon: '💵' },
-  { name: 'Débito', icon: '💳' },
-  { name: 'Crédito', icon: '💳' },
-  { name: 'Transferencia', icon: '🏦' },
-  { name: 'Webpay', icon: '🔐' },
-  { name: 'Amipass', icon: '🎫' },
-  { name: 'Edenred', icon: '🎫' },
-  { name: 'Pluxee', icon: '🎫' },
-]
-
 export default function CartPage() {
   const { items, removeItem, updateQuantity, clearCart, total } = useCart()
-  const [ordering, setOrdering] = useState(false)
-  const [ordered, setOrdered] = useState(false)
-  const [name, setName] = useState('')
-  const [phone, setPhone] = useState('')
-  const [address, setAddress] = useState('')
-  const [notes, setNotes] = useState('')
 
+  const [name,    setName]    = useState('')
+  const [phone,   setPhone]   = useState('')
+  const [address, setAddress] = useState('')
+  const [notes,   setNotes]   = useState('')
+
+  // Pago normal (sin webpay)
+  const [ordering, setOrdering] = useState(false)
+  const [ordered,  setOrdered]  = useState(false)
+
+  // WebPay
+  const [webpayLoading, setWebpayLoading] = useState(false)
+  const [webpayError,   setWebpayError]   = useState('')
+
+  // ── Pedido sin pago online ───────────────────────────────────
   const handleOrder = async () => {
     if (!name || !phone) return
     setOrdering(true)
@@ -36,8 +33,8 @@ export default function CartPage() {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          customer_name: name,
-          customer_phone: phone,
+          customer_name:    name,
+          customer_phone:   phone,
           customer_address: address,
           notes,
           items: items.map(i => ({ product_id: i.id, quantity: i.quantity, unit_price: i.price })),
@@ -53,6 +50,64 @@ export default function CartPage() {
     }
   }
 
+  // ── WebPay Plus ──────────────────────────────────────────────
+  const handleWebpay = async () => {
+    if (!name || !phone) {
+      setWebpayError('Completa tu nombre y teléfono antes de pagar.')
+      return
+    }
+    setWebpayError('')
+    setWebpayLoading(true)
+
+    try {
+      const orderId = `${Date.now()}`
+
+      // Guardar datos del pedido en sessionStorage para recuperarlos en /webpay/return
+      sessionStorage.setItem('webpay_order', JSON.stringify({
+        customer_name:    name,
+        customer_phone:   phone,
+        customer_address: address,
+        notes,
+        items: items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price, unit: i.unit })),
+      }))
+
+      const res = await fetch('/api/webpay/create', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount:    total(),
+          orderId,
+          returnUrl: `${window.location.origin}/webpay/return`,
+        }),
+      })
+
+      const data = await res.json()
+
+      if (!res.ok || !data.token) {
+        throw new Error(data.error || 'No se pudo iniciar el pago')
+      }
+
+      // Redirigir a Transbank: el formulario debe hacer POST con token_ws
+      // Creamos un formulario y lo enviamos programáticamente
+      const form = document.createElement('form')
+      form.method = 'POST'
+      form.action = data.url
+
+      const input = document.createElement('input')
+      input.type  = 'hidden'
+      input.name  = 'token_ws'
+      input.value = data.token
+
+      form.appendChild(input)
+      document.body.appendChild(form)
+      form.submit()
+    } catch (err: unknown) {
+      setWebpayError(err instanceof Error ? err.message : 'Error al iniciar WebPay')
+      setWebpayLoading(false)
+    }
+  }
+
+  // ── Pantalla de éxito ────────────────────────────────────────
   if (ordered) {
     return (
       <>
@@ -70,6 +125,15 @@ export default function CartPage() {
         <Footer />
       </>
     )
+  }
+
+  // ── Helpers visuales ─────────────────────────────────────────
+  const fmtQty = (qty: number, unit?: string) => {
+    if (unit === 'kg') {
+      if (qty < 1) return `${qty * 1000} g`
+      return `${qty % 1 === 0 ? qty : qty} kg`
+    }
+    return `${qty} ${unit || 'un'}`
   }
 
   return (
@@ -96,32 +160,43 @@ export default function CartPage() {
           ) : (
             <div className="grid lg:grid-cols-3 gap-8">
 
-              {/* Items */}
+              {/* ── Lista de items ── */}
               <div className="lg:col-span-2 space-y-3">
                 {items.map(item => (
                   <div key={item.id} className="bg-white rounded-2xl p-5 flex items-center gap-4 border border-gray-100">
                     <div className="flex-1 min-w-0">
                       <h3 className="font-bold text-gray-900 truncate">{item.name}</h3>
                       <p className="text-sm text-gray-400">
-                        ${item.price.toLocaleString('es-CL')} / kg
+                        ${item.price.toLocaleString('es-CL')} / {item.unit || 'kg'}
                       </p>
                     </div>
+                    {/* Cantidad */}
                     <div className="flex items-center gap-2">
                       <button
-                        onClick={() => updateQuantity(item.id, Math.max(1, item.quantity - 1))}
+                        onClick={() => {
+                          const step = item.unit === 'kg' ? 0.25 : 1
+                          const next = parseFloat((item.quantity - step).toFixed(2))
+                          if (next >= (item.unit === 'kg' ? 0.25 : 1)) updateQuantity(item.id, next)
+                        }}
                         className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
                       >
                         <Minus className="w-3 h-3" />
                       </button>
-                      <span className="w-8 text-center font-semibold text-gray-900">{item.quantity}</span>
+                      <span className="min-w-[64px] text-center font-semibold text-gray-900 text-sm">
+                        {fmtQty(item.quantity, item.unit)}
+                      </span>
                       <button
-                        onClick={() => updateQuantity(item.id, item.quantity + 1)}
+                        onClick={() => {
+                          const step = item.unit === 'kg' ? 0.25 : 1
+                          updateQuantity(item.id, parseFloat((item.quantity + step).toFixed(2)))
+                        }}
                         className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 flex items-center justify-center transition"
                       >
                         <Plus className="w-3 h-3" />
                       </button>
                     </div>
-                    <div className="text-right min-w-[80px]">
+                    {/* Subtotal */}
+                    <div className="text-right min-w-[90px]">
                       <p className="font-black text-gray-900">${(item.price * item.quantity).toLocaleString('es-CL')}</p>
                     </div>
                     <button
@@ -137,16 +212,16 @@ export default function CartPage() {
                 </button>
               </div>
 
-              {/* Summary + Form */}
+              {/* ── Resumen + Formulario + Pago ── */}
               <div className="space-y-4">
 
-                {/* Order summary */}
+                {/* Resumen */}
                 <div className="bg-white rounded-2xl p-6 border border-gray-100">
                   <h2 className="font-bold text-gray-900 mb-4">Resumen</h2>
                   <div className="space-y-2 mb-4">
                     {items.map(item => (
                       <div key={item.id} className="flex justify-between text-sm text-gray-600">
-                        <span className="truncate mr-2">{item.name} x{item.quantity}</span>
+                        <span className="truncate mr-2">{item.name} × {fmtQty(item.quantity, item.unit)}</span>
                         <span className="shrink-0">${(item.price * item.quantity).toLocaleString('es-CL')}</span>
                       </div>
                     ))}
@@ -157,7 +232,7 @@ export default function CartPage() {
                   </div>
                 </div>
 
-                {/* Contact form */}
+                {/* Datos de contacto */}
                 <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-3">
                   <h2 className="font-bold text-gray-900 mb-1">Datos de contacto</h2>
                   <input
@@ -188,26 +263,50 @@ export default function CartPage() {
                     rows={2}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
                   />
+                </div>
+
+                {/* Botones de pago */}
+                <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-3">
+                  <h2 className="font-bold text-gray-900 mb-2">Forma de pago</h2>
+
+                  {webpayError && (
+                    <p className="text-xs text-red-600 bg-red-50 rounded-lg px-3 py-2">{webpayError}</p>
+                  )}
+
+                  {/* WebPay */}
+                  <button
+                    onClick={handleWebpay}
+                    disabled={webpayLoading || !name || !phone}
+                    className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#0f3460] hover:bg-[#162447] text-white"
+                  >
+                    {webpayLoading ? (
+                      <><Loader className="w-5 h-5 animate-spin" /> Redirigiendo a WebPay...</>
+                    ) : (
+                      <><Lock className="w-4 h-4" /> Pagar con WebPay</>
+                    )}
+                  </button>
+                  <p className="text-xs text-gray-400 text-center">
+                    Débito, crédito y prepago — pago seguro con Transbank
+                  </p>
+
+                  {/* Separador */}
+                  <div className="flex items-center gap-3 py-1">
+                    <div className="flex-1 h-px bg-gray-100" />
+                    <span className="text-xs text-gray-400">o paga al recibir</span>
+                    <div className="flex-1 h-px bg-gray-100" />
+                  </div>
+
+                  {/* Confirmar sin pago online */}
                   <button
                     onClick={handleOrder}
                     disabled={ordering || !name || !phone}
-                    className="w-full bg-red-600 text-white py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition disabled:opacity-50 disabled:cursor-not-allowed"
+                    className="w-full border-2 border-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {ordering ? 'Enviando...' : 'Confirmar pedido'}
+                    {ordering ? 'Enviando...' : 'Pedir sin pago online'}
                   </button>
-                </div>
-
-                {/* Payment methods */}
-                <div className="bg-white rounded-2xl p-5 border border-gray-100">
-                  <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">Medios de pago</p>
-                  <div className="grid grid-cols-4 gap-2">
-                    {PAYMENT_METHODS.map(m => (
-                      <div key={m.name} className="flex flex-col items-center gap-1 p-2 rounded-lg bg-gray-50">
-                        <span className="text-xl">{m.icon}</span>
-                        <span className="text-xs text-gray-500 text-center leading-tight">{m.name}</span>
-                      </div>
-                    ))}
-                  </div>
+                  <p className="text-xs text-gray-400 text-center">
+                    Efectivo · Transferencia · Débito en local
+                  </p>
                 </div>
 
               </div>

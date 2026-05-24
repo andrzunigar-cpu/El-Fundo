@@ -241,6 +241,9 @@ importers:
       react-dom:
         specifier: ^18.3.0
         version: 18.3.1(react@18.3.1)
+      transbank-sdk:
+        specifier: ^6.1.1
+        version: 6.1.1
       zustand:
         specifier: ^4.4.0
         version: 4.5.7(@types/react@18.3.28)(react@18.3.1)
