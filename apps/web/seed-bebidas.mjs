@@ -12,47 +12,55 @@ const supabase = createClient(
 
 // Imágenes por tipo
 const IMG = {
-  cola:       'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400&q=80',
-  cola_zero:  'https://images.unsplash.com/photo-1629203849820-f1f2a993e6d6?w=400&q=80',
-  fanta:      'https://images.unsplash.com/photo-1624552184280-9e9631bbeee9?w=400&q=80',
-  sprite:     'https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=400&q=80',
-  monster:    'https://images.unsplash.com/photo-1622543925917-763c34d1a86e?w=400&q=80',
-  agua:       'https://images.unsplash.com/photo-1559839914-17aae19cec71?w=400&q=80',
+  cola_25:    'https://images.unsplash.com/photo-MRMVqUaNZSE?w=400&q=80',
+  cola_15:    'https://images.unsplash.com/photo-aJ8CYMhemc8?w=400&q=80',
+  cola_lata:  'https://images.unsplash.com/photo-Qvnohn4GyJA?w=400&q=80',
+  fanta_25:   'https://images.unsplash.com/photo-nJguJaHo5dg?w=400&q=80',
+  fanta_lata: 'https://images.unsplash.com/photo-aHp47GFJqqw?w=400&q=80',
+  sprite_bot: 'https://images.unsplash.com/photo-4KLT91f3mAM?w=400&q=80',
+  sprite_can: 'https://images.unsplash.com/photo-RH2ZA73kHiA?w=400&q=80',
+  sprite_lata:'https://images.unsplash.com/photo-oaE6Zllcc6Y?w=400&q=80',
+  monster_a:  'https://images.unsplash.com/photo-Bf-K7BbYIMo?w=400&q=80',
+  monster_b:  'https://images.unsplash.com/photo-snQCK9ghEaA?w=400&q=80',
+  monster_c:  'https://images.unsplash.com/photo-boZnep9tiEM?w=400&q=80',
+  agua_a:     'https://images.unsplash.com/photo-0_he2akLhyA?w=400&q=80',
+  agua_b:     'https://images.unsplash.com/photo-UK_jYMqoHxE?w=400&q=80',
   isotonica:  'https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&q=80',
-  jugo:       'https://images.unsplash.com/photo-1534353436294-0dbd4bdac845?w=400&q=80',
+  jugo_a:     'https://images.unsplash.com/photo-zc-rZTYKGzc?w=400&q=80',
+  jugo_b:     'https://images.unsplash.com/photo-A6c4cUoFrHg?w=400&q=80',
 }
 
 const BEBIDAS = [
   // ── Coca-Cola ─────────────────────────────────────────
-  { name: 'Coca-Cola Original Desechable 2,5 lt',      price: 12702, img: IMG.cola      },
-  { name: 'Coca-Cola Original Desechable 1,5 lt x6',   price:  9614, img: IMG.cola      },
-  { name: 'Coca-Cola Original Lata 350 ml x6',         price:  4416, img: IMG.cola      },
-  { name: 'Coca-Cola Zero Azúcar Desechable 2,5 lt',   price: 12702, img: IMG.cola_zero },
-  { name: 'Coca-Cola Zero Azúcar Desechable 1,5 lt x6',price:  9614, img: IMG.cola_zero },
-  { name: 'Coca-Cola Zero Azúcar Lata 350 ml x6',      price:  4416, img: IMG.cola_zero },
+  { name: 'Coca-Cola Original Desechable 2,5 lt',       price: 12702, img: IMG.cola_25   },
+  { name: 'Coca-Cola Original Desechable 1,5 lt x6',   price:  9614, img: IMG.cola_15   },
+  { name: 'Coca-Cola Original Lata 350 ml x6',         price:  4416, img: IMG.cola_lata },
+  { name: 'Coca-Cola Zero Azúcar Desechable 2,5 lt',   price: 12702, img: IMG.cola_25   },
+  { name: 'Coca-Cola Zero Azúcar Desechable 1,5 lt x6',price:  9614, img: IMG.cola_15   },
+  { name: 'Coca-Cola Zero Azúcar Lata 350 ml x6',      price:  4416, img: IMG.cola_lata },
 
   // ── Fanta ─────────────────────────────────────────────
-  { name: 'Fanta Naranja Desechable 2,5 lt x6',        price: 12702, img: IMG.fanta     },
-  { name: 'Fanta Naranja Desechable 1,5 lt x6',        price:  9614, img: IMG.fanta     },
-  { name: 'Fanta Naranja Lata 350 ml x6',              price:  4415, img: IMG.fanta     },
+  { name: 'Fanta Naranja Desechable 2,5 lt x6',        price: 12702, img: IMG.fanta_25  },
+  { name: 'Fanta Naranja Desechable 1,5 lt x6',        price:  9614, img: IMG.fanta_25  },
+  { name: 'Fanta Naranja Lata 350 ml x6',              price:  4415, img: IMG.fanta_lata},
 
   // ── Sprite ────────────────────────────────────────────
-  { name: 'Sprite Desechable 2,5 lt x6',               price: 12702, img: IMG.sprite    },
-  { name: 'Sprite Desechable 1,5 lt x6',               price:  9614, img: IMG.sprite    },
-  { name: 'Sprite Lata 350 ml x6',                     price:  4416, img: IMG.sprite    },
+  { name: 'Sprite Desechable 2,5 lt x6',               price: 12702, img: IMG.sprite_bot},
+  { name: 'Sprite Desechable 1,5 lt x6',               price:  9614, img: IMG.sprite_can},
+  { name: 'Sprite Lata 350 ml x6',                     price:  4416, img: IMG.sprite_lata},
 
   // ── Monster ───────────────────────────────────────────
-  { name: 'Monster Energy 473 ml x6',                  price:  9295, img: IMG.monster   },
-  { name: 'Monster Energy Zero Sugar 473 ml x6',       price:  9295, img: IMG.monster   },
-  { name: 'Monster Ultra 473 ml x6',                   price:  9295, img: IMG.monster   },
-  { name: 'Monster Ripper 473 ml x6',                  price:  9295, img: IMG.monster   },
-  { name: 'Monster Pipeline Punch 473 ml x6',          price:  9295, img: IMG.monster   },
+  { name: 'Monster Energy 473 ml x6',                  price:  9295, img: IMG.monster_a },
+  { name: 'Monster Energy Zero Sugar 473 ml x6',       price:  9295, img: IMG.monster_b },
+  { name: 'Monster Ultra 473 ml x6',                   price:  9295, img: IMG.monster_c },
+  { name: 'Monster Ripper 473 ml x6',                  price:  9295, img: IMG.monster_b },
+  { name: 'Monster Pipeline Punch 473 ml x6',          price:  9295, img: IMG.monster_a },
 
   // ── Benedictino ───────────────────────────────────────
-  { name: 'Benedictino Con Gas 500 ml x12',            price:  6601, img: IMG.agua      },
-  { name: 'Benedictino Sin Gas 500 ml x12',            price:  6601, img: IMG.agua      },
-  { name: 'Benedictino Con Gas 1,5 lt x6',             price:  4644, img: IMG.agua      },
-  { name: 'Benedictino Sin Gas 1,5 lt x6',             price:  4644, img: IMG.agua      },
+  { name: 'Benedictino Con Gas 500 ml x12',            price:  6601, img: IMG.agua_a    },
+  { name: 'Benedictino Sin Gas 500 ml x12',            price:  6601, img: IMG.agua_b    },
+  { name: 'Benedictino Con Gas 1,5 lt x6',             price:  4644, img: IMG.agua_a    },
+  { name: 'Benedictino Sin Gas 1,5 lt x6',             price:  4644, img: IMG.agua_b    },
 
   // ── Aquarius ──────────────────────────────────────────
   { name: 'Aquarius Uva 1,6 lt x6',                    price:  5251, img: IMG.isotonica },
@@ -63,8 +71,8 @@ const BEBIDAS = [
   { name: 'Aquarius Manzana 500 ml x6',                price:  3785, img: IMG.isotonica },
 
   // ── Del Valle ─────────────────────────────────────────
-  { name: 'Del Valle Durazno 1,5 lt x6',               price:  7736, img: IMG.jugo      },
-  { name: 'Del Valle Naranja 1,75 lt x6',              price:  6948, img: IMG.jugo      },
+  { name: 'Del Valle Durazno 1,5 lt x6',               price:  7736, img: IMG.jugo_a    },
+  { name: 'Del Valle Naranja 1,75 lt x6',              price:  6948, img: IMG.jugo_b    },
 ]
 
 const rows = BEBIDAS.map((b, i) => ({
