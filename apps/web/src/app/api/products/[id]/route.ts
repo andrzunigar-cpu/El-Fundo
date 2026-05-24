@@ -1,10 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase-server'
+import { getSupabase } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
+  const supabase = getSupabase()
+  const { id }   = await params
   const { data, error } = await supabase
     .from('products')
     .select('*')
@@ -16,16 +17,30 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params
-  const body = await request.json()
+  const supabase = getSupabase()
+  const { id }   = await params
+  const body     = await request.json()
+
+  const payload = { ...body, updated_at: new Date().toISOString() }
 
   const { data, error } = await supabase
     .from('products')
-    .update({ ...body, updated_at: new Date().toISOString() })
+    .update(payload)
     .eq('id', id)
     .select()
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  if (error) {
+    // Si falla por columna "unit" inexistente, reintentar sin ella
+    if (error.message?.includes('column') && error.message?.includes('unit')) {
+      const { unit: _unit, ...withoutUnit } = payload
+      const { data: d2, error: e2 } = await supabase
+        .from('products').update(withoutUnit).eq('id', id).select().single()
+      if (e2) return NextResponse.json({ error: e2.message }, { status: 500 })
+      return NextResponse.json(d2)
+    }
+    return NextResponse.json({ error: error.message }, { status: 500 })
+  }
+
   return NextResponse.json(data)
 }
