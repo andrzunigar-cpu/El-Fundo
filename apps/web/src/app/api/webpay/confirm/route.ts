@@ -65,13 +65,10 @@ export async function POST(req: NextRequest) {
             customer_phone:   orderData.customer_phone,
             customer_address: orderData.customer_address || '',
             notes:            orderData.notes || '',
-            subtotal:         result.amount,
-            discount_total:   0,
-            tax_total:        0,
-            total:            result.amount,
+            total_amount:     result.amount,
             payment_method:   'webpay',
             payment_status:   'paid',
-            delivery_type:    'delivery',
+            channel:          'web',
             status:           'confirmed',
           })
           .select('id')

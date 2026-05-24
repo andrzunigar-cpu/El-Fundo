@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { supabase } from '@/lib/supabase-server'
+import { getSupabase } from '@/lib/getSupabase()-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -12,7 +12,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Nombre y teléfono son requeridos' }, { status: 400 })
     }
 
-    const { data: order, error: orderError } = await supabase
+    const { data: order, error: orderError } = await getSupabase()
       .from('orders')
       .insert({
         customer_name,
@@ -36,7 +36,7 @@ export async function POST(request: NextRequest) {
         unit_price: item.unit_price,
         subtotal: item.quantity * item.unit_price,
       }))
-      const { error: itemsError } = await supabase.from('order_items').insert(orderItems)
+      const { error: itemsError } = await getSupabase().from('order_items').insert(orderItems)
       if (itemsError) console.error('Order items error:', itemsError)
     }
 
@@ -48,7 +48,7 @@ export async function POST(request: NextRequest) {
 }
 
 export async function GET() {
-  const { data, error } = await supabase
+  const { data, error } = await getSupabase()
     .from('orders')
     .select('*, order_items(*)')
     .order('created_at', { ascending: false })

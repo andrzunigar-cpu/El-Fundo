@@ -6,6 +6,7 @@ import { ShoppingBag, Phone, MapPin, Clock, RefreshCw, ChevronDown } from 'lucid
 interface OrderItem {
   id: string
   product_id: string
+  product_name?: string
   quantity: number
   unit_price: number
   subtotal: number
@@ -193,7 +194,8 @@ export default function PedidosAdmin() {
                       {order.order_items.map(item => (
                         <div key={item.id} className="flex justify-between text-sm">
                           <span className="text-gray-600">
-                            {item.quantity} kg × <span className="font-medium text-gray-800">${item.unit_price?.toLocaleString('es-CL')}</span>
+                            <span className="font-medium text-gray-800">{item.product_name || item.product_id}</span>
+                            {' — '}{item.quantity} × ${item.unit_price?.toLocaleString('es-CL')}
                           </span>
                           <span className="font-semibold text-gray-900">${item.subtotal?.toLocaleString('es-CL')}</span>
                         </div>

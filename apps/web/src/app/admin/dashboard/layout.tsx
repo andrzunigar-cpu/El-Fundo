@@ -4,14 +4,15 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LayoutDashboard, Package, Tag, LogOut, ChevronRight, ShoppingBag, Percent } from 'lucide-react'
+import { LayoutDashboard, Package, Tag, LogOut, ChevronRight, ShoppingBag, Percent, Settings } from 'lucide-react'
 
 const NAV = [
-  { href: '/admin/dashboard',            label: 'Dashboard',   icon: LayoutDashboard, exact: true },
-  { href: '/admin/dashboard/pedidos',    label: 'Pedidos',     icon: ShoppingBag },
-  { href: '/admin/dashboard/productos',  label: 'Productos',   icon: Package },
-  { href: '/admin/dashboard/promociones',label: 'Promociones', icon: Percent },
-  { href: '/admin/dashboard/categorias', label: 'Categorías',  icon: Tag },
+  { href: '/admin/dashboard',               label: 'Dashboard',      icon: LayoutDashboard, exact: true },
+  { href: '/admin/dashboard/pedidos',       label: 'Pedidos',        icon: ShoppingBag },
+  { href: '/admin/dashboard/productos',     label: 'Productos',      icon: Package },
+  { href: '/admin/dashboard/promociones',   label: 'Promociones',    icon: Percent },
+  { href: '/admin/dashboard/categorias',    label: 'Categorías',     icon: Tag },
+  { href: '/admin/dashboard/configuracion', label: 'Configuración',  icon: Settings },
 ]
 
 function isAuthed() {
