@@ -32,35 +32,40 @@ export async function GET(request: NextRequest) {
   }
 }
 
+// Insert robusto — quita columnas inexistentes y reintenta
+async function tryInsert(payload: Record<string, unknown>, attempts = 0): Promise<{ data: unknown; error: { message: string } | null }> {
+  const supabase = getSupabase()
+  const { data, error } = await supabase
+    .from('products')
+    .insert(payload)
+    .select()
+    .single()
+
+  if (!error) return { data, error: null }
+
+  const match = error.message.match(/['"]([a-z_]+)['"]/i)
+  const missingCol = match?.[1]
+
+  if (missingCol && missingCol in payload && attempts < 10) {
+    const cleanPayload = { ...payload }
+    delete cleanPayload[missingCol]
+    return tryInsert(cleanPayload, attempts + 1)
+  }
+
+  return { data: null, error }
+}
+
 export async function POST(request: NextRequest) {
   try {
-    const supabase = getSupabase()
-    const body     = await request.json()
+    const body = await request.json()
+    const result = await tryInsert(body)
 
-    // Quitar campos que pueden no existir en el schema
-    const safe = { ...body }
-    if (!safe.unit) delete safe.unit
-
-    const { data, error } = await supabase
-      .from('products')
-      .insert(safe)
-      .select()
-      .single()
-
-    if (error) {
-      console.error('[POST /api/products]', error)
-      // Si el error es por columna faltante, reintentar sin esa columna
-      if (error.message?.includes('column') && error.message?.includes('unit')) {
-        const { unit: _unit, ...withoutUnit } = safe
-        const { data: d2, error: e2 } = await supabase
-          .from('products').insert(withoutUnit).select().single()
-        if (e2) return NextResponse.json({ error: e2.message }, { status: 500 })
-        return NextResponse.json(d2, { status: 201 })
-      }
-      return NextResponse.json({ error: error.message }, { status: 500 })
+    if (result.error) {
+      console.error('[POST /api/products]', result.error)
+      return NextResponse.json({ error: result.error.message }, { status: 500 })
     }
 
-    return NextResponse.json(data, { status: 201 })
+    return NextResponse.json(result.data, { status: 201 })
   } catch (err: unknown) {
     const msg = err instanceof Error ? err.message : 'Error interno'
     return NextResponse.json({ error: msg }, { status: 500 })

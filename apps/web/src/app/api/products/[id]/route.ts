@@ -16,13 +16,9 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json(data)
 }
 
-export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+// Intentar update y, si falla por columna inexistente, sacar esa columna y reintentar
+async function tryUpdate(id: string, payload: Record<string, unknown>, attempts = 0): Promise<{ data: unknown; error: { message: string } | null }> {
   const supabase = getSupabase()
-  const { id }   = await params
-  const body     = await request.json()
-
-  const payload = { ...body, updated_at: new Date().toISOString() }
-
   const { data, error } = await supabase
     .from('products')
     .update(payload)
@@ -30,17 +26,32 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .select()
     .single()
 
-  if (error) {
-    // Si falla por columna "unit" inexistente, reintentar sin ella
-    if (error.message?.includes('column') && error.message?.includes('unit')) {
-      const { unit: _unit, ...withoutUnit } = payload
-      const { data: d2, error: e2 } = await supabase
-        .from('products').update(withoutUnit).eq('id', id).select().single()
-      if (e2) return NextResponse.json({ error: e2.message }, { status: 500 })
-      return NextResponse.json(d2)
-    }
-    return NextResponse.json({ error: error.message }, { status: 500 })
+  if (!error) return { data, error: null }
+
+  // Extraer nombre de columna del mensaje de error de Postgres
+  // Ejemplos: "Could not find the 'unit' column", "column \"foo\" of relation \"products\" does not exist"
+  const match = error.message.match(/['"]([a-z_]+)['"]/i)
+  const missingCol = match?.[1]
+
+  if (missingCol && missingCol in payload && attempts < 10) {
+    const cleanPayload = { ...payload }
+    delete cleanPayload[missingCol]
+    return tryUpdate(id, cleanPayload, attempts + 1)
   }
 
-  return NextResponse.json(data)
+  return { data: null, error }
+}
+
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const { id }   = await params
+  const body     = await request.json()
+
+  const payload = { ...body, updated_at: new Date().toISOString() }
+  const result = await tryUpdate(id, payload)
+
+  if (result.error) {
+    return NextResponse.json({ error: result.error.message }, { status: 500 })
+  }
+
+  return NextResponse.json(result.data)
 }

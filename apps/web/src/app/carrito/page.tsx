@@ -3,9 +3,9 @@
 import { useCart } from '@/lib/store'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, Loader, Lock, Clock, Calendar, Zap } from 'lucide-react'
+import { Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight, Loader, Lock, Clock, Calendar, Zap, Truck, Store } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect } from 'react'
 
 // Formatear fecha YYYY-MM-DD a partir de un Date
 function toDateStr(d: Date) {
@@ -37,6 +37,28 @@ export default function CartPage() {
   const [scheduleMode, setScheduleMode] = useState<'asap' | 'scheduled'>('asap')
   const [schedDate, setSchedDate] = useState('')
   const [schedTime, setSchedTime] = useState('')
+
+  // Despacho vs Retiro
+  const [deliveryMode, setDeliveryMode] = useState<'delivery' | 'pickup'>('delivery')
+  const [deliveryPrice, setDeliveryPrice] = useState(2990)
+  const [minOrder, setMinOrder] = useState(0)
+  const [storeAddress, setStoreAddress] = useState('Santiago, Chile')
+
+  // Cargar config (precio despacho, dirección local)
+  useEffect(() => {
+    fetch('/api/settings')
+      .then(r => r.json())
+      .then(data => {
+        if (typeof data.delivery_price === 'number') setDeliveryPrice(data.delivery_price)
+        if (typeof data.min_order === 'number')       setMinOrder(data.min_order)
+        if (data.store_address)                       setStoreAddress(data.store_address)
+        if (data.delivery_active === false)           setDeliveryMode('pickup')
+      })
+      .catch(() => {/* defaults */})
+  }, [])
+
+  const shippingCost = deliveryMode === 'delivery' ? deliveryPrice : 0
+  const grandTotal   = total() + shippingCost
 
   // Opciones de fecha: hoy + próximos 6 días
   const dateOptions = useMemo(() => {
@@ -77,6 +99,12 @@ export default function CartPage() {
 
   // Validación de programación
   const scheduleValid = scheduleMode === 'asap' || (schedDate && schedTime && timeOptions.length > 0)
+  // Validación pedido mínimo
+  const meetsMinOrder = !minOrder || total() >= minOrder
+  // Validación dirección (solo para despacho)
+  const addressValid = deliveryMode === 'pickup' || !!address.trim()
+  // Todo válido para checkout
+  const canCheckout = !!name && !!phone && scheduleValid && meetsMinOrder && addressValid
 
   // Pago normal (sin webpay)
   const [ordering, setOrdering] = useState(false)
@@ -101,7 +129,9 @@ export default function CartPage() {
           customer_address: address,
           notes,
           items: items.map(i => ({ product_id: i.id, product_name: i.name, quantity: i.quantity, unit_price: i.price })),
-          total_amount: total(),
+          total_amount: grandTotal,
+          shipping_cost: shippingCost,
+          delivery_type: deliveryMode,
           scheduled_for: scheduledFor,
         }),
       })
@@ -134,13 +164,15 @@ export default function CartPage() {
         notes,
         items: items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price, unit: i.unit })),
         scheduled_for:    scheduledFor,
+        delivery_type:    deliveryMode,
+        shipping_cost:    shippingCost,
       }))
 
       const res = await fetch('/api/webpay/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount:    total(),
+          amount:    grandTotal,
           orderId,
           returnUrl: `${window.location.origin}/webpay/return`,
         }),
@@ -280,6 +312,46 @@ export default function CartPage() {
               {/* ── Resumen + Formulario + Pago ── */}
               <div className="space-y-4">
 
+                {/* ── DESPACHO O RETIRO ── */}
+                <div className="bg-white rounded-2xl p-6 border border-gray-100 space-y-3">
+                  <h2 className="font-bold text-gray-900 mb-1">¿Cómo lo quieres recibir?</h2>
+                  <div className="grid grid-cols-2 gap-2">
+                    <button
+                      onClick={() => setDeliveryMode('delivery')}
+                      className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 transition ${
+                        deliveryMode === 'delivery'
+                          ? 'border-red-500 bg-red-50 text-red-700'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Truck className="w-5 h-5" />
+                      <span className="text-sm font-bold">Despacho a domicilio</span>
+                      <span className="text-xs">
+                        {deliveryPrice > 0
+                          ? `+ $${deliveryPrice.toLocaleString('es-CL')}`
+                          : 'Gratis'}
+                      </span>
+                    </button>
+                    <button
+                      onClick={() => setDeliveryMode('pickup')}
+                      className={`flex flex-col items-center gap-1 py-3 px-2 rounded-xl border-2 transition ${
+                        deliveryMode === 'pickup'
+                          ? 'border-red-500 bg-red-50 text-red-700'
+                          : 'border-gray-200 text-gray-600 hover:bg-gray-50'
+                      }`}
+                    >
+                      <Store className="w-5 h-5" />
+                      <span className="text-sm font-bold">Retiro en local</span>
+                      <span className="text-xs">Sin costo</span>
+                    </button>
+                  </div>
+                  {deliveryMode === 'pickup' && (
+                    <p className="text-xs text-gray-500 bg-gray-50 px-3 py-2 rounded-lg">
+                      📍 Retiro en: <span className="font-semibold text-gray-700">{storeAddress}</span>
+                    </p>
+                  )}
+                </div>
+
                 {/* Resumen */}
                 <div className="bg-white rounded-2xl p-6 border border-gray-100">
                   <h2 className="font-bold text-gray-900 mb-4">Resumen</h2>
@@ -291,9 +363,28 @@ export default function CartPage() {
                       </div>
                     ))}
                   </div>
-                  <div className="border-t border-gray-100 pt-4 flex justify-between">
-                    <span className="font-bold text-gray-900">Total</span>
-                    <span className="font-black text-xl text-gray-900">${total().toLocaleString('es-CL')}</span>
+                  <div className="border-t border-gray-100 pt-3 space-y-1.5">
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">Subtotal</span>
+                      <span className="text-gray-800">${total().toLocaleString('es-CL')}</span>
+                    </div>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-gray-600">
+                        {deliveryMode === 'delivery' ? 'Despacho' : 'Retiro en local'}
+                      </span>
+                      <span className="text-gray-800">
+                        {shippingCost > 0 ? `$${shippingCost.toLocaleString('es-CL')}` : 'Gratis'}
+                      </span>
+                    </div>
+                    <div className="border-t border-gray-100 pt-2 flex justify-between">
+                      <span className="font-bold text-gray-900">Total</span>
+                      <span className="font-black text-xl text-gray-900">${grandTotal.toLocaleString('es-CL')}</span>
+                    </div>
+                    {minOrder > 0 && total() < minOrder && (
+                      <p className="text-xs text-orange-600 bg-orange-50 px-2 py-1.5 rounded-lg mt-1">
+                        ⚠️ Pedido mínimo: ${minOrder.toLocaleString('es-CL')}. Te faltan ${(minOrder - total()).toLocaleString('es-CL')}.
+                      </p>
+                    )}
                   </div>
                 </div>
 
@@ -314,13 +405,15 @@ export default function CartPage() {
                     onChange={e => setPhone(e.target.value)}
                     className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                   />
-                  <input
-                    type="text"
-                    placeholder="Dirección de entrega"
-                    value={address}
-                    onChange={e => setAddress(e.target.value)}
-                    className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
-                  />
+                  {deliveryMode === 'delivery' && (
+                    <input
+                      type="text"
+                      placeholder="Dirección de entrega *"
+                      value={address}
+                      onChange={e => setAddress(e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
+                    />
+                  )}
                   <textarea
                     placeholder="Notas adicionales"
                     value={notes}
@@ -421,7 +514,7 @@ export default function CartPage() {
                   {/* WebPay */}
                   <button
                     onClick={handleWebpay}
-                    disabled={webpayLoading || !name || !phone || !scheduleValid}
+                    disabled={webpayLoading || !canCheckout}
                     className="w-full flex items-center justify-center gap-2 py-4 rounded-xl font-bold text-base transition disabled:opacity-50 disabled:cursor-not-allowed bg-[#0f3460] hover:bg-[#162447] text-white"
                   >
                     {webpayLoading ? (
@@ -444,7 +537,7 @@ export default function CartPage() {
                   {/* Confirmar sin pago online */}
                   <button
                     onClick={handleOrder}
-                    disabled={ordering || !name || !phone || !scheduleValid}
+                    disabled={ordering || !canCheckout}
                     className="w-full border-2 border-gray-200 text-gray-700 py-3 rounded-xl font-semibold text-sm hover:bg-gray-50 transition disabled:opacity-50 disabled:cursor-not-allowed"
                   >
                     {ordering ? 'Enviando...' : 'Pedir sin pago online'}

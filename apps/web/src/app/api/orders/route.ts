@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { customer_name, customer_phone, customer_address, notes, items, total_amount, scheduled_for } = body
+    const { customer_name, customer_phone, customer_address, notes, items, total_amount, scheduled_for, delivery_type, shipping_cost } = body
 
     if (!customer_name || !customer_phone) {
       return NextResponse.json({ error: 'Nombre y teléfono son requeridos' }, { status: 400 })
@@ -21,23 +21,26 @@ export async function POST(request: NextRequest) {
       status: 'pending',
       channel: 'web',
     }
-    if (scheduled_for) orderPayload.scheduled_for = scheduled_for
+    if (scheduled_for)         orderPayload.scheduled_for = scheduled_for
+    if (delivery_type)         orderPayload.delivery_type = delivery_type
+    if (shipping_cost != null) orderPayload.shipping_cost = shipping_cost
 
-    let { data: order, error: orderError } = await getSupabase()
-      .from('orders')
-      .insert(orderPayload)
-      .select()
-      .single()
-
-    // Si la columna scheduled_for no existe, reintentar sin ella
-    if (orderError && orderError.message?.includes('scheduled_for')) {
-      delete orderPayload.scheduled_for
-      const retry = await getSupabase().from('orders').insert(orderPayload).select().single()
-      order = retry.data
-      orderError = retry.error
+    // Insert robusto: si falta cualquier columna, sacarla y reintentar
+    let order: { id: string } | null = null
+    let orderError: { message: string } | null = null
+    for (let i = 0; i < 5; i++) {
+      const res = await getSupabase().from('orders').insert(orderPayload).select().single()
+      if (!res.error) { order = res.data; orderError = null; break }
+      const missing = res.error.message.match(/['"]([a-z_]+)['"]/i)?.[1]
+      if (missing && missing in orderPayload) {
+        delete orderPayload[missing]
+        continue
+      }
+      orderError = res.error
+      break
     }
 
-    if (orderError) throw orderError
+    if (orderError || !order) throw orderError || new Error('No se pudo crear el pedido')
 
     if (items?.length) {
       const orderItems = items.map((item: { product_id: string; product_name?: string; quantity: number; unit_price: number }) => ({

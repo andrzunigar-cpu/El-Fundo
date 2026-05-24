@@ -5,6 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { LayoutDashboard, Package, Tag, LogOut, ChevronRight, ShoppingBag, Percent, Settings } from 'lucide-react'
+import NewOrderNotifier from '@/components/NewOrderNotifier'
 
 const NAV = [
   { href: '/admin/dashboard',               label: 'Dashboard',      icon: LayoutDashboard, exact: true },
@@ -111,6 +112,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
       <main className="flex-1 overflow-auto">
         {children}
       </main>
+
+      {/* Notificador de pedidos nuevos */}
+      <NewOrderNotifier />
     </div>
   )
 }
