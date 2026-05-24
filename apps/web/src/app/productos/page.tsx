@@ -150,7 +150,9 @@ export default function ProductsPage() {
   const promos   = products.filter(p => (p as any).promotional_price)
   const isInCart = (id: string) => items.some(i => i.id === id)
 
+  // Combos siempre van en la sección dark, nunca en el grid normal
   const filtered = products.filter(p => {
+    if (p.category_id === 'cat-combos') return false
     const matchCat    = activeCategory === 'all' || p.category_id === activeCategory
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase())
     return matchCat && matchSearch
@@ -318,7 +320,7 @@ export default function ProductsPage() {
         )}
 
         {/* ── Combos ── */}
-        {!loading && activeCategory === 'all' && (
+        {!loading && (activeCategory === 'all' || activeCategory === 'cat-combos') && (
           (() => {
             const combos = products.filter(p => p.category_id === 'cat-combos')
             if (combos.length === 0) return null
@@ -444,7 +446,7 @@ export default function ProductsPage() {
             </div>
           )}
 
-          {!loading && filtered.length === 0 && (
+          {!loading && filtered.length === 0 && activeCategory !== 'cat-combos' && (
             <div className="text-center py-20">
               <p className="text-gray-400 text-lg">No hay productos en esta categoría</p>
             </div>

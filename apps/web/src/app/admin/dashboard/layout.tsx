@@ -1,37 +1,62 @@
 'use client'
 
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
 import { LayoutDashboard, Package, Tag, LogOut, ChevronRight, ShoppingBag, Percent } from 'lucide-react'
 
 const NAV = [
-  { href: '/admin/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/admin/dashboard/pedidos', label: 'Pedidos', icon: ShoppingBag },
-  { href: '/admin/dashboard/productos', label: 'Productos', icon: Package },
-  { href: '/admin/dashboard/promociones', label: 'Promociones', icon: Percent },
-  { href: '/admin/dashboard/categorias', label: 'Categorías', icon: Tag },
+  { href: '/admin/dashboard',            label: 'Dashboard',   icon: LayoutDashboard, exact: true },
+  { href: '/admin/dashboard/pedidos',    label: 'Pedidos',     icon: ShoppingBag },
+  { href: '/admin/dashboard/productos',  label: 'Productos',   icon: Package },
+  { href: '/admin/dashboard/promociones',label: 'Promociones', icon: Percent },
+  { href: '/admin/dashboard/categorias', label: 'Categorías',  icon: Tag },
 ]
 
+function isAuthed() {
+  // Revisar cookie
+  if (typeof document !== 'undefined') {
+    if (document.cookie.includes('admin_auth=true')) return true
+  }
+  // Revisar localStorage como fallback
+  try {
+    if (localStorage.getItem('admin_auth') === 'true') return true
+  } catch {}
+  return false
+}
+
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const router = useRouter()
+  const router   = useRouter()
   const pathname = usePathname()
+  const [ready, setReady] = useState(false)
 
   useEffect(() => {
-    const auth = sessionStorage.getItem('admin_auth')
-    if (!auth) router.push('/admin')
+    if (!isAuthed()) {
+      router.replace('/admin')
+    } else {
+      setReady(true)
+    }
   }, [router])
 
   const handleLogout = () => {
-    sessionStorage.removeItem('admin_auth')
-    router.push('/admin')
+    try { localStorage.removeItem('admin_auth') } catch {}
+    document.cookie = 'admin_auth=; path=/; max-age=0'
+    router.replace('/admin')
+  }
+
+  if (!ready) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-gray-400 text-sm">Verificando acceso...</div>
+      </div>
+    )
   }
 
   return (
     <div className="min-h-screen bg-gray-50 flex">
       {/* Sidebar */}
-      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col">
+      <aside className="w-64 bg-white border-r border-gray-200 flex flex-col shrink-0">
         <div className="p-5 border-b border-gray-100 bg-gray-950">
           <Image
             src="/logo.png"
@@ -47,7 +72,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         <nav className="flex-1 p-4 space-y-1">
           {NAV.map(item => {
             const Icon = item.icon
-            const active = pathname === item.href || pathname.startsWith(item.href + '/')
+            // Exact match para Dashboard, startsWith para el resto
+            const active = item.exact
+              ? pathname === item.href
+              : pathname === item.href || pathname.startsWith(item.href + '/')
+
             return (
               <Link
                 key={item.href}

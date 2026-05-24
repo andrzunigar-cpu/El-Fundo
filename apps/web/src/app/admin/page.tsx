@@ -20,15 +20,18 @@ export default function AdminLogin() {
     setLoading(true)
     setError('')
 
-    await new Promise(r => setTimeout(r, 500))
+    await new Promise(r => setTimeout(r, 400))
 
-    if (username === ADMIN_USER && password === ADMIN_PASS) {
-      sessionStorage.setItem('admin_auth', 'true')
+    if (username.trim() === ADMIN_USER && password === ADMIN_PASS) {
+      // Usar cookie + localStorage para máxima compatibilidad
+      try { localStorage.setItem('admin_auth', 'true') } catch {}
+      // Cookie con expiración de 8 horas
+      document.cookie = `admin_auth=true; path=/; max-age=${60 * 60 * 8}; SameSite=Lax`
       router.push('/admin/dashboard')
     } else {
       setError('Usuario o contraseña incorrectos')
+      setLoading(false)
     }
-    setLoading(false)
   }
 
   return (
@@ -51,6 +54,7 @@ export default function AdminLogin() {
                 onChange={e => setUsername(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 placeholder="admin"
+                autoComplete="username"
                 required
               />
             </div>
@@ -66,9 +70,14 @@ export default function AdminLogin() {
                 onChange={e => setPassword(e.target.value)}
                 className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
                 placeholder="••••••••"
+                autoComplete="current-password"
                 required
               />
-              <button type="button" onClick={() => setShowPass(!showPass)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+              <button
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
                 {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
