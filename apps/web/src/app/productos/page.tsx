@@ -53,10 +53,12 @@ const CATALOGO: Product[] = [
   { id: 'prod-cor-002', name: 'Costillar Cordero',  category_id: 'cat-parrilla',  base_price: 11990, online_price: 11990, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=600&q=80"]' },
   { id: 'prod-beb-1',   name: 'Coca Cola 1.5L',     category_id: 'cat-bebidas',   base_price:  1500, online_price:  1500, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1554866585-cd94860890b7?w=600&q=80"]' },
   { id: 'prod-beb-2',   name: 'Fanta 1.5L',         category_id: 'cat-bebidas',   base_price:  2000, online_price:  2000, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=600&q=80"]' },
-  { id: 'prod-combo-001', name: 'Pack Asado Familiar',    category_id: 'cat-combos', base_price: 35000, online_price: 35000, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=600&q=80"]' },
-  { id: 'prod-combo-002', name: 'Pack Parrilla Completa', category_id: 'cat-combos', base_price: 45000, online_price: 45000, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80"]' },
-  { id: 'prod-combo-003', name: 'Pack Económico',         category_id: 'cat-combos', base_price: 20000, online_price: 20000, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1546069901-ba9599a7e63c?w=600&q=80"]' },
-  { id: 'prod-combo-004', name: 'Pack Pollo y Cerdo',     category_id: 'cat-combos', base_price: 18000, online_price: 18000, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=600&q=80"]' },
+  { id: 'prod-combo-001', name: 'Pack Asado Clásico',      category_id: 'cat-combos', base_price: 38000, online_price: 38000, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=600&q=80"]' },
+  { id: 'prod-combo-002', name: 'Pack Parrillero Pro',     category_id: 'cat-combos', base_price: 55000, online_price: 55000, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80"]' },
+  { id: 'prod-combo-003', name: 'Pack Familiar Económico', category_id: 'cat-combos', base_price: 22000, online_price: 22000, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=600&q=80"]' },
+  { id: 'prod-combo-004', name: 'Pack Cazuela Completa',   category_id: 'cat-combos', base_price: 18000, online_price: 18000, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80"]' },
+  { id: 'prod-combo-005', name: 'Pack Fin de Semana',      category_id: 'cat-combos', base_price: 32000, online_price: 32000, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&q=80"]' },
+  { id: 'prod-combo-006', name: 'Pack Cumpleaños',         category_id: 'cat-combos', base_price: 75000, online_price: 75000, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=600&q=80"]' },
 ]
 
 export default function ProductsPage() {
@@ -230,16 +232,67 @@ export default function ProductsPage() {
           (() => {
             const combos = products.filter(p => p.category_id === 'cat-combos')
             if (combos.length === 0) return null
+
+            const COMBO_INFO: Record<string, { desc: string; personas: string; badge: string }> = {
+              'prod-combo-001': { desc: 'Entraña 1kg · Lomo Vetado 1kg · Chorizo 500g · Longaniza 500g', personas: '4 personas', badge: '🥩 Asado' },
+              'prod-combo-002': { desc: 'Lomo Liso 1kg · Asado de Tira 1kg · Cordero 1kg · Chorizo 500g · Longaniza 500g', personas: '6-8 personas', badge: '🔥 Pro' },
+              'prod-combo-003': { desc: 'Carne Molida 1kg · Pechuga de Pollo 1kg · Costillar Cerdo 1kg', personas: 'Semana completa', badge: '💰 Ahorro' },
+              'prod-combo-004': { desc: 'Osobuco 1kg · Plateada 500g · Pollo Entero 1 unidad', personas: '4 personas', badge: '🍲 Cazuela' },
+              'prod-combo-005': { desc: 'Costillar Cerdo 1kg · Costillar Cordero 1kg · Prieta 6u · Longaniza 500g', personas: '5-6 personas', badge: '🎉 Finde' },
+              'prod-combo-006': { desc: 'Lomo Liso 2kg · Entraña 1kg · Asado de Tira 1kg · Chorizo 1kg · Longaniza 1kg · Costillar Cordero 1kg', personas: '10-12 personas', badge: '🎂 Fiesta' },
+            }
+
             return (
-              <section className="bg-gray-900 py-10">
+              <section className="bg-gray-900 py-12">
                 <div className="max-w-7xl mx-auto px-4">
-                  <div className="flex items-center gap-3 mb-6">
-                    <Package className="w-6 h-6 text-white" />
-                    <h2 className="text-2xl font-black text-white">Combos y Packs</h2>
-                    <span className="text-gray-400 text-sm">— para llevar más ahorrando</span>
+                  <div className="text-center mb-8">
+                    <p className="text-red-400 font-semibold text-sm uppercase tracking-widest mb-2">Más por menos</p>
+                    <h2 className="text-3xl font-black text-white">Combos y Packs</h2>
+                    <p className="text-gray-400 mt-2">Packs armados para tu asado, cazuela o la semana</p>
                   </div>
-                  <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                    {combos.map(p => <ProductCard key={p.id} product={p} />)}
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+                    {combos.map(p => {
+                      const info = COMBO_INFO[p.id] || { desc: '', personas: '', badge: '📦' }
+                      const inCart = isInCart(p.id)
+                      return (
+                        <div key={p.id} className="bg-gray-800 rounded-2xl overflow-hidden border border-gray-700 hover:border-red-500 transition-all group flex flex-col">
+                          <div className="relative h-48 overflow-hidden">
+                            <img
+                              src={getProductImage(p)}
+                              alt={p.name}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500 brightness-75"
+                              onError={e => { (e.target as HTMLImageElement).src = CATEGORY_IMAGES.default }}
+                            />
+                            <div className="absolute inset-0 bg-gradient-to-t from-gray-900/80 to-transparent" />
+                            <span className="absolute top-3 left-3 bg-red-600 text-white text-xs font-black px-2.5 py-1 rounded-lg">
+                              {info.badge}
+                            </span>
+                            <span className="absolute bottom-3 right-3 bg-black/60 text-white text-xs px-2 py-1 rounded-lg">
+                              👥 {info.personas}
+                            </span>
+                          </div>
+                          <div className="p-5 flex flex-col flex-1">
+                            <h3 className="font-black text-white text-lg mb-2">{p.name}</h3>
+                            <p className="text-gray-400 text-sm mb-4 leading-relaxed flex-1">{info.desc}</p>
+                            <div className="flex items-center justify-between">
+                              <div>
+                                <p className="text-2xl font-black text-white">${(p.online_price || p.base_price).toLocaleString('es-CL')}</p>
+                                <p className="text-xs text-gray-400">pack completo</p>
+                              </div>
+                              <button
+                                onClick={() => addItem({ id: p.id, name: p.name, price: p.online_price || p.base_price, quantity: 1 })}
+                                className={`flex items-center gap-2 px-4 py-2.5 rounded-xl font-bold text-sm transition-all ${
+                                  inCart ? 'bg-green-500 text-white' : 'bg-red-600 text-white hover:bg-red-500 active:scale-95'
+                                }`}
+                              >
+                                <ShoppingCart className="w-4 h-4" />
+                                {inCart ? '✓ Agregado' : 'Pedir'}
+                              </button>
+                            </div>
+                          </div>
+                        </div>
+                      )
+                    })}
                   </div>
                 </div>
               </section>
