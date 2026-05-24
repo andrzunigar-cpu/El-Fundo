@@ -38,15 +38,18 @@ export function Header() {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-0.5">
-            {CATEGORIES.slice(0, 5).map(cat => (
+            {CATEGORIES.map(cat => (
               <Link
                 key={cat.id}
                 href={`/categoria/${cat.id}`}
-                className="px-3 py-2 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition"
+                className="px-2.5 py-2 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition whitespace-nowrap"
               >
                 {cat.name}
               </Link>
             ))}
+            <Link href="/recetas" className="px-2.5 py-2 text-xs font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10 rounded-lg transition whitespace-nowrap">
+              Recetas
+            </Link>
           </nav>
 
           <div className="flex items-center gap-3">
@@ -78,11 +81,16 @@ export function Header() {
               <Link
                 key={cat.id}
                 href={`/categoria/${cat.id}`}
+                onClick={() => setMenuOpen(false)}
                 className="block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition"
               >
                 {cat.name}
               </Link>
             ))}
+            <Link href="/recetas" onClick={() => setMenuOpen(false)}
+              className="block px-4 py-2.5 text-sm font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10 rounded-lg transition">
+              🍳 Recetas
+            </Link>
           </div>
         )}
       </div>
