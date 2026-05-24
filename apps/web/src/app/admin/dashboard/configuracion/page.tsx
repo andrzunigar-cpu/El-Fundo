@@ -1,32 +1,34 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Save, Loader, Store, Truck, Clock, Phone, MapPin, MessageCircle, CreditCard, ToggleLeft, ToggleRight, AlertCircle, CheckCircle } from 'lucide-react'
+import { Save, Loader, Store, Truck, Clock, Phone, MapPin, MessageCircle, CreditCard, ToggleLeft, ToggleRight, AlertCircle, CheckCircle, WrenchIcon } from 'lucide-react'
 
 interface Settings {
-  store_name:      string
-  store_phone:     string
-  store_address:   string
-  store_hours:     string
-  whatsapp:        string
-  delivery_price:  number
-  min_order:       number
-  delivery_active: boolean
-  store_open:      boolean
-  webpay_active:   boolean
+  store_name:        string
+  store_phone:       string
+  store_address:     string
+  store_hours:       string
+  whatsapp:          string
+  delivery_price:    number
+  min_order:         number
+  delivery_active:   boolean
+  store_open:        boolean
+  webpay_active:     boolean
+  maintenance_mode:  boolean
 }
 
 const DEFAULTS: Settings = {
-  store_name:      'Carnicería El Fundo',
+  store_name:        'Carnicería El Fundo',
   store_phone:     '+56 9 XXXX XXXX',
   store_address:   'Santiago, Chile',
   store_hours:     'Lun–Sáb 8:00–20:00, Dom 9:00–14:00',
   whatsapp:        '',
   delivery_price:  2990,
   min_order:       5000,
-  delivery_active: true,
-  store_open:      true,
-  webpay_active:   true,
+  delivery_active:   true,
+  store_open:        true,
+  webpay_active:     true,
+  maintenance_mode:  false,
 }
 
 export default function ConfiguracionAdmin() {
@@ -46,22 +48,34 @@ export default function ConfiguracionAdmin() {
   const set = <K extends keyof Settings>(key: K, val: Settings[K]) =>
     setSettings(prev => ({ ...prev, [key]: val }))
 
+  // Aplica/quita la cookie de mantención inmediatamente al toggle
+  const toggleMaintenance = (val: boolean) => {
+    set('maintenance_mode', val)
+    if (val) {
+      document.cookie = 'maintenance_mode=true; path=/; max-age=86400; SameSite=Lax'
+    } else {
+      document.cookie = 'maintenance_mode=; path=/; max-age=0; SameSite=Lax'
+    }
+  }
+
   const handleSave = async () => {
     setSaving(true); setError(''); setSaved(false)
+    // Sincronizar cookie con el estado guardado
+    if (settings.maintenance_mode) {
+      document.cookie = 'maintenance_mode=true; path=/; max-age=86400; SameSite=Lax'
+    } else {
+      document.cookie = 'maintenance_mode=; path=/; max-age=0; SameSite=Lax'
+    }
     try {
-      // Guardar en API (Supabase si está disponible)
-      const res = await fetch('/api/settings', {
+      await fetch('/api/settings', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(settings),
       })
-      if (!res.ok) throw new Error('Error al guardar')
-      // Guardar también en localStorage como respaldo
       localStorage.setItem('store_settings', JSON.stringify(settings))
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
-    } catch (e: unknown) {
-      // Si falla Supabase, igual guardamos en localStorage
+    } catch {
       localStorage.setItem('store_settings', JSON.stringify(settings))
       setSaved(true)
       setTimeout(() => setSaved(false), 3000)
@@ -100,6 +114,53 @@ export default function ConfiguracionAdmin() {
       )}
 
       <div className="space-y-6">
+
+        {/* ── MODO MANTENCIÓN (tarjeta destacada) ── */}
+        <div className={`rounded-xl border-2 p-6 transition-all ${
+          settings.maintenance_mode
+            ? 'bg-orange-50 border-orange-400'
+            : 'bg-white border-gray-200'
+        }`}>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-3">
+              <div className={`p-2.5 rounded-xl ${settings.maintenance_mode ? 'bg-orange-100' : 'bg-gray-100'}`}>
+                <WrenchIcon className={`w-5 h-5 ${settings.maintenance_mode ? 'text-orange-600' : 'text-gray-500'}`} />
+              </div>
+              <div>
+                <p className="font-bold text-gray-900">Modo Mantención</p>
+                <p className="text-sm text-gray-500 mt-0.5">
+                  {settings.maintenance_mode
+                    ? '⚠️ El sitio está en mantención — los clientes ven la página de mantención'
+                    : 'El sitio está visible para todos los clientes'}
+                </p>
+              </div>
+            </div>
+            <button
+              onClick={() => toggleMaintenance(!settings.maintenance_mode)}
+              className={`relative inline-flex h-8 w-16 items-center rounded-full transition-colors focus:outline-none ${
+                settings.maintenance_mode ? 'bg-orange-500' : 'bg-gray-300'
+              }`}
+            >
+              <span className={`inline-block h-6 w-6 rounded-full bg-white shadow-md transition-transform ${
+                settings.maintenance_mode ? 'translate-x-9' : 'translate-x-1'
+              }`} />
+            </button>
+          </div>
+          {settings.maintenance_mode && (
+            <div className="mt-4 flex items-center gap-3 px-4 py-3 bg-orange-100 rounded-lg">
+              <span className="text-orange-600 text-sm font-medium">
+                🔒 Los clientes ven la pantalla de mantención. Tú (admin) sigues teniendo acceso normal.
+              </span>
+              <a
+                href="/mantencion"
+                target="_blank"
+                className="ml-auto text-xs font-semibold text-orange-700 underline whitespace-nowrap"
+              >
+                Ver página →
+              </a>
+            </div>
+          )}
+        </div>
 
         {/* ── Estado de la tienda ── */}
         <div className="bg-white rounded-xl border border-gray-200 p-6">
