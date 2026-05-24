@@ -6,7 +6,7 @@ export const dynamic = 'force-dynamic'
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json()
-    const { customer_name, customer_phone, customer_address, notes, items, total_amount, scheduled_for, delivery_type, shipping_cost } = body
+    const { customer_name, customer_phone, customer_address, notes, items, total_amount, scheduled_for, delivery_type, shipping_cost, payment_method } = body
 
     if (!customer_name || !customer_phone) {
       return NextResponse.json({ error: 'Nombre y teléfono son requeridos' }, { status: 400 })
@@ -21,9 +21,10 @@ export async function POST(request: NextRequest) {
       status: 'pending',
       channel: 'web',
     }
-    if (scheduled_for)         orderPayload.scheduled_for = scheduled_for
-    if (delivery_type)         orderPayload.delivery_type = delivery_type
-    if (shipping_cost != null) orderPayload.shipping_cost = shipping_cost
+    if (scheduled_for)         orderPayload.scheduled_for  = scheduled_for
+    if (delivery_type)         orderPayload.delivery_type  = delivery_type
+    if (shipping_cost != null) orderPayload.shipping_cost  = shipping_cost
+    if (payment_method)        orderPayload.payment_method = payment_method
 
     // Insert robusto: si falta cualquier columna, sacarla y reintentar
     let order: { id: string } | null = null

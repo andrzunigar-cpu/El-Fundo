@@ -5,7 +5,7 @@ import { useParams } from 'next/navigation'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { useCart } from '@/lib/store'
-import { ArrowLeft, ShoppingCart } from 'lucide-react'
+import { ArrowLeft, Plus, Minus, ShoppingCart, Check } from 'lucide-react'
 import Link from 'next/link'
 
 const CATEGORIES: Record<string, { name: string; image: string; desc: string }> = {
@@ -19,121 +19,190 @@ const CATEGORIES: Record<string, { name: string; image: string; desc: string }> 
   quesos:    { name: 'Quesos',    image: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=800&q=80', desc: 'Selección artesanal de quesos' },
 }
 
-// Catálogo de respaldo — se muestra inmediatamente mientras carga la API
+// Catálogo fallback — muestra instantáneamente mientras carga la API
 const CATALOGO_FALLBACK: Product[] = [
-  { id: 'prod-vac-001', name: 'Lomo Liso',         base_price: 100, online_price: 100, category_id: 'cat-vacuno',    is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80'] },
-  { id: 'prod-vac-002', name: 'Lomo Vetado',        base_price: 100, online_price: 100, category_id: 'cat-vacuno',    is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&q=80'] },
-  { id: 'prod-vac-003', name: 'Posta Negra',        base_price: 100, online_price: 100, category_id: 'cat-vacuno',    is_featured: false, image_urls: ['https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=600&q=80'] },
-  { id: 'prod-vac-004', name: 'Asado de Tira',      base_price: 100, online_price: 100, category_id: 'cat-vacuno',    is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1633237308525-cd587cf71926?w=600&q=80'] },
-  { id: 'prod-vac-005', name: 'Entraña',            base_price: 100, online_price: 100, category_id: 'cat-vacuno',    is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=600&q=80'] },
-  { id: 'prod-vac-006', name: 'Plateada',           base_price: 100, online_price: 100, category_id: 'cat-vacuno',    is_featured: false, image_urls: ['https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=600&q=80'] },
-  { id: 'prod-vac-007', name: 'Osobuco',            base_price: 100, online_price: 100, category_id: 'cat-vacuno',    is_featured: false, image_urls: ['https://images.unsplash.com/photo-1615937691194-97dbd3f3dc29?w=600&q=80'] },
-  { id: 'prod-vac-008', name: 'Carne Molida',       base_price: 100, online_price: 100, category_id: 'cat-vacuno',    is_featured: false, image_urls: ['https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80'] },
-  { id: 'prod-cer-001', name: 'Pulpa de Cerdo',     base_price: 100, online_price: 100, category_id: 'cat-cerdo',     is_featured: false, image_urls: ['https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80'] },
-  { id: 'prod-cer-002', name: 'Costillar de Cerdo', base_price: 100, online_price: 100, category_id: 'cat-cerdo',     is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&q=80'] },
-  { id: 'prod-cer-003', name: 'Chuleta Centro',     base_price: 100, online_price: 100, category_id: 'cat-cerdo',     is_featured: false, image_urls: ['https://images.unsplash.com/photo-1432139509613-5c4255815697?w=600&q=80'] },
-  { id: 'prod-pol-001', name: 'Pollo Entero',       base_price: 100, online_price: 100, category_id: 'cat-pollo',     is_featured: false, image_urls: ['https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=600&q=80'] },
-  { id: 'prod-pol-002', name: 'Pechuga de Pollo',   base_price: 100, online_price: 100, category_id: 'cat-pollo',     is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80'] },
-  { id: 'prod-pol-003', name: 'Trutro de Pollo',    base_price: 100, online_price: 100, category_id: 'cat-pollo',     is_featured: false, image_urls: ['https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=600&q=80'] },
-  { id: 'prod-emb-001', name: 'Longaniza Casera',   base_price: 100, online_price: 100, category_id: 'cat-embutidos', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&q=80'] },
-  { id: 'prod-emb-002', name: 'Chorizo Parrillero', base_price: 100, online_price: 100, category_id: 'cat-embutidos', is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80'] },
-  { id: 'prod-emb-003', name: 'Prieta',             base_price: 100, online_price: 100, category_id: 'cat-embutidos', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=600&q=80'] },
-  { id: 'prod-cor-001', name: 'Pierna de Cordero',  base_price: 100, online_price: 100, category_id: 'cat-parrilla',  is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1615937722923-67f6deaf2cc9?w=600&q=80'] },
-  { id: 'prod-cor-002', name: 'Costillar Cordero',  base_price: 100, online_price: 100, category_id: 'cat-parrilla',  is_featured: false, image_urls: ['https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&q=80'] },
-  { id: 'prod-beb-1',   name: 'Coca Cola 1.5L',     base_price: 100, online_price: 100, category_id: 'cat-bebidas',   is_featured: false, image_urls: ['https://images.unsplash.com/photo-1554866585-cd94860890b7?w=600&q=80'] },
-  { id: 'prod-beb-2',   name: 'Fanta 1.5L',         base_price: 100, online_price: 100, category_id: 'cat-bebidas',   is_featured: false, image_urls: ['https://images.unsplash.com/photo-1629203851122-3726ecdf080e?w=600&q=80'] },
+  { id: 'prod-vac-001', name: 'Lomo Liso',         base_price: 100, online_price: 100, category_id: 'cat-vacuno',    unit: 'kg', is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80'] },
+  { id: 'prod-vac-002', name: 'Lomo Vetado',        base_price: 100, online_price: 100, category_id: 'cat-vacuno',    unit: 'kg', is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1600891964092-4316c288032e?w=600&q=80'] },
+  { id: 'prod-vac-003', name: 'Posta Negra',        base_price: 100, online_price: 100, category_id: 'cat-vacuno',    unit: 'kg', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=600&q=80'] },
+  { id: 'prod-vac-004', name: 'Asado de Tira',      base_price: 100, online_price: 100, category_id: 'cat-vacuno',    unit: 'kg', is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1633237308525-cd587cf71926?w=600&q=80'] },
+  { id: 'prod-vac-005', name: 'Entraña',            base_price: 100, online_price: 100, category_id: 'cat-vacuno',    unit: 'kg', is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1588168333986-5078d3ae3976?w=600&q=80'] },
+  { id: 'prod-vac-006', name: 'Plateada',           base_price: 100, online_price: 100, category_id: 'cat-vacuno',    unit: 'kg', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=600&q=80'] },
+  { id: 'prod-vac-007', name: 'Osobuco',            base_price: 100, online_price: 100, category_id: 'cat-vacuno',    unit: 'kg', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1615937691194-97dbd3f3dc29?w=600&q=80'] },
+  { id: 'prod-vac-008', name: 'Carne Molida',       base_price: 100, online_price: 100, category_id: 'cat-vacuno',    unit: 'kg', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80'] },
+  { id: 'prod-cer-001', name: 'Pulpa de Cerdo',     base_price: 100, online_price: 100, category_id: 'cat-cerdo',     unit: 'kg', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80'] },
+  { id: 'prod-cer-002', name: 'Costillar de Cerdo', base_price: 100, online_price: 100, category_id: 'cat-cerdo',     unit: 'kg', is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&q=80'] },
+  { id: 'prod-cer-003', name: 'Chuleta Centro',     base_price: 100, online_price: 100, category_id: 'cat-cerdo',     unit: 'kg', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1432139509613-5c4255815697?w=600&q=80'] },
+  { id: 'prod-pol-001', name: 'Pollo Entero',       base_price: 100, online_price: 100, category_id: 'cat-pollo',     unit: 'un', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=600&q=80'] },
+  { id: 'prod-pol-002', name: 'Pechuga de Pollo',   base_price: 100, online_price: 100, category_id: 'cat-pollo',     unit: 'kg', is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80'] },
+  { id: 'prod-pol-003', name: 'Trutro de Pollo',    base_price: 100, online_price: 100, category_id: 'cat-pollo',     unit: 'kg', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=600&q=80'] },
+  { id: 'prod-emb-001', name: 'Longaniza Casera',   base_price: 100, online_price: 100, category_id: 'cat-embutidos', unit: 'un', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&q=80'] },
+  { id: 'prod-emb-002', name: 'Chorizo Parrillero', base_price: 100, online_price: 100, category_id: 'cat-embutidos', unit: 'un', is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80'] },
+  { id: 'prod-emb-003', name: 'Prieta',             base_price: 100, online_price: 100, category_id: 'cat-embutidos', unit: 'un', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=600&q=80'] },
+  { id: 'prod-cor-001', name: 'Pierna de Cordero',  base_price: 100, online_price: 100, category_id: 'cat-parrilla',  unit: 'kg', is_featured: true,  image_urls: ['https://images.unsplash.com/photo-1615937722923-67f6deaf2cc9?w=600&q=80'] },
+  { id: 'prod-cor-002', name: 'Costillar Cordero',  base_price: 100, online_price: 100, category_id: 'cat-parrilla',  unit: 'kg', is_featured: false, image_urls: ['https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&q=80'] },
 ]
 
-const QUESOS_EJEMPLO = [
-  {
-    id: 'q1', name: 'Queso Mantecoso', price: 4990,
-    desc: 'Queso suave y cremoso, ideal para derretir',
-    image: 'https://images.unsplash.com/photo-1552767059-ce182ead6c1b?w=400&q=80',
-  },
-  {
-    id: 'q2', name: 'Queso Gouda', price: 5990,
-    desc: 'Queso holandés semiduro con sabor suave',
-    image: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&q=80',
-  },
-  {
-    id: 'q3', name: 'Queso Chanco', price: 3990,
-    desc: 'El clásico queso chileno, firme y sabroso',
-    image: 'https://images.unsplash.com/photo-1559561853-08451507cbe7?w=400&q=80',
-  },
-  {
-    id: 'q4', name: 'Queso Brie', price: 7990,
-    desc: 'Queso francés suave con corteza blanca',
-    image: 'https://images.unsplash.com/photo-1618164436241-4473940d1f5c?w=400&q=80',
-  },
-  {
-    id: 'q5', name: 'Queso Parmesano', price: 8990,
-    desc: 'Queso duro italiano, perfecto para rallar',
-    image: 'https://images.unsplash.com/photo-1634487359989-3e90c9432133?w=400&q=80',
-  },
-  {
-    id: 'q6', name: 'Queso Mozzarella', price: 4490,
-    desc: 'Fresco y elástico, ideal para pizzas',
-    image: 'https://images.unsplash.com/photo-1587132137056-bfbf0166836e?w=400&q=80',
-  },
+// Quesos hardcoded con unidad kg
+const QUESOS_FALLBACK: Product[] = [
+  { id: 'q1', name: 'Queso Mantecoso', base_price: 4990, online_price: 4990, unit: 'kg', category_id: 'cat-quesos', image_urls: ['https://images.unsplash.com/photo-1552767059-ce182ead6c1b?w=400&q=80'] },
+  { id: 'q2', name: 'Queso Gouda',     base_price: 5990, online_price: 5990, unit: 'kg', category_id: 'cat-quesos', image_urls: ['https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&q=80'] },
+  { id: 'q3', name: 'Queso Chanco',    base_price: 3990, online_price: 3990, unit: 'kg', category_id: 'cat-quesos', image_urls: ['https://images.unsplash.com/photo-1559561853-08451507cbe7?w=400&q=80'] },
+  { id: 'q4', name: 'Queso Brie',      base_price: 7990, online_price: 7990, unit: 'kg', category_id: 'cat-quesos', image_urls: ['https://images.unsplash.com/photo-1618164436241-4473940d1f5c?w=400&q=80'] },
+  { id: 'q5', name: 'Queso Parmesano', base_price: 8990, online_price: 8990, unit: 'kg', category_id: 'cat-quesos', image_urls: ['https://images.unsplash.com/photo-1634487359989-3e90c9432133?w=400&q=80'] },
+  { id: 'q6', name: 'Queso Mozzarella',base_price: 4490, online_price: 4490, unit: 'kg', category_id: 'cat-quesos', image_urls: ['https://images.unsplash.com/photo-1587132137056-bfbf0166836e?w=400&q=80'] },
 ]
+
+// Categorías con unidad "un" por defecto
+const UN_CATEGORIES = new Set(['cat-bebidas', 'cat-combos'])
+const UN_PRODUCTS   = new Set(['prod-pol-001', 'prod-emb-001', 'prod-emb-002', 'prod-emb-003'])
 
 interface Product {
   id: string
   name: string
   base_price: number
   online_price?: number
-  meat_type?: string
-  image_urls?: string[]
+  unit?: string
+  image_urls?: string[] | string
   category_id?: string
   is_featured?: boolean
 }
 
+function getUnit(product: Product, categoryId: string): 'kg' | 'un' {
+  if (product.unit) return product.unit as 'kg' | 'un'
+  if (UN_CATEGORIES.has(`cat-${categoryId}`)) return 'un'
+  if (UN_PRODUCTS.has(product.id)) return 'un'
+  return 'kg'
+}
+
+function fmtQty(qty: number, unit: 'kg' | 'un') {
+  if (unit === 'kg') return qty < 1 ? `${qty * 1000} g` : `${qty} kg`
+  return `${qty} un`
+}
+
+function ProductCard({ product, categoryId }: { product: Product; categoryId: string }) {
+  const { addItem, updateQuantity, items } = useCart()
+  const unit   = getUnit(product, categoryId)
+  const step   = unit === 'kg' ? 0.25 : 1
+  const minQty = step
+  const price  = product.online_price || product.base_price
+
+  const cartItem = items.find(i => i.id === product.id)
+  const [qty, setQty] = useState(unit === 'kg' ? 0.25 : 1)
+
+  const imgs  = typeof product.image_urls === 'string'
+    ? JSON.parse(product.image_urls || '[]')
+    : (product.image_urls || [])
+  const image = imgs[0] || 'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=400&q=80'
+
+  const adjust = (delta: number) => {
+    const next = parseFloat((qty + delta).toFixed(2))
+    if (next >= minQty) setQty(next)
+  }
+
+  const handleAdd = () => {
+    if (cartItem) {
+      updateQuantity(product.id, parseFloat((cartItem.quantity + qty).toFixed(2)))
+    } else {
+      addItem({ id: product.id, name: product.name, price, quantity: qty, unit })
+    }
+  }
+
+  return (
+    <div className="group bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100 flex flex-col">
+      <div className="relative h-48 overflow-hidden">
+        <img
+          src={image}
+          alt={product.name}
+          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
+        />
+        {cartItem && (
+          <div className="absolute top-2 right-2 bg-green-500 text-white text-xs font-bold px-2 py-1 rounded-full">
+            ✓ En carrito
+          </div>
+        )}
+      </div>
+      <div className="p-4 flex flex-col flex-1">
+        <h3 className="font-bold text-gray-900 mb-1 text-sm leading-tight">{product.name}</h3>
+
+        <div className="mt-auto pt-3 border-t border-gray-100 space-y-2">
+          {/* Precio */}
+          <div className="flex items-baseline gap-1">
+            <span className="text-lg font-black text-gray-900">
+              ${price.toLocaleString('es-CL')}
+            </span>
+            <span className="text-xs text-gray-400">/ {unit}</span>
+          </div>
+
+          {/* Selector de cantidad */}
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => adjust(-step)}
+              className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-red-600 flex items-center justify-center transition shrink-0"
+            >
+              <Minus className="w-3 h-3" />
+            </button>
+            <span className="flex-1 text-center text-sm font-semibold text-gray-900 bg-gray-50 rounded-lg py-1.5">
+              {fmtQty(qty, unit)}
+            </span>
+            <button
+              onClick={() => adjust(step)}
+              className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-red-50 hover:text-red-600 flex items-center justify-center transition shrink-0"
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          </div>
+
+          {/* Subtotal + botón */}
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-gray-500 flex-1">
+              = ${(price * qty).toLocaleString('es-CL')}
+            </span>
+            <button
+              onClick={handleAdd}
+              className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-bold transition ${
+                cartItem
+                  ? 'bg-green-100 text-green-700 hover:bg-green-200'
+                  : 'bg-red-600 text-white hover:bg-red-700'
+              }`}
+            >
+              {cartItem ? <Check className="w-4 h-4" /> : <ShoppingCart className="w-4 h-4" />}
+              {cartItem ? 'Agregar más' : 'Agregar'}
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function CategoryPage() {
-  const params = useParams()
+  const params     = useParams()
   const categoryId = params.id as string
-  const category = CATEGORIES[categoryId]
+  const category   = CATEGORIES[categoryId]
 
   const fallback = categoryId === 'quesos'
-    ? QUESOS_EJEMPLO.map(q => ({ id: q.id, name: q.name, base_price: q.price, online_price: q.price, image_urls: [q.image] }))
+    ? QUESOS_FALLBACK
     : CATALOGO_FALLBACK.filter(p => p.category_id === `cat-${categoryId}`)
 
   const [products, setProducts] = useState<Product[]>(fallback)
-  const [loading, setLoading] = useState(fallback.length === 0)
-  const { addItem, items } = useCart()
-
-  const isInCart = (id: string) => items.some(i => i.id === id)
+  const [loading,  setLoading]  = useState(fallback.length === 0)
 
   useEffect(() => {
-    if (categoryId === 'quesos') return // quesos usa datos locales
-
-    const apiUrl = process.env.NEXT_PUBLIC_API_URL || ''
-    fetch(`${apiUrl}/api/products?category_id=cat-${categoryId}`)
+    if (categoryId === 'quesos') return // usa fallback local
+    fetch(`/api/products?category_id=cat-${categoryId}`)
       .then(r => r.json())
       .then(data => { if (Array.isArray(data) && data.length > 0) setProducts(data) })
-      .catch(() => {/* mantener fallback */})
+      .catch(() => {})
       .finally(() => setLoading(false))
   }, [categoryId])
-
-  const getImage = (product: Product) => {
-    const imgs = typeof product.image_urls === 'string'
-      ? JSON.parse(product.image_urls || '[]')
-      : product.image_urls || []
-    if (imgs.length > 0) return imgs[0]
-    return category?.image || 'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=400&q=80'
-  }
 
   return (
     <>
       <Header />
       <main className="min-h-screen bg-gray-50">
-
-        {/* Hero categoría */}
+        {/* Hero */}
         <div className="relative h-48 overflow-hidden">
-          <img
-            src={category?.image}
-            alt={category?.name}
-            className="w-full h-full object-cover"
-          />
+          <img src={category?.image} alt={category?.name} className="w-full h-full object-cover" />
           <div className="absolute inset-0 bg-gradient-to-r from-black/70 to-black/30" />
           <div className="absolute inset-0 flex items-center px-8 max-w-7xl mx-auto">
             <div>
@@ -147,7 +216,6 @@ export default function CategoryPage() {
         </div>
 
         <div className="max-w-7xl mx-auto px-4 py-10">
-
           {loading && (
             <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-5">
               {[...Array(6)].map((_, i) => (
@@ -172,45 +240,9 @@ export default function CategoryPage() {
             <>
               <p className="text-sm text-gray-500 mb-6">{products.length} productos</p>
               <div className="grid md:grid-cols-3 lg:grid-cols-4 gap-5">
-                {products.map(product => {
-                  const quesoInfo = QUESOS_EJEMPLO.find(q => q.id === product.id)
-                  return (
-                    <div key={product.id} className="group bg-white rounded-2xl overflow-hidden hover:shadow-lg transition-all duration-300 border border-gray-100">
-                      <div className="relative h-48 overflow-hidden">
-                        <img
-                          src={getImage(product)}
-                          alt={product.name}
-                          className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                        />
-                      </div>
-                      <div className="p-4">
-                        <h3 className="font-bold text-gray-900 mb-1">{product.name}</h3>
-                        {quesoInfo && (
-                          <p className="text-xs text-gray-500 mb-3 line-clamp-2">{quesoInfo.desc}</p>
-                        )}
-                        <div className="flex items-center justify-between pt-2 border-t border-gray-100">
-                          <div>
-                            <span className="text-xl font-black text-gray-900">
-                              ${(product.online_price || product.base_price)?.toLocaleString('es-CL')}
-                            </span>
-                            <span className="text-xs text-gray-400 ml-1">/ kg</span>
-                          </div>
-                          <button
-                            onClick={() => addItem({ id: product.id, name: product.name, price: product.online_price || product.base_price, quantity: 1 })}
-                            className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm font-semibold transition ${
-                              isInCart(product.id)
-                                ? 'bg-green-100 text-green-700'
-                                : 'bg-red-600 text-white hover:bg-red-700'
-                            }`}
-                          >
-                            <ShoppingCart className="w-4 h-4" />
-                            {isInCart(product.id) ? '✓' : 'Agregar'}
-                          </button>
-                        </div>
-                      </div>
-                    </div>
-                  )
-                })}
+                {products.map(product => (
+                  <ProductCard key={product.id} product={product} categoryId={categoryId} />
+                ))}
               </div>
             </>
           )}
