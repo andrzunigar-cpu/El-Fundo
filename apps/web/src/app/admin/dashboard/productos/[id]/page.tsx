@@ -61,6 +61,19 @@ export default function EditProducto() {
   const [imageUrl, setImageUrl] = useState('')
   const [showUrlInput, setShowUrlInput] = useState(false)
 
+  // ── Calculadora de precio ──
+  const [costo,     setCosto]     = useState('')
+  const [impuesto,  setImpuesto]  = useState('19')   // IVA Chile
+  const [margen,    setMargen]    = useState('30')
+
+  const precioCalculado = (() => {
+    const c = parseFloat(costo)
+    const i = parseFloat(impuesto)
+    const m = parseFloat(margen)
+    if (isNaN(c) || c <= 0) return null
+    return Math.round(c * (1 + m / 100) * (1 + i / 100))
+  })()
+
   const getImages = (p: Product): string[] => {
     if (!p.image_urls) return []
     if (Array.isArray(p.image_urls)) return p.image_urls
@@ -329,6 +342,73 @@ export default function EditProducto() {
                 <span className={`inline-block h-4 w-4 rounded-full bg-white transition ${product.is_featured ? 'translate-x-6' : 'translate-x-1'}`} />
               </button>
             </div>
+          </div>
+
+          {/* Calculadora de precio */}
+          <div className="bg-blue-50 rounded-xl border border-blue-200 p-6 space-y-4">
+            <div className="flex items-center gap-2">
+              <span className="text-lg">🧮</span>
+              <h2 className="font-semibold text-gray-900">Calculadora de precio</h2>
+              <span className="text-xs text-blue-500 ml-auto">Opcional</span>
+            </div>
+            <div className="grid grid-cols-3 gap-3">
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Costo</label>
+                <div className="relative">
+                  <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+                  <input
+                    type="number"
+                    value={costo}
+                    onChange={e => setCosto(e.target.value)}
+                    placeholder="0"
+                    className="w-full pl-6 pr-2 py-2 border border-blue-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Impuesto %</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={impuesto}
+                    onChange={e => setImpuesto(e.target.value)}
+                    className="w-full pr-6 pl-3 py-2 border border-blue-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">%</span>
+                </div>
+              </div>
+              <div>
+                <label className="block text-xs font-medium text-gray-600 mb-1">Margen %</label>
+                <div className="relative">
+                  <input
+                    type="number"
+                    value={margen}
+                    onChange={e => setMargen(e.target.value)}
+                    className="w-full pr-6 pl-3 py-2 border border-blue-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-blue-400"
+                  />
+                  <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-gray-400 text-xs">%</span>
+                </div>
+              </div>
+            </div>
+            {precioCalculado && (
+              <div className="flex items-center justify-between bg-white rounded-xl px-4 py-3 border border-blue-200">
+                <div>
+                  <p className="text-xs text-gray-500">Precio de venta calculado</p>
+                  <p className="text-2xl font-black text-blue-700">${precioCalculado.toLocaleString('es-CL')}</p>
+                  {parseFloat(costo) > 0 && (
+                    <p className="text-xs text-gray-400 mt-0.5">
+                      Costo: ${parseFloat(costo).toLocaleString('es-CL')} · Rentabilidad neta: ${(precioCalculado - parseFloat(costo) * (1 + parseFloat(impuesto) / 100)).toFixed(0)}
+                    </p>
+                  )}
+                </div>
+                <button
+                  onClick={() => { set('base_price', precioCalculado); set('online_price', precioCalculado) }}
+                  className="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm font-bold rounded-xl transition"
+                >
+                  Aplicar →
+                </button>
+              </div>
+            )}
           </div>
 
           {/* Precios */}

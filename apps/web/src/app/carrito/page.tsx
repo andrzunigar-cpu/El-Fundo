@@ -30,9 +30,9 @@ function fmtQty(qty: number, unit?: string) {
 function fmt(n: number) { return n.toLocaleString('es-CL') }
 
 // ── tipos de pago ──────────────────────────────────────────────────────────
-type PayMethod = 'webpay' | 'efectivo' | 'transferencia' | 'tarjeta_local'
+type PayMethod = 'webpay' | 'efectivo' | 'transferencia' | 'tarjeta_local' | 'amipass' | 'edenred' | 'pluxee'
 
-const PAY_OPTIONS: { id: PayMethod; label: string; sub: string; icon: React.ReactNode; onlineOnly?: boolean }[] = [
+const PAY_OPTIONS: { id: PayMethod; label: string; sub: string; icon: React.ReactNode; pickupOnly?: boolean }[] = [
   {
     id: 'webpay',
     label: 'WebPay',
@@ -56,6 +56,28 @@ const PAY_OPTIONS: { id: PayMethod; label: string; sub: string; icon: React.Reac
     label: 'Tarjeta en local',
     sub: 'Débito o crédito al retirar',
     icon: <CreditCard className="w-5 h-5" />,
+    pickupOnly: true,
+  },
+  {
+    id: 'amipass',
+    label: 'Amipass',
+    sub: 'Tarjeta de beneficios',
+    icon: <span className="text-lg">🎫</span>,
+    pickupOnly: true,
+  },
+  {
+    id: 'edenred',
+    label: 'Edenred',
+    sub: 'Tarjeta de beneficios',
+    icon: <span className="text-lg">🎫</span>,
+    pickupOnly: true,
+  },
+  {
+    id: 'pluxee',
+    label: 'Pluxee',
+    sub: 'Tarjeta de beneficios',
+    icon: <span className="text-lg">🎫</span>,
+    pickupOnly: true,
   },
 ]
 
@@ -295,7 +317,7 @@ export default function CartPage() {
                   ].map(opt => (
                     <button
                       key={opt.mode}
-                      onClick={() => setDeliveryMode(opt.mode)}
+                      onClick={() => { setDeliveryMode(opt.mode); if (opt.mode === 'delivery') { const p = PAY_OPTIONS.find(x => x.id === payMethod); if (p?.pickupOnly) setPayMethod('webpay') } }}
                       className={`flex items-center gap-3 px-4 py-4 rounded-xl border-2 text-left transition ${
                         deliveryMode === opt.mode
                           ? 'border-red-500 bg-red-50 text-red-700'
@@ -478,7 +500,7 @@ export default function CartPage() {
               <div className="bg-white rounded-2xl p-6 shadow-sm">
                 <h2 className="font-bold text-gray-900 mb-4">Método de pago</h2>
                 <div className="space-y-2">
-                  {PAY_OPTIONS.filter(p => !(p.id === 'tarjeta_local' && deliveryMode === 'delivery')).map(opt => (
+                  {PAY_OPTIONS.filter(p => !(p.pickupOnly && deliveryMode === 'delivery')).map(opt => (
                     <button
                       key={opt.id}
                       onClick={() => setPayMethod(opt.id)}

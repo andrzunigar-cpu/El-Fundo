@@ -51,6 +51,19 @@ export default function NuevoProducto() {
   const [uploading, setUploading] = useState(false)
   const [error, setError] = useState('')
 
+  // ── Calculadora de precio ──
+  const [costo,    setCosto]    = useState('')
+  const [impuesto, setImpuesto] = useState('19')
+  const [margen,   setMargen]   = useState('30')
+
+  const precioCalculado = (() => {
+    const c = parseFloat(costo)
+    const i = parseFloat(impuesto)
+    const m = parseFloat(margen)
+    if (isNaN(c) || c <= 0) return null
+    return Math.round(c * (1 + m / 100) * (1 + i / 100))
+  })()
+
   const set = (key: string, val: unknown) => setForm(prev => ({ ...prev, [key]: val }))
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -226,6 +239,53 @@ export default function NuevoProducto() {
                 placeholder="Descripción del corte..."
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500 resize-none"
               />
+            </div>
+
+            {/* Calculadora */}
+            <div className="bg-blue-50 rounded-xl border border-blue-200 p-4 space-y-3">
+              <div className="flex items-center gap-2">
+                <span className="text-base">🧮</span>
+                <p className="text-sm font-semibold text-gray-700">Calcular precio de venta</p>
+                <span className="text-xs text-blue-400 ml-auto">Opcional</span>
+              </div>
+              <div className="grid grid-cols-3 gap-2">
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Costo</label>
+                  <div className="relative">
+                    <span className="absolute left-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">$</span>
+                    <input type="number" value={costo} onChange={e => setCosto(e.target.value)} placeholder="0"
+                      className="w-full pl-5 pr-2 py-1.5 border border-blue-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Impuesto %</label>
+                  <div className="relative">
+                    <input type="number" value={impuesto} onChange={e => setImpuesto(e.target.value)}
+                      className="w-full pr-5 pl-2 py-1.5 border border-blue-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">%</span>
+                  </div>
+                </div>
+                <div>
+                  <label className="block text-xs text-gray-500 mb-1">Margen %</label>
+                  <div className="relative">
+                    <input type="number" value={margen} onChange={e => setMargen(e.target.value)}
+                      className="w-full pr-5 pl-2 py-1.5 border border-blue-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-blue-400" />
+                    <span className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 text-xs">%</span>
+                  </div>
+                </div>
+              </div>
+              {precioCalculado && (
+                <div className="flex items-center justify-between bg-white rounded-lg px-3 py-2 border border-blue-200">
+                  <div>
+                    <p className="text-xs text-gray-400">Precio de venta</p>
+                    <p className="text-xl font-black text-blue-700">${precioCalculado.toLocaleString('es-CL')}</p>
+                  </div>
+                  <button onClick={() => { set('base_price', String(precioCalculado)); set('online_price', String(precioCalculado)) }}
+                    className="px-3 py-1.5 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg transition">
+                    Aplicar →
+                  </button>
+                </div>
+              )}
             </div>
 
             <div className="grid grid-cols-2 gap-3">
