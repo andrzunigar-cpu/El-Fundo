@@ -38,12 +38,15 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, message: result.error_message || 'Error Transbank' })
     }
 
-    // responseCode 0 = aprobado
-    if (result.response_code !== 0) {
+    // Pago aprobado: response_code 0 + status AUTHORIZED
+    if (result.response_code !== 0 || result.status !== 'AUTHORIZED') {
       return NextResponse.json({
         success:      false,
         responseCode: result.response_code,
-        message:      'Pago rechazado por el banco',
+        status:       result.status,
+        message:      result.response_code !== 0
+          ? 'Pago rechazado por el banco'
+          : 'Transacción no autorizada',
       })
     }
 
