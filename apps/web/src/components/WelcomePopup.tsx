@@ -53,22 +53,22 @@ export default function WelcomePopup() {
   const code = `BIENVENIDO${discount}`
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
-      <div className="bg-white rounded-3xl shadow-2xl max-w-md w-full overflow-hidden animate-in zoom-in-95 slide-in-from-bottom-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center bg-black/60 backdrop-blur-sm p-0 sm:p-4">
+      <div className="bg-white rounded-t-3xl sm:rounded-3xl shadow-2xl max-w-md w-full overflow-y-auto max-h-[92vh] animate-in slide-in-from-bottom-4 sm:zoom-in-95">
         {/* Header rojo */}
-        <div className="relative bg-gradient-to-br from-red-600 to-red-800 p-8 text-white text-center">
-          <button onClick={dismiss} className="absolute top-4 right-4 p-1.5 hover:bg-white/20 rounded-lg transition">
+        <div className="relative bg-gradient-to-br from-red-600 to-red-800 px-6 py-6 sm:p-8 text-white text-center">
+          <button onClick={dismiss} className="absolute top-3 right-3 sm:top-4 sm:right-4 p-1.5 hover:bg-white/20 rounded-lg transition">
             <X className="w-4 h-4" />
           </button>
-          <div className="w-16 h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Gift className="w-8 h-8" />
+          <div className="w-12 h-12 sm:w-16 sm:h-16 bg-white/20 rounded-2xl flex items-center justify-center mx-auto mb-3 sm:mb-4">
+            <Gift className="w-6 h-6 sm:w-8 sm:h-8" />
           </div>
-          <p className="text-red-200 text-sm uppercase tracking-widest font-semibold mb-1">Oferta de bienvenida</p>
-          <h2 className="text-4xl font-black mb-1">{discount}% OFF</h2>
+          <p className="text-red-200 text-xs sm:text-sm uppercase tracking-widest font-semibold mb-1">Oferta de bienvenida</p>
+          <h2 className="text-3xl sm:text-4xl font-black mb-1">{discount}% OFF</h2>
           <p className="text-red-100 text-sm">en tu primera compra</p>
         </div>
 
-        <div className="p-6">
+        <div className="p-5 sm:p-6">
           {!sent ? (
             <>
               <p className="text-gray-600 text-sm text-center mb-5">

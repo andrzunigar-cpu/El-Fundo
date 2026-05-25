@@ -6,7 +6,7 @@ import { useEffect, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useCart } from '@/lib/store'
 import Link from 'next/link'
-import { CheckCircle, XCircle, Loader, ArrowRight, Home } from 'lucide-react'
+import { CheckCircle, XCircle, Loader, ArrowRight, Home, ClipboardList } from 'lucide-react'
 
 // Transbank envía token_ws como POST o GET; Next.js client recibe el GET final
 function ReturnContent() {
@@ -121,13 +121,24 @@ function ReturnContent() {
             <CheckCircle className="w-12 h-12 text-green-600" />
           </div>
           <h1 className="text-3xl font-black text-gray-900 mb-2">¡Pago exitoso!</h1>
-          <p className="text-gray-500 mb-8">Tu pedido fue registrado. Te contactaremos para coordinar la entrega.</p>
+          <p className="text-gray-500 mb-4">Tu pedido fue registrado. Te contactaremos para coordinar la entrega.</p>
 
-          {/* Comprobante */}
+          {/* Número de pedido destacado */}
+          {detail.orderId && (
+            <div className="bg-red-50 border border-red-200 rounded-2xl px-6 py-4 mb-6">
+              <p className="text-xs text-red-400 font-semibold uppercase tracking-wider mb-1">Tu número de pedido</p>
+              <p className="text-3xl font-black text-red-600 tracking-wider">
+                #{detail.orderId.slice(0, 8).toUpperCase()}
+              </p>
+              <p className="text-xs text-gray-500 mt-1">📌 Guarda este número para seguir tu pedido</p>
+            </div>
+          )}
+
+          {/* Comprobante Transbank */}
           <div className="bg-gray-50 rounded-2xl p-5 text-left space-y-3 mb-8">
             {detail.buyOrder && (
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">N° orden</span>
+                <span className="text-gray-500">N° transacción</span>
                 <span className="font-semibold text-gray-900">{detail.buyOrder}</span>
               </div>
             )}
@@ -152,9 +163,17 @@ function ReturnContent() {
           </div>
 
           <div className="flex flex-col gap-3">
+            {detail.orderId && (
+              <Link
+                href={`/pedido/${detail.orderId}`}
+                className="inline-flex items-center justify-center gap-2 bg-red-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition"
+              >
+                <ClipboardList className="w-5 h-5" /> Ver estado del pedido
+              </Link>
+            )}
             <Link
               href="/productos"
-              className="inline-flex items-center justify-center gap-2 bg-red-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition"
+              className="inline-flex items-center justify-center gap-2 border border-gray-200 text-gray-700 px-8 py-3 rounded-xl font-semibold hover:bg-gray-50 transition"
             >
               Seguir comprando <ArrowRight className="w-4 h-4" />
             </Link>

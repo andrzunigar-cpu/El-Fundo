@@ -1,11 +1,12 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, Suspense } from 'react'
+import { useSearchParams } from 'next/navigation'
 import { Product } from '@/lib/types'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { useCart } from '@/lib/store'
-import { ShoppingCart, Search, Tag, Minus, Plus } from 'lucide-react'
+import { ShoppingCart, Search, Tag, Minus, Plus, Loader } from 'lucide-react'
 
 const CATEGORY_IMAGES: Record<string, string> = {
   vacuno:    'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400&q=80',
@@ -35,7 +36,7 @@ const CATEGORIES = [
 // Categorías que se venden por unidad por defecto
 const UNIT_CATEGORIES = new Set(['cat-bebidas', 'cat-combos'])
 // Productos específicos que se venden por unidad
-const UNIT_PRODUCTS = new Set(['prod-pol-001', 'prod-emb-001', 'prod-emb-002', 'prod-emb-003'])
+const UNIT_PRODUCTS = new Set(['prod-pol-001', 'prod-emb-001', 'prod-emb-003'])
 
 const CATALOGO: Product[] = [
   { id: 'prod-vac-001', name: 'Lomo Liso',         category_id: 'cat-vacuno',    unit: 'kg', base_price: 100, online_price: 100, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1558030006-450675393462?w=600&q=80"]' },
@@ -53,7 +54,7 @@ const CATALOGO: Product[] = [
   { id: 'prod-pol-002', name: 'Pechuga de Pollo',   category_id: 'cat-pollo',     unit: 'kg', base_price: 100, online_price: 100, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1604503468506-a8da13d82791?w=600&q=80"]' },
   { id: 'prod-pol-003', name: 'Trutro de Pollo',    category_id: 'cat-pollo',     unit: 'kg', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1598515214211-89d3c73ae83b?w=600&q=80"]' },
   { id: 'prod-emb-001', name: 'Longaniza Casera',   category_id: 'cat-embutidos', unit: 'un', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1621996346565-e3dbc646d9a9?w=600&q=80"]' },
-  { id: 'prod-emb-002', name: 'Chorizo Parrillero', category_id: 'cat-embutidos', unit: 'un', base_price: 100, online_price: 100, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&q=80"]' },
+  { id: 'prod-emb-002', name: 'Chorizo Parrillero', category_id: 'cat-embutidos', unit: 'kg', base_price: 100, online_price: 100, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&q=80"]' },
   { id: 'prod-emb-003', name: 'Prieta',             category_id: 'cat-embutidos', unit: 'un', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=600&q=80"]' },
   { id: 'prod-cor-001', name: 'Pierna de Cordero',  category_id: 'cat-parrilla',  unit: 'kg', base_price: 100, online_price: 100, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1615937722923-67f6deaf2cc9?w=600&q=80"]' },
   { id: 'prod-cor-002', name: 'Costillar Cordero',  category_id: 'cat-parrilla',  unit: 'kg', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1544025162-d76538485696?w=600&q=80"]' },
@@ -125,13 +126,28 @@ function fmtQty(qty: number, unit: 'kg' | 'un') {
   return `${qty} un`
 }
 
-export default function ProductsPage() {
+function ProductsContent() {
+  const searchParams = useSearchParams()
   const [products, setProducts] = useState<Product[]>(CATALOGO)
-  const [syncing, setSyncing] = useState(true) // indicador sutil mientras carga API
+  const [syncing, setSyncing] = useState(true)
   const [search, setSearch]     = useState('')
   const [activeCategory, setActiveCategory] = useState('all')
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const { addItem, items } = useCart()
+
+  // Sincronizar categoría con URL — se dispara en cada cambio de ruta
+  useEffect(() => {
+    const cat = searchParams.get('cat') || 'all'
+    setActiveCategory(cat)
+    setSearch('') // limpiar búsqueda al cambiar categoría desde el header
+  }, [searchParams])
+
+  // Cambiar categoría desde los botones de la página
+  const handleCategoryClick = (catId: string) => {
+    setActiveCategory(catId)
+    const url = catId === 'all' ? '/productos' : `/productos?cat=${catId}`
+    window.history.pushState({}, '', url)
+  }
 
   useEffect(() => {
     fetch('/api/products')
@@ -307,7 +323,7 @@ export default function ProductsPage() {
       <main className="min-h-screen bg-gray-50">
 
         {/* ── Promoción de la semana ── */}
-        {promos.length > 0 && (
+        {promos.length > 0 && activeCategory === 'all' && (
           <section className="bg-gradient-to-r from-orange-600 to-red-600 py-10">
             <div className="max-w-7xl mx-auto px-4">
               <div className="flex items-center gap-3 mb-6">
@@ -460,7 +476,7 @@ export default function ProductsPage() {
               {CATEGORIES.map(cat => (
                 <button
                   key={cat.id}
-                  onClick={() => setActiveCategory(cat.id)}
+                  onClick={() => handleCategoryClick(cat.id)}
                   className={`px-4 py-2 rounded-full text-sm font-semibold transition ${
                     activeCategory === cat.id ? 'bg-red-600 text-white' : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
                   }`}
@@ -499,5 +515,17 @@ export default function ProductsPage() {
       </main>
       <Footer />
     </>
+  )
+}
+
+export default function ProductsPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <Loader className="w-8 h-8 text-red-600 animate-spin" />
+      </div>
+    }>
+      <ProductsContent />
+    </Suspense>
   )
 }

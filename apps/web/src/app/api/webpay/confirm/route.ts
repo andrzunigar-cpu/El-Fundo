@@ -11,6 +11,24 @@ const BASE_URL = IS_PROD
   ? 'https://webpay3g.transbank.cl'
   : 'https://webpay3gint.transbank.cl'
 
+// Insert robusto: reintenta hasta 5 veces sacando columnas desconocidas
+async function robustInsert(
+  table: string,
+  payload: Record<string, unknown>
+): Promise<{ id: string } | null> {
+  const supabase = getSupabase()
+  const data = { ...payload }
+  for (let i = 0; i < 5; i++) {
+    const res = await supabase.from(table).insert(data).select('id').single()
+    if (!res.error) return res.data as { id: string }
+    const missing = res.error.message.match(/['"]([a-z_]+)['"]/i)?.[1]
+    if (missing && missing in data) { delete data[missing]; continue }
+    console.error(`[robustInsert ${table}] error:`, res.error.message)
+    break
+  }
+  return null
+}
+
 export async function POST(req: NextRequest) {
   try {
     const { token, orderData } = await req.json()
@@ -34,6 +52,23 @@ export async function POST(req: NextRequest) {
 
     const result = await res.json()
 
+    // Guardar transacción Transbank siempre (aprobada o rechazada)
+    const supabase = getSupabase()
+    await robustInsert('webpay_transactions', {
+      token,
+      buy_order:          result.buy_order          ?? null,
+      session_id:         result.session_id         ?? null,
+      amount:             result.amount             ?? null,
+      status:             result.status             ?? 'UNKNOWN',
+      response_code:      result.response_code      ?? null,
+      authorization_code: result.authorization_code ?? null,
+      card_number:        result.card_detail?.card_number ?? null,
+      transaction_date:   result.transaction_date   ?? null,
+      payment_type_code:  result.payment_type_code  ?? null,
+      commerce_code:      COMMERCE_CODE,
+      raw_response:       result,
+    })
+
     if (!res.ok) {
       return NextResponse.json({ success: false, message: result.error_message || 'Error Transbank' })
     }
@@ -54,35 +89,28 @@ export async function POST(req: NextRequest) {
     let orderId: string | null = null
     if (orderData) {
       try {
-        const supabase  = getSupabase()
-        const orderNum  = `EF-${Date.now().toString().slice(-8)}`
+        const orderNum = `EF-${Date.now().toString().slice(-8)}`
 
         const orderPayload: Record<string, unknown> = {
           order_number:     orderNum,
           customer_name:    orderData.customer_name,
           customer_phone:   orderData.customer_phone,
           customer_address: orderData.customer_address || '',
-          notes:            orderData.notes || '',
+          notes:            orderData.notes            || '',
           total_amount:     result.amount,
           payment_method:   'webpay',
           payment_status:   'paid',
           channel:          'web',
           status:           'confirmed',
         }
-        if (orderData.scheduled_for) orderPayload.scheduled_for = orderData.scheduled_for
 
-        let { data: order } = await supabase
-          .from('orders')
-          .insert(orderPayload)
-          .select('id')
-          .single()
+        // Campos opcionales según lo que envíe el cliente
+        if (orderData.delivery_type)          orderPayload.delivery_type  = orderData.delivery_type
+        if (orderData.shipping_cost != null)  orderPayload.shipping_cost  = orderData.shipping_cost
+        if (orderData.scheduled_for)          orderPayload.scheduled_for  = orderData.scheduled_for
+        if (result.authorization_code)        orderPayload.webpay_auth_code = result.authorization_code
 
-        // Fallback si scheduled_for no existe
-        if (!order && orderData.scheduled_for) {
-          delete orderPayload.scheduled_for
-          const retry = await supabase.from('orders').insert(orderPayload).select('id').single()
-          order = retry.data
-        }
+        const order = await robustInsert('orders', orderPayload)
 
         if (order?.id && orderData.items?.length) {
           await supabase.from('order_items').insert(
@@ -97,6 +125,13 @@ export async function POST(req: NextRequest) {
               subtotal:     item.price * item.quantity,
             }))
           )
+
+          // Vincular transacción con la orden
+          await supabase
+            .from('webpay_transactions')
+            .update({ order_id: order.id })
+            .eq('token', token)
+
           orderId = order.id
         }
       } catch (dbErr) {
