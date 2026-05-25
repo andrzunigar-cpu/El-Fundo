@@ -61,22 +61,22 @@ function BebidaCard({ p, onAdd }: { p: BebidaProduct; onAdd: () => void }) {
     onAdd()
   }
   return (
-    <div className="w-full bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm flex flex-col">
-      <div className="h-20 overflow-hidden bg-gray-50">
+    <div className="w-full bg-white rounded-lg overflow-hidden border border-gray-100 flex flex-col">
+      <div className="h-12 overflow-hidden bg-gray-50">
         <img src={getBebidaImg(p)} alt={p.name}
           className="w-full h-full object-cover"
           onError={e => { (e.target as HTMLImageElement).src = BEBIDA_FALLBACK }} />
       </div>
-      <div className="p-2 flex flex-col flex-1">
-        <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-tight mb-1 flex-1">{p.name}</p>
-        <p className="text-xs font-black text-gray-900 mb-1.5">${price.toLocaleString('es-CL')}</p>
+      <div className="p-1.5 flex flex-col flex-1">
+        <p className="text-[10px] font-medium text-gray-700 line-clamp-2 leading-tight mb-1 flex-1">{p.name}</p>
+        <p className="text-[10px] font-black text-gray-900 mb-1">${price.toLocaleString('es-CL')}</p>
         <button
           onClick={handleAdd}
-          className={`w-full flex items-center justify-center gap-0.5 py-1.5 rounded-lg text-xs font-bold transition ${
+          className={`w-full py-1 rounded text-[10px] font-bold transition ${
             inCart ? 'bg-green-100 text-green-700' : 'bg-red-600 hover:bg-red-700 text-white'
           }`}
         >
-          {inCart ? '✓ Listo' : <><Plus className="w-3 h-3" /> Agregar</>}
+          {inCart ? '✓' : '+ Agregar'}
         </button>
       </div>
     </div>
@@ -96,14 +96,13 @@ function ForgotSection() {
           <p className="text-xs text-gray-400">Desliza para ver más</p>
         </div>
       </div>
-      <div className="px-3 sm:px-4 py-3">
-        {/* gap de 8px → 4 gaps × 8px = 32px → cada card = calc(20% - 6.4px) */}
+      <div className="px-3 sm:px-4 py-2">
         <div
-          className="flex overflow-x-auto pb-2"
-          style={{ gap: '8px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+          className="flex overflow-x-auto pb-1"
+          style={{ gap: '6px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {bebidas.map(p => (
-            <div key={p.id} style={{ flex: '0 0 calc(18% - 5.8px)', minWidth: '72px' }}>
+            <div key={p.id} style={{ flex: '0 0 calc(18% - 5px)', minWidth: '68px' }}>
               <BebidaCard p={p} onAdd={() => {}} />
             </div>
           ))}
