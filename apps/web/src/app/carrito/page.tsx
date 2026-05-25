@@ -103,7 +103,7 @@ function ForgotSection() {
           style={{ gap: '8px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
         >
           {bebidas.map(p => (
-            <div key={p.id} style={{ flex: '0 0 calc(20% - 6.4px)', minWidth: '80px' }}>
+            <div key={p.id} style={{ flex: '0 0 calc(18% - 5.8px)', minWidth: '72px' }}>
               <BebidaCard p={p} onAdd={() => {}} />
             </div>
           ))}
