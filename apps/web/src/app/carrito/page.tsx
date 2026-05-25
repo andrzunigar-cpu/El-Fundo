@@ -201,7 +201,8 @@ export default function CartPage() {
   const [deliveryPrice, setDeliveryPrice] = useState(2990)
   const [storeAddress,  setStoreAddress]  = useState('Av. Parque Central 06441, Puente Alto')
 
-  const [payMethod, setPayMethod] = useState<PayMethod>('webpay')
+  const [payMethod,   setPayMethod]   = useState<PayMethod>('webpay')
+  const [showErrors,  setShowErrors]  = useState(false)
 
   const [ordering,      setOrdering]      = useState(false)
   const [ordered,       setOrdered]       = useState(false)
@@ -332,7 +333,20 @@ export default function CartPage() {
     }
   }
 
-  const handleConfirm = () => payMethod === 'webpay' ? handleWebpay() : handleOrder()
+  const handleConfirm = () => {
+    if (!canCheckout) {
+      setShowErrors(true)
+      // Scroll al primer campo inválido
+      const firstInvalid = !name ? 'field-name'
+        : !phone   ? 'field-phone'
+        : !addressValid ? 'field-address'
+        : 'field-schedule'
+      document.getElementById(firstInvalid)?.scrollIntoView({ behavior: 'smooth', block: 'center' })
+      document.getElementById(firstInvalid)?.focus()
+      return
+    }
+    payMethod === 'webpay' ? handleWebpay() : handleOrder()
+  }
 
   // ── pantalla éxito ───────────────────────────────────────────────────────
   if (ordered) {
@@ -431,15 +445,13 @@ export default function CartPage() {
         </div>
         <button
           onClick={handleConfirm}
-          disabled={!canCheckout || webpayLoading || ordering}
+          disabled={webpayLoading || ordering}
           className="w-full py-3.5 rounded-2xl font-black text-base transition disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white flex items-center justify-center gap-2"
         >
           {(webpayLoading || ordering) ? (
             <><Loader className="w-5 h-5 animate-spin" /> {payMethod === 'webpay' ? 'Redirigiendo...' : 'Enviando...'}</>
-          ) : canCheckout ? (
-            <>{payMethod === 'webpay' ? <Lock className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />} Confirmar pedido</>
           ) : (
-            <span className="text-sm">{!name || !phone ? 'Completa nombre y teléfono' : !addressValid ? 'Ingresa dirección' : 'Selecciona día y hora'}</span>
+            <>{payMethod === 'webpay' ? <Lock className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />} Confirmar pedido</>
           )}
         </button>
       </div>
@@ -550,21 +562,23 @@ export default function CartPage() {
                     <div>
                       <label className="text-xs font-medium text-gray-500 mb-1.5 block">Nombre *</label>
                       <input
+                        id="field-name"
                         type="text"
                         placeholder="Tu nombre"
                         value={name}
-                        onChange={e => setName(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        onChange={e => { setName(e.target.value); setShowErrors(false) }}
+                        className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent ${showErrors && !name ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
                       />
                     </div>
                     <div>
                       <label className="text-xs font-medium text-gray-500 mb-1.5 block">Teléfono *</label>
                       <input
+                        id="field-phone"
                         type="tel"
                         placeholder="+56 9 0000 0000"
                         value={phone}
-                        onChange={e => setPhone(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        onChange={e => { setPhone(e.target.value); setShowErrors(false) }}
+                        className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent ${showErrors && !phone ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
                       />
                     </div>
                   </div>
@@ -572,11 +586,12 @@ export default function CartPage() {
                     <div>
                       <label className="text-xs font-medium text-gray-500 mb-1.5 block">Dirección de entrega *</label>
                       <input
+                        id="field-address"
                         type="text"
                         placeholder="Calle, número, ciudad"
                         value={address}
-                        onChange={e => setAddress(e.target.value)}
-                        className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
+                        onChange={e => { setAddress(e.target.value); setShowErrors(false) }}
+                        className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent ${showErrors && !addressValid ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
                       />
                     </div>
                   )}
@@ -788,7 +803,7 @@ export default function CartPage() {
               <div className="hidden lg:block space-y-2">
                 <button
                   onClick={handleConfirm}
-                  disabled={!canCheckout || webpayLoading || ordering}
+                  disabled={webpayLoading || ordering}
                   className="w-full py-4 rounded-2xl font-black text-base transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2"
                 >
                   {(webpayLoading || ordering) ? (
@@ -802,13 +817,6 @@ export default function CartPage() {
                     </>
                   )}
                 </button>
-                {!canCheckout && (
-                  <p className="text-xs text-center text-gray-400">
-                    {!name || !phone ? 'Completa nombre y teléfono' :
-                     !addressValid   ? 'Ingresa dirección de entrega' :
-                     !scheduleValid  ? 'Selecciona día y hora' : ''}
-                  </p>
-                )}
                 <p className="text-xs text-gray-400 text-center flex items-center justify-center gap-1">
                   <Lock className="w-3 h-3" /> Compra segura · El Fundo
                 </p>
