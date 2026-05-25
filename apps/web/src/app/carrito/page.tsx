@@ -51,11 +51,11 @@ const PAY_ONLINE: PayOption[] = [
 ]
 
 const PAY_PRESENCIAL: PayOption[] = [
-  { id: 'tarjeta_local', label: 'Tarjeta',         sub: 'Débito, crédito y cuenta RUT',     icon: <CreditCard className="w-5 h-5" />, pickupOnly: true },
-  { id: 'efectivo',      label: 'Efectivo',        sub: 'Pago al recibir o en local',        icon: <Banknote className="w-5 h-5" /> },
-  { id: 'amipass',       label: 'Amipass',         sub: 'Tarjeta de beneficios',             icon: <span className="text-base">🎫</span>, pickupOnly: true },
-  { id: 'pluxee',        label: 'Pluxee',          sub: 'Tarjeta de beneficios',             icon: <span className="text-base">🎫</span>, pickupOnly: true },
-  { id: 'edenred',       label: 'Edenred',         sub: 'Tarjeta de beneficios',             icon: <span className="text-base">🎫</span>, pickupOnly: true },
+  { id: 'tarjeta_local', label: 'Tarjeta',  sub: 'Débito, crédito y cuenta RUT',          icon: <CreditCard className="w-5 h-5" /> },
+  { id: 'efectivo',      label: 'Efectivo', sub: 'Pago al recibir o en local',             icon: <Banknote className="w-5 h-5" /> },
+  { id: 'amipass',       label: 'Amipass',  sub: 'Tarjeta de beneficios al recibir',       icon: <span className="text-base">🎫</span> },
+  { id: 'pluxee',        label: 'Pluxee',   sub: 'Tarjeta de beneficios al recibir',       icon: <span className="text-base">🎫</span> },
+  { id: 'edenred',       label: 'Edenred',  sub: 'Tarjeta de beneficios al recibir',       icon: <span className="text-base">🎫</span> },
 ]
 
 // ── componente principal ───────────────────────────────────────────────────
@@ -330,7 +330,7 @@ export default function CartPage() {
                   ].map(opt => (
                     <button
                       key={opt.mode}
-                      onClick={() => { setDeliveryMode(opt.mode); if (opt.mode === 'delivery') { const p = PAY_PRESENCIAL.find(x => x.id === payMethod); if (p?.pickupOnly) setPayMethod('webpay') } }}
+                      onClick={() => setDeliveryMode(opt.mode)}
                       className={`flex items-center gap-3 px-4 py-4 rounded-xl border-2 text-left transition ${
                         deliveryMode === opt.mode
                           ? 'border-red-500 bg-red-50 text-red-700'
