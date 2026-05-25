@@ -5,9 +5,9 @@ export const dynamic = 'force-dynamic'
 
 const DEFAULTS = {
   store_name:      'Carnicería El Fundo',
-  store_phone:     '+56 9 XXXX XXXX',
-  store_address:   'Santiago, Chile',
-  store_hours:     'Lun–Sáb 8:00–20:00, Dom 9:00–14:00',
+  store_phone:     '+56 9 2823 9161',
+  store_address:   'Av. Parque Central 06441, Puente Alto',
+  store_hours:     'Lun–Vie 9:30–19:30, Sáb 9:00–19:30, Dom 9:30–15:00',
   whatsapp:        '',
   delivery_price:  2990,
   min_order:       5000,

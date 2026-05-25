@@ -109,7 +109,7 @@ const COMBOS = [
     nombre: "Pack Cerdo BBQ",
     badge: "🐷 Cerdo",
     badgeColor: "bg-orange-600",
-    image: "https://images.unsplash.com/photo-1544025162-d76538485696?w=600&q=80",
+    image: "https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=600&q=80",
     items: [
       { emoji: "🐷", producto: "Costillar de Cerdo",  cantidad: "2 kg"  },
       { emoji: "🥩", producto: "Pulpa de Cerdo",      cantidad: "1 kg"  },
@@ -124,7 +124,7 @@ const COMBOS = [
 ]
 
 const BENEFITS = [
-  { icon: Truck,  title: "Despacho rápido",    desc: "Entrega a domicilio en Santiago" },
+  { icon: Truck,  title: "Despacho rápido",    desc: "Entrega a domicilio en Puente Alto" },
   { icon: Shield, title: "Calidad garantizada", desc: "Carnes frescas y de primera" },
   { icon: Zap,    title: "Proceso simple",      desc: "Compra en menos de 2 minutos" },
 ]
@@ -141,9 +141,13 @@ const PAYMENT_METHODS = [
 ]
 
 const HORARIOS = [
-  { dias: "Lunes a Viernes", horas: "09:00 – 20:00" },
-  { dias: "Sábado",          horas: "09:00 – 18:00" },
-  { dias: "Domingo",         horas: "10:00 – 14:00" },
+  { dias: "Lunes",      horas: "09:30 – 19:30" },
+  { dias: "Martes",     horas: "09:30 – 19:30" },
+  { dias: "Miércoles",  horas: "09:30 – 19:30" },
+  { dias: "Jueves",     horas: "09:30 – 19:30" },
+  { dias: "Viernes",    horas: "09:30 – 19:30" },
+  { dias: "Sábado",     horas: "09:00 – 19:30" },
+  { dias: "Domingo",    horas: "09:30 – 15:00" },
 ]
 
 const WA_NUMBER = "56928239161"
@@ -162,7 +166,14 @@ function ComboCard({ combo }: { combo: typeof COMBOS[0] }) {
     <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
       {/* Foto + badge */}
       <div className="relative h-44 overflow-hidden">
-        <img src={combo.image} alt={combo.nombre} className="w-full h-full object-cover" />
+        <img
+          src={combo.image}
+          alt={combo.nombre}
+          className="w-full h-full object-cover"
+          onError={e => {
+            (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&q=80'
+          }}
+        />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
         <span className={`absolute top-3 left-3 ${combo.badgeColor} text-white text-xs font-bold px-2.5 py-1 rounded-full`}>
           {combo.badge}
@@ -284,7 +295,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/65" />
           <div className="absolute inset-y-0 left-1/2 w-px bg-white/10" />
           <div className="relative z-10 max-w-5xl mx-auto px-4 text-center">
-            <p className="text-red-400 font-semibold text-sm uppercase tracking-widest mb-4">🇨🇱 Santiago de Chile</p>
+            <p className="text-red-400 font-semibold text-sm uppercase tracking-widest mb-4">🇨🇱 Puente Alto, Chile</p>
             <h1 className="text-5xl md:text-7xl font-black text-white mb-6 leading-tight">
               Carne de verdad,<br />
               <span className="text-red-500">sabor de Chile</span>
@@ -434,19 +445,19 @@ export default function Home() {
                 </div>
                 <div className="p-5">
                   <p className="font-bold text-gray-900 mb-0.5">Carnicería El Fundo</p>
-                  <p className="text-gray-500 text-sm mb-4">Santiago, Chile</p>
+                  <p className="text-gray-500 text-sm mb-4">Av. Parque Central 06441, Puente Alto · Frente a Iglesia Ciudad del Este</p>
                   <div className="rounded-xl overflow-hidden h-44 bg-gray-100">
                     <iframe
-                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3329.8!2d-70.6483!3d-33.4569!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2zMzPCsDI3JzI0LjgiUyA3MMKwMzgnNTMuOSJX!5e0!3m2!1ses!2scl!4v1"
+                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3328.6!2d-70.5948!3d-33.5833!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662d08c8b7adf3d%3A0x1!2sAv.+Parque+Central+06441%2C+Puente+Alto%2C+Regi%C3%B3n+Metropolitana!5e0!3m2!1ses!2scl!4v1"
                       width="100%" height="100%" style={{ border: 0 }}
                       allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"
                       title="Ubicación Carnicería El Fundo"
                     />
                   </div>
-                  <a href={`https://wa.me/${WA_NUMBER}?text=Hola%2C%20quisiera%20saber%20cómo%20llegar%20a%20la%20carnicería`}
+                  <a href="https://www.google.com/maps/search/?api=1&query=Av.+Parque+Central+06441+Puente+Alto"
                     target="_blank" rel="noopener noreferrer"
-                    className="mt-4 flex items-center justify-center gap-2 bg-green-500 hover:bg-green-600 text-white py-3 rounded-xl font-bold text-sm transition">
-                    📍 Cómo llegar por WhatsApp
+                    className="mt-4 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-sm transition">
+                    📍 Cómo llegar — Google Maps
                   </a>
                 </div>
               </div>
@@ -512,7 +523,7 @@ export default function Home() {
           <div className="absolute inset-0 bg-black/70" />
           <div className="relative z-10 text-center px-4">
             <h2 className="text-4xl md:text-5xl font-black text-white mb-4">¿Listo para comprar?</h2>
-            <p className="text-gray-300 text-lg mb-8">Descubre nuestro catálogo con los mejores cortes de Santiago</p>
+            <p className="text-gray-300 text-lg mb-8">Descubre nuestro catálogo con los mejores cortes de Puente Alto</p>
             <Link href="/productos" className="inline-flex items-center gap-2 bg-red-600 text-white px-10 py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition group">
               Ver todos los productos <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition" />
             </Link>

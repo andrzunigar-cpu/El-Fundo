@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback } from 'react'
-import { ShoppingBag, Phone, MapPin, Clock, RefreshCw, ChevronDown, Calendar, Zap } from 'lucide-react'
+import { ShoppingBag, Phone, MapPin, Clock, RefreshCw, Calendar, Zap, Truck, Store, CreditCard, Banknote, Building2, Lock } from 'lucide-react'
 
 interface OrderItem {
   id: string
@@ -19,11 +19,24 @@ interface Order {
   customer_address: string
   notes: string
   total_amount: number
+  shipping_cost?: number
   status: string
   channel: string
+  delivery_type?: string
+  payment_method?: string
   created_at: string
   scheduled_for?: string | null
   order_items: OrderItem[]
+}
+
+const PAYMENT_LABELS: Record<string, { label: string; icon: React.ReactNode }> = {
+  webpay:        { label: 'WebPay',         icon: <Lock className="w-3.5 h-3.5" /> },
+  transferencia: { label: 'Transferencia',  icon: <Building2 className="w-3.5 h-3.5" /> },
+  efectivo:      { label: 'Efectivo',       icon: <Banknote className="w-3.5 h-3.5" /> },
+  tarjeta_local: { label: 'Tarjeta',        icon: <CreditCard className="w-3.5 h-3.5" /> },
+  amipass:       { label: 'Amipass',        icon: <span className="text-xs">🎫</span> },
+  edenred:       { label: 'Edenred',        icon: <span className="text-xs">🎫</span> },
+  pluxee:        { label: 'Pluxee',         icon: <span className="text-xs">🎫</span> },
 }
 
 function formatScheduled(iso: string): string {
@@ -179,16 +192,23 @@ export default function PedidosAdmin() {
                             </span>
                           )}
                         </div>
-                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500">
+                        <div className="flex items-center gap-3 mt-1 text-xs text-gray-500 flex-wrap">
                           <span className="flex items-center gap-1">
                             <Clock className="w-3 h-3" />
                             {timeAgo(order.created_at)}
                           </span>
-                          <span className="flex items-center gap-1">
+                          <a href={`tel:${order.customer_phone}`} className="flex items-center gap-1 hover:text-red-600 transition">
                             <Phone className="w-3 h-3" />
                             {order.customer_phone}
-                          </span>
-                          {order.customer_address && (
+                          </a>
+                          {order.delivery_type && (
+                            <span className="flex items-center gap-1">
+                              {order.delivery_type === 'pickup'
+                                ? <><Store className="w-3 h-3" /> Retiro en local</>
+                                : <><Truck className="w-3 h-3" /> Despacho</>}
+                            </span>
+                          )}
+                          {order.customer_address && order.delivery_type !== 'pickup' && (
                             <span className="flex items-center gap-1">
                               <MapPin className="w-3 h-3" />
                               {order.customer_address}
@@ -197,11 +217,21 @@ export default function PedidosAdmin() {
                         </div>
                       </div>
                     </div>
-                    <div className="text-right">
+                    <div className="text-right shrink-0">
                       <p className="text-xl font-black text-gray-900">
                         ${order.total_amount?.toLocaleString('es-CL')}
                       </p>
-                      <p className="text-xs text-gray-400">{order.channel === 'web' ? 'Web' : 'Local'}</p>
+                      {order.shipping_cost != null && order.shipping_cost > 0 && (
+                        <p className="text-xs text-gray-400">+ ${order.shipping_cost?.toLocaleString('es-CL')} despacho</p>
+                      )}
+                      {order.payment_method && (() => {
+                        const pm = PAYMENT_LABELS[order.payment_method]
+                        return pm ? (
+                          <span className="inline-flex items-center gap-1 mt-1 text-xs font-semibold bg-gray-100 text-gray-700 px-2 py-0.5 rounded-full">
+                            {pm.icon} {pm.label}
+                          </span>
+                        ) : null
+                      })()}
                     </div>
                   </div>
 

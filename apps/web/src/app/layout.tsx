@@ -2,9 +2,9 @@ import type { Metadata } from 'next'
 import './globals.css'
 
 export const metadata: Metadata = {
-  title: 'Carnicería El Fundo | Carnes de Calidad en Santiago',
-  description: 'Carnes frescas, cortes seleccionados y despacho a domicilio en Santiago de Chile. Calidad y tradición en cada corte.',
-  keywords: 'carnicería, carnes, Santiago, Chile, despacho a domicilio',
+  title: 'Carnicería El Fundo | Carnes de Calidad en Puente Alto',
+  description: 'Carnes frescas, cortes seleccionados y despacho a domicilio en Puente Alto. Calidad y tradición en cada corte.',
+  keywords: 'carnicería, carnes, Puente Alto, Santiago, Chile, despacho a domicilio',
   icons: {
     icon: '/favicon.ico',
   },

@@ -30,55 +30,32 @@ function fmtQty(qty: number, unit?: string) {
 function fmt(n: number) { return n.toLocaleString('es-CL') }
 
 // ── tipos de pago ──────────────────────────────────────────────────────────
-type PayMethod = 'webpay' | 'efectivo' | 'transferencia' | 'tarjeta_local' | 'amipass' | 'edenred' | 'pluxee'
+type PayMethod = 'webpay' | 'efectivo' | 'transferencia' | 'tarjeta_local' | 'amipass' | 'edenred' | 'pluxee' | 'machbank'
 
-const PAY_OPTIONS: { id: PayMethod; label: string; sub: string; icon: React.ReactNode; pickupOnly?: boolean }[] = [
-  {
-    id: 'webpay',
-    label: 'WebPay',
-    sub: 'Débito, crédito o prepago',
-    icon: <Lock className="w-5 h-5" />,
-  },
-  {
-    id: 'efectivo',
-    label: 'Efectivo',
-    sub: 'Pago al recibir o en local',
-    icon: <Banknote className="w-5 h-5" />,
-  },
-  {
-    id: 'transferencia',
-    label: 'Transferencia',
-    sub: 'Te enviamos los datos por WhatsApp',
-    icon: <Building2 className="w-5 h-5" />,
-  },
-  {
-    id: 'tarjeta_local',
-    label: 'Tarjeta en local',
-    sub: 'Débito o crédito al retirar',
-    icon: <CreditCard className="w-5 h-5" />,
-    pickupOnly: true,
-  },
-  {
-    id: 'amipass',
-    label: 'Amipass',
-    sub: 'Tarjeta de beneficios',
-    icon: <span className="text-lg">🎫</span>,
-    pickupOnly: true,
-  },
-  {
-    id: 'edenred',
-    label: 'Edenred',
-    sub: 'Tarjeta de beneficios',
-    icon: <span className="text-lg">🎫</span>,
-    pickupOnly: true,
-  },
-  {
-    id: 'pluxee',
-    label: 'Pluxee',
-    sub: 'Tarjeta de beneficios',
-    icon: <span className="text-lg">🎫</span>,
-    pickupOnly: true,
-  },
+interface PayOption {
+  id: PayMethod
+  label: string
+  sub: string
+  icon: React.ReactNode
+  soon?: boolean       // próximamente — visible pero no seleccionable
+  pickupOnly?: boolean // solo retiro en local
+}
+
+const PAY_ONLINE: PayOption[] = [
+  { id: 'webpay',        label: 'WebPay',          sub: 'Débito, crédito y prepago',         icon: <Lock className="w-5 h-5" /> },
+  { id: 'transferencia', label: 'Transferencia',   sub: 'Te enviamos los datos por WhatsApp', icon: <Building2 className="w-5 h-5" /> },
+  { id: 'amipass',       label: 'Amipass',         sub: 'Tarjeta de beneficios online',      icon: <span className="text-base">🎫</span>, soon: true },
+  { id: 'pluxee',        label: 'Pluxee',          sub: 'Tarjeta de beneficios online',      icon: <span className="text-base">🎫</span>, soon: true },
+  { id: 'edenred',       label: 'Edenred',         sub: 'Tarjeta de beneficios online',      icon: <span className="text-base">🎫</span>, soon: true },
+  { id: 'machbank',      label: 'Mach / Bank',     sub: 'App de pagos móvil',                icon: <span className="text-base">📱</span>, soon: true },
+]
+
+const PAY_PRESENCIAL: PayOption[] = [
+  { id: 'tarjeta_local', label: 'Tarjeta',         sub: 'Débito, crédito y cuenta RUT',     icon: <CreditCard className="w-5 h-5" />, pickupOnly: true },
+  { id: 'efectivo',      label: 'Efectivo',        sub: 'Pago al recibir o en local',        icon: <Banknote className="w-5 h-5" /> },
+  { id: 'amipass',       label: 'Amipass',         sub: 'Tarjeta de beneficios',             icon: <span className="text-base">🎫</span>, pickupOnly: true },
+  { id: 'pluxee',        label: 'Pluxee',          sub: 'Tarjeta de beneficios',             icon: <span className="text-base">🎫</span>, pickupOnly: true },
+  { id: 'edenred',       label: 'Edenred',         sub: 'Tarjeta de beneficios',             icon: <span className="text-base">🎫</span>, pickupOnly: true },
 ]
 
 // ── componente principal ───────────────────────────────────────────────────
@@ -97,12 +74,13 @@ export default function CartPage() {
   const [deliveryMode,  setDeliveryMode]  = useState<'delivery' | 'pickup'>('delivery')
   const [deliveryPrice, setDeliveryPrice] = useState(2990)
   const [minOrder,      setMinOrder]      = useState(0)
-  const [storeAddress,  setStoreAddress]  = useState('Santiago, Chile')
+  const [storeAddress,  setStoreAddress]  = useState('Av. Parque Central 06441, Puente Alto')
 
   const [payMethod, setPayMethod] = useState<PayMethod>('webpay')
 
   const [ordering,      setOrdering]      = useState(false)
   const [ordered,       setOrdered]       = useState(false)
+  const [orderId,       setOrderId]       = useState('')
   const [webpayLoading, setWebpayLoading] = useState(false)
   const [webpayError,   setWebpayError]   = useState('')
 
@@ -145,16 +123,15 @@ export default function CartPage() {
   }, [scheduleMode, schedDate, schedTime])
 
   const scheduleValid  = scheduleMode === 'asap' || (!!schedDate && !!schedTime && timeOptions.length > 0)
-  const meetsMinOrder  = !minOrder || total() >= minOrder
   const addressValid   = deliveryMode === 'pickup' || !!address.trim()
-  const canCheckout    = !!name && !!phone && scheduleValid && meetsMinOrder && addressValid
+  const canCheckout    = !!name && !!phone && scheduleValid && addressValid
 
   // ── pedido sin webpay ────────────────────────────────────────────────────
   const handleOrder = async () => {
     if (!canCheckout) return
     setOrdering(true)
     try {
-      await fetch('/api/orders', {
+      const res = await fetch('/api/orders', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -170,10 +147,16 @@ export default function CartPage() {
           scheduled_for: scheduledFor,
         }),
       })
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}))
+        throw new Error(err.error || `Error ${res.status}`)
+      }
+      const data = await res.json()
+      setOrderId(data.id || '')
       setOrdered(true)
       clearCart()
-    } catch {
-      alert('Error al enviar el pedido. Inténtalo de nuevo.')
+    } catch (err: unknown) {
+      alert(`Error al enviar el pedido: ${err instanceof Error ? err.message : 'Inténtalo de nuevo'}`)
     } finally {
       setOrdering(false)
     }
@@ -211,25 +194,55 @@ export default function CartPage() {
 
   // ── pantalla éxito ───────────────────────────────────────────────────────
   if (ordered) {
+    const shortId = orderId ? orderId.slice(0, 8).toUpperCase() : '--------'
     return (
       <>
         <Header />
-        <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4">
-          <div className="text-center max-w-md">
+        <main className="min-h-screen bg-gray-50 flex items-center justify-center px-4 py-12">
+          <div className="text-center max-w-lg w-full">
             <div className="w-20 h-20 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-6">
               <CheckCircle2 className="w-10 h-10 text-green-600" />
             </div>
-            <h1 className="text-3xl font-black text-gray-900 mb-3">¡Pedido recibido!</h1>
-            <p className="text-gray-500 mb-2">Hola <strong>{name}</strong>, recibimos tu pedido correctamente.</p>
+            <h1 className="text-3xl font-black text-gray-900 mb-2">¡Pedido recibido!</h1>
+            <p className="text-gray-500 mb-6">Hola <strong>{name}</strong>, recibimos tu pedido correctamente.</p>
+
+            {/* Número de pedido */}
+            <div className="bg-white border-2 border-dashed border-gray-200 rounded-2xl px-6 py-5 mb-6">
+              <p className="text-xs font-semibold text-gray-400 uppercase tracking-widest mb-1">Número de pedido</p>
+              <p className="text-3xl font-black text-gray-900 tracking-widest font-mono">#{shortId}</p>
+              {orderId && (
+                <p className="text-xs text-gray-400 mt-1 font-mono">{orderId}</p>
+              )}
+              <p className="text-xs text-orange-600 bg-orange-50 rounded-lg px-3 py-2 mt-3 font-medium">
+                📌 Guarda este número para consultar el estado de tu pedido
+              </p>
+            </div>
+
+            {/* Info según medio de pago */}
             {payMethod === 'transferencia' && (
               <p className="text-sm text-blue-700 bg-blue-50 rounded-xl px-4 py-3 mb-4">
-                📲 Te enviaremos los datos de transferencia por WhatsApp al {phone}.
+                📲 Te enviaremos los datos de transferencia por WhatsApp al <strong>{phone}</strong>.
               </p>
             )}
-            <p className="text-gray-400 text-sm mb-8">Te contactaremos pronto para confirmar.</p>
-            <Link href="/productos" className="inline-flex items-center gap-2 bg-red-600 text-white px-8 py-4 rounded-xl font-bold hover:bg-red-700 transition">
-              Seguir comprando <ArrowRight className="w-4 h-4" />
-            </Link>
+            {payMethod === 'efectivo' && (
+              <p className="text-sm text-green-700 bg-green-50 rounded-xl px-4 py-3 mb-4">
+                💵 Pago en efectivo al {deliveryMode === 'pickup' ? 'retirar en local' : 'momento de la entrega'}.
+              </p>
+            )}
+
+            <p className="text-gray-400 text-sm mb-6">Te contactaremos pronto para confirmar tu pedido.</p>
+
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+              <Link
+                href={`/pedido/${orderId}`}
+                className="inline-flex items-center justify-center gap-2 bg-gray-900 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-gray-800 transition"
+              >
+                Ver estado del pedido
+              </Link>
+              <Link href="/productos" className="inline-flex items-center justify-center gap-2 bg-red-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-red-700 transition">
+                Seguir comprando <ArrowRight className="w-4 h-4" />
+              </Link>
+            </div>
           </div>
         </main>
         <Footer />
@@ -317,7 +330,7 @@ export default function CartPage() {
                   ].map(opt => (
                     <button
                       key={opt.mode}
-                      onClick={() => { setDeliveryMode(opt.mode); if (opt.mode === 'delivery') { const p = PAY_OPTIONS.find(x => x.id === payMethod); if (p?.pickupOnly) setPayMethod('webpay') } }}
+                      onClick={() => { setDeliveryMode(opt.mode); if (opt.mode === 'delivery') { const p = PAY_PRESENCIAL.find(x => x.id === payMethod); if (p?.pickupOnly) setPayMethod('webpay') } }}
                       className={`flex items-center gap-3 px-4 py-4 rounded-xl border-2 text-left transition ${
                         deliveryMode === opt.mode
                           ? 'border-red-500 bg-red-50 text-red-700'
@@ -488,42 +501,81 @@ export default function CartPage() {
                     <span className="font-bold text-gray-900">Total</span>
                     <span className="font-black text-2xl text-gray-900">${fmt(grandTotal)}</span>
                   </div>
-                  {minOrder > 0 && total() < minOrder && (
-                    <p className="text-xs text-orange-600 bg-orange-50 px-3 py-2 rounded-xl">
-                      ⚠️ Mínimo ${fmt(minOrder)} — faltan ${fmt(minOrder - total())}
-                    </p>
-                  )}
                 </div>
               </div>
 
               {/* Método de pago */}
               <div className="bg-white rounded-2xl p-6 shadow-sm">
                 <h2 className="font-bold text-gray-900 mb-4">Método de pago</h2>
-                <div className="space-y-2">
-                  {PAY_OPTIONS.filter(p => !(p.pickupOnly && deliveryMode === 'delivery')).map(opt => (
-                    <button
-                      key={opt.id}
-                      onClick={() => setPayMethod(opt.id)}
-                      className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left transition ${
-                        payMethod === opt.id
-                          ? 'border-red-500 bg-red-50'
-                          : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      <span className={`shrink-0 ${payMethod === opt.id ? 'text-red-600' : 'text-gray-400'}`}>
-                        {opt.icon}
-                      </span>
-                      <div className="flex-1">
-                        <p className={`text-sm font-bold ${payMethod === opt.id ? 'text-red-700' : 'text-gray-800'}`}>{opt.label}</p>
-                        <p className="text-xs text-gray-400">{opt.sub}</p>
+
+                {/* ── Online ── */}
+                <div className="mb-4">
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-black uppercase tracking-widest text-blue-600 bg-blue-50 px-2.5 py-1 rounded-full">🌐 Online</span>
+                  </div>
+                  <div className="space-y-2">
+                    {PAY_ONLINE.map(opt => opt.soon ? (
+                      <div key={opt.id} className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 opacity-60 cursor-not-allowed">
+                        <span className="shrink-0 text-gray-300">{opt.icon}</span>
+                        <div className="flex-1">
+                          <p className="text-sm font-bold text-gray-400">{opt.label}</p>
+                          <p className="text-xs text-gray-400">{opt.sub}</p>
+                        </div>
+                        <span className="text-xs font-bold text-gray-400 bg-gray-200 px-2 py-0.5 rounded-full shrink-0">Pronto</span>
                       </div>
-                      <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                        payMethod === opt.id ? 'border-red-500 bg-red-500' : 'border-gray-300'
-                      }`}>
-                        {payMethod === opt.id && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                      </div>
-                    </button>
-                  ))}
+                    ) : (
+                      <button
+                        key={opt.id}
+                        onClick={() => setPayMethod(opt.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left transition ${
+                          payMethod === opt.id ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className={`shrink-0 ${payMethod === opt.id ? 'text-red-600' : 'text-gray-400'}`}>{opt.icon}</span>
+                        <div className="flex-1">
+                          <p className={`text-sm font-bold ${payMethod === opt.id ? 'text-red-700' : 'text-gray-800'}`}>{opt.label}</p>
+                          <p className="text-xs text-gray-400">{opt.sub}</p>
+                        </div>
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          payMethod === opt.id ? 'border-red-500 bg-red-500' : 'border-gray-300'
+                        }`}>
+                          {payMethod === opt.id && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* ── Presencial ── */}
+                <div>
+                  <div className="flex items-center gap-2 mb-2">
+                    <span className="text-xs font-black uppercase tracking-widest text-green-700 bg-green-50 px-2.5 py-1 rounded-full">🏪 Presencial</span>
+                    {deliveryMode === 'delivery' && (
+                      <span className="text-xs text-gray-400">(algunos solo en local)</span>
+                    )}
+                  </div>
+                  <div className="space-y-2">
+                    {PAY_PRESENCIAL.filter(p => !(p.pickupOnly && deliveryMode === 'delivery')).map(opt => (
+                      <button
+                        key={opt.id}
+                        onClick={() => setPayMethod(opt.id)}
+                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left transition ${
+                          payMethod === opt.id ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                        }`}
+                      >
+                        <span className={`shrink-0 ${payMethod === opt.id ? 'text-red-600' : 'text-gray-400'}`}>{opt.icon}</span>
+                        <div className="flex-1">
+                          <p className={`text-sm font-bold ${payMethod === opt.id ? 'text-red-700' : 'text-gray-800'}`}>{opt.label}</p>
+                          <p className="text-xs text-gray-400">{opt.sub}</p>
+                        </div>
+                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                          payMethod === opt.id ? 'border-red-500 bg-red-500' : 'border-gray-300'
+                        }`}>
+                          {payMethod === opt.id && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                        </div>
+                      </button>
+                    ))}
+                  </div>
                 </div>
 
                 {webpayError && (
@@ -551,8 +603,7 @@ export default function CartPage() {
                 <p className="text-xs text-center text-gray-400">
                   {!name || !phone ? 'Completa nombre y teléfono' :
                    !addressValid   ? 'Ingresa dirección de entrega' :
-                   !scheduleValid  ? 'Selecciona día y hora' :
-                   !meetsMinOrder  ? `Mínimo $${fmt(minOrder)}` : ''}
+                   !scheduleValid  ? 'Selecciona día y hora' : ''}
                 </p>
               )}
 

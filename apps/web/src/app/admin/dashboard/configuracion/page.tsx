@@ -35,20 +35,20 @@ const DAYS = [
 ] as const
 
 const DEFAULT_SCHEDULE: Record<string, DaySchedule> = {
-  mon: { open: true,  from: '08:00', to: '20:00' },
-  tue: { open: true,  from: '08:00', to: '20:00' },
-  wed: { open: true,  from: '08:00', to: '20:00' },
-  thu: { open: true,  from: '08:00', to: '20:00' },
-  fri: { open: true,  from: '08:00', to: '20:00' },
-  sat: { open: true,  from: '08:00', to: '20:00' },
+  mon: { open: true,  from: '09:30', to: '19:30' },
+  tue: { open: true,  from: '09:30', to: '19:30' },
+  wed: { open: true,  from: '09:30', to: '19:30' },
+  thu: { open: true,  from: '09:30', to: '19:30' },
+  fri: { open: true,  from: '09:30', to: '19:30' },
+  sat: { open: true,  from: '09:30', to: '19:30' },
   sun: { open: true,  from: '09:00', to: '14:00' },
 }
 
 const DEFAULTS: Settings = {
   store_name:        'Carnicería El Fundo',
-  store_phone:       '+56 9 XXXX XXXX',
-  store_address:     'Santiago, Chile',
-  store_hours:       'Lun–Sáb 8:00–20:00, Dom 9:00–14:00',
+  store_phone:       '+56 9 2823 9161',
+  store_address:     'Av. Parque Central 06441, Puente Alto',
+  store_hours:       'Lun–Vie 9:30–19:30, Sáb 9:00–19:30, Dom 9:30–15:00',
   schedule:          DEFAULT_SCHEDULE,
   whatsapp:          '',
   delivery_price:    2990,
@@ -274,7 +274,7 @@ export default function ConfiguracionAdmin() {
                   type="tel"
                   value={settings.store_phone}
                   onChange={e => set('store_phone', e.target.value)}
-                  placeholder="+56 9 XXXX XXXX"
+                  placeholder="+56 9 2823 9161"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
@@ -286,7 +286,7 @@ export default function ConfiguracionAdmin() {
                   type="tel"
                   value={settings.whatsapp}
                   onChange={e => set('whatsapp', e.target.value)}
-                  placeholder="+56 9 XXXX XXXX"
+                  placeholder="+56 9 2823 9161"
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
                 />
               </div>
@@ -300,7 +300,7 @@ export default function ConfiguracionAdmin() {
                 type="text"
                 value={settings.store_address}
                 onChange={e => set('store_address', e.target.value)}
-                placeholder="Calle, número, comuna, Santiago"
+                placeholder="Av. Parque Central 06441, Puente Alto"
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-red-500"
               />
             </div>

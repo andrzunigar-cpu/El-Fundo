@@ -137,7 +137,13 @@ export default function ProductsPage() {
     fetch('/api/products')
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) setProducts(data)
+        if (Array.isArray(data) && data.length > 0) {
+          const clean = data.map((p: Product) => ({
+            ...p,
+            name: p.name.replace(/\s+x(6|12)\b/gi, '').trim(),
+          }))
+          setProducts(clean)
+        }
       })
       .catch(() => {/* mantener CATALOGO */})
       .finally(() => setSyncing(false))
