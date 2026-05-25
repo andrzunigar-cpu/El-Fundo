@@ -74,7 +74,7 @@ function BebidaRow() {
               )}
               <p className="text-[10px] font-bold text-red-600 mb-1.5">${price.toLocaleString('es-CL')}</p>
               <button
-                onClick={() => addItem({ id: p.id, name: p.name, price, quantity: p.unit === 'kg' ? 0.5 : 1, unit: p.unit || 'un' })}
+                onClick={() => addItem({ id: p.id, name: p.name, price, quantity: p.unit === 'kg' ? 0.5 : 1, unit: p.unit === 'kg' ? 'kg' : 'un' })}
                 className={`w-full py-1 rounded-lg text-[10px] font-bold transition ${
                   inCart ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-red-100 hover:text-red-700 text-gray-600'
                 }`}
@@ -117,7 +117,7 @@ function ForgotModal({ onClose }: { onClose: () => void }) {
                 <p className="text-[11px] text-gray-700 line-clamp-2 leading-tight mb-1">{p.name}</p>
                 <p className="text-[11px] font-bold text-gray-900 mb-1.5">${price.toLocaleString('es-CL')}</p>
                 <button
-                  onClick={() => addItem({ id: p.id, name: p.name, price, quantity: p.unit === 'kg' ? 0.5 : 1, unit: p.unit || 'un' })}
+                  onClick={() => addItem({ id: p.id, name: p.name, price, quantity: p.unit === 'kg' ? 0.5 : 1, unit: p.unit === 'kg' ? 'kg' : 'un' })}
                   className={`w-full py-1.5 rounded-lg text-[11px] font-bold transition ${
                     inCart ? 'bg-green-100 text-green-700' : 'bg-red-600 hover:bg-red-700 text-white'
                   }`}
