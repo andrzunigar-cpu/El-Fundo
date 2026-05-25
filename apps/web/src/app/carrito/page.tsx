@@ -60,13 +60,13 @@ function BebidaCard({ p, onAdd }: { p: BebidaProduct; onAdd: () => void }) {
     onAdd()
   }
   return (
-    <div className="bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm flex flex-col">
-      <div className="h-16 sm:h-20 overflow-hidden bg-gray-50 flex-shrink-0">
+    <div className="flex-shrink-0 w-28 bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm flex flex-col">
+      <div className="h-20 overflow-hidden bg-gray-50">
         <img src={getBebidaImg(p)} alt={p.name}
           className="w-full h-full object-cover"
           onError={e => { (e.target as HTMLImageElement).src = BEBIDA_FALLBACK }} />
       </div>
-      <div className="p-1.5 sm:p-2 flex flex-col flex-1">
+      <div className="p-2 flex flex-col flex-1">
         <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-tight mb-1 flex-1">{p.name}</p>
         <p className="text-xs font-black text-gray-900 mb-1.5">${price.toLocaleString('es-CL')}</p>
         <button
@@ -75,7 +75,7 @@ function BebidaCard({ p, onAdd }: { p: BebidaProduct; onAdd: () => void }) {
             inCart ? 'bg-green-100 text-green-700' : 'bg-red-600 hover:bg-red-700 text-white'
           }`}
         >
-          {inCart ? '✓' : <><Plus className="w-3 h-3" /> Agregar</>}
+          {inCart ? '✓ Listo' : <><Plus className="w-3 h-3" /> Agregar</>}
         </button>
       </div>
     </div>
@@ -92,11 +92,12 @@ function ForgotSection() {
         <span className="text-lg">🥤</span>
         <div>
           <h3 className="font-bold text-gray-900 text-sm">¿Se te olvidó algo?</h3>
-          <p className="text-xs text-gray-400">Agrega una bebida para acompañar</p>
+          <p className="text-xs text-gray-400">Desliza para ver más opciones</p>
         </div>
       </div>
-      <div className="p-3 sm:p-4">
-        <div className="grid grid-cols-4 sm:grid-cols-5 md:grid-cols-6 gap-2">
+      <div className="px-3 sm:px-4 py-3">
+        <div className="flex gap-2.5 overflow-x-auto pb-2"
+          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
           {bebidas.map(p => <BebidaCard key={p.id} p={p} onAdd={() => {}} />)}
         </div>
       </div>
@@ -128,7 +129,7 @@ function ForgotModal({ onClose }: { onClose: () => void }) {
         {/* Productos */}
         <div className="p-3 sm:p-4 overflow-y-auto flex-1">
           <p className="text-sm text-gray-500 mb-3 sm:mb-4">Agrega una bebida para acompañar tu pedido</p>
-          <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+          <div className="flex flex-wrap gap-2.5 justify-start">
             {bebidas.map(p => (
               <BebidaCard key={p.id} p={p} onAdd={() => setAdded(true)} />
             ))}
