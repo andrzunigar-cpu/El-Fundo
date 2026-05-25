@@ -51,6 +51,7 @@ function useBebidas() {
 }
 
 // ── Mini tarjeta bebida ────────────────────────────────────────────────────
+// BebidaCard sin ancho fijo — el padre controla el tamaño
 function BebidaCard({ p, onAdd }: { p: BebidaProduct; onAdd: () => void }) {
   const { addItem, items } = useCart()
   const inCart = items.some(i => i.id === p.id)
@@ -60,7 +61,7 @@ function BebidaCard({ p, onAdd }: { p: BebidaProduct; onAdd: () => void }) {
     onAdd()
   }
   return (
-    <div className="flex-shrink-0 w-28 bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm flex flex-col">
+    <div className="w-full bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm flex flex-col">
       <div className="h-20 overflow-hidden bg-gray-50">
         <img src={getBebidaImg(p)} alt={p.name}
           className="w-full h-full object-cover"
@@ -82,7 +83,7 @@ function BebidaCard({ p, onAdd }: { p: BebidaProduct; onAdd: () => void }) {
   )
 }
 
-// ── Sección inline "¿Se te olvidó algo?" ──────────────────────────────────
+// ── Sección inline "¿Se te olvidó algo?" — 5 visibles, resto con scroll ──
 function ForgotSection() {
   const bebidas = useBebidas()
   if (bebidas.length === 0) return null
@@ -92,13 +93,20 @@ function ForgotSection() {
         <span className="text-lg">🥤</span>
         <div>
           <h3 className="font-bold text-gray-900 text-sm">¿Se te olvidó algo?</h3>
-          <p className="text-xs text-gray-400">Desliza para ver más opciones</p>
+          <p className="text-xs text-gray-400">Desliza para ver más</p>
         </div>
       </div>
       <div className="px-3 sm:px-4 py-3">
-        <div className="flex gap-2.5 overflow-x-auto pb-2"
-          style={{ scrollbarWidth: 'none', msOverflowStyle: 'none' }}>
-          {bebidas.map(p => <BebidaCard key={p.id} p={p} onAdd={() => {}} />)}
+        {/* gap de 8px → 4 gaps × 8px = 32px → cada card = calc(20% - 6.4px) */}
+        <div
+          className="flex overflow-x-auto pb-2"
+          style={{ gap: '8px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        >
+          {bebidas.map(p => (
+            <div key={p.id} style={{ flex: '0 0 calc(20% - 6.4px)', minWidth: '80px' }}>
+              <BebidaCard p={p} onAdd={() => {}} />
+            </div>
+          ))}
         </div>
       </div>
     </div>
