@@ -11,66 +11,70 @@ import {
 import Link from 'next/link'
 import { useState, useMemo, useEffect, useRef } from 'react'
 
-// ── Bebidas ────────────────────────────────────────────────────────────────
-interface BebidaProduct {
-  id: string; name: string; base_price: number; online_price: number; image_urls: string
+// ── Promociones ───────────────────────────────────────────────────────────
+interface PromoProduct {
+  id: string; name: string; base_price: number; online_price: number
+  promotional_price?: number; image_urls: string; unit?: string
 }
 
-function useBebidas() {
-  const [bebidas, setBebidas] = useState<BebidaProduct[]>([])
+function usePromos() {
+  const [promos, setPromos] = useState<PromoProduct[]>([])
   useEffect(() => {
-    fetch('/api/products?category_id=cat-bebidas')
+    fetch('/api/products?is_promo=true')
       .then(r => r.json())
       .then(data => {
         if (Array.isArray(data) && data.length > 0)
-          setBebidas(data.slice(0, 12).map((p: BebidaProduct) => ({
-            ...p, name: p.name.replace(/\s+x(6|12)\b/gi, '').trim(),
-          })))
+          setPromos(data.slice(0, 16))
       }).catch(() => {})
   }, [])
-  return bebidas
+  return promos
 }
 
-function getImg(p: BebidaProduct) {
+function getImg(p: PromoProduct) {
   try { const a = JSON.parse(p.image_urls || '[]'); if (a[0]) return a[0] } catch {}
-  return 'https://images.unsplash.com/photo-1546173159-315724a31696?w=300&q=70'
+  return 'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=300&q=70'
 }
 
 // ── Sección "¿Se te olvidó algo?" ─────────────────────────────────────────
 function BebidaRow() {
-  const bebidas = useBebidas()
+  const promos = usePromos()
   const { addItem, items } = useCart()
-  if (bebidas.length === 0) return null
+  if (promos.length === 0) return null
 
   return (
     <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
       <div className="px-4 py-2.5 border-b border-gray-50 flex items-center gap-1.5">
-        <span className="text-sm">🥤</span>
-        <span className="text-xs font-semibold text-gray-500">¿Se te olvidó una bebida?</span>
+        <span className="text-sm">🏷️</span>
+        <span className="text-xs font-semibold text-gray-500">¿Se te olvidó algo?</span>
       </div>
       <div
         className="flex px-3 py-3"
         style={{ gap: '8px', overflowX: 'auto', scrollbarWidth: 'none' }}
       >
-        {bebidas.map(p => {
-          const price   = p.online_price || p.base_price
-          const inCart  = items.some(i => i.id === p.id)
+        {promos.map(p => {
+          const price      = p.promotional_price || p.online_price || p.base_price
+          const origPrice  = p.promotional_price ? (p.online_price || p.base_price) : null
+          const inCart     = items.some(i => i.id === p.id)
           return (
             <div
               key={p.id}
-              className="flex-shrink-0 w-20 flex flex-col items-center text-center"
+              className="flex-shrink-0 flex flex-col items-center text-center"
+              style={{ flex: '0 0 calc(25% - 12px)' }}
             >
-              <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 mb-1.5">
+              <div className="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 mb-1.5">
                 <img
                   src={getImg(p)} alt={p.name}
                   className="w-full h-full object-cover"
-                  onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546173159-315724a31696?w=300&q=70' }}
+                  onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=300&q=70' }}
                 />
               </div>
-              <p className="text-[10px] text-gray-700 leading-tight line-clamp-2 mb-1 w-full">{p.name}</p>
-              <p className="text-[10px] font-bold text-gray-900 mb-1.5">${price.toLocaleString('es-CL')}</p>
+              <p className="text-[10px] text-gray-700 leading-tight line-clamp-2 mb-0.5 w-full">{p.name}</p>
+              {origPrice && (
+                <p className="text-[9px] text-gray-400 line-through leading-none mb-0.5">${origPrice.toLocaleString('es-CL')}</p>
+              )}
+              <p className="text-[10px] font-bold text-red-600 mb-1.5">${price.toLocaleString('es-CL')}</p>
               <button
-                onClick={() => addItem({ id: p.id, name: p.name, price, quantity: 1, unit: 'un' })}
+                onClick={() => addItem({ id: p.id, name: p.name, price, quantity: p.unit === 'kg' ? 0.5 : 1, unit: p.unit || 'un' })}
                 className={`w-full py-1 rounded-lg text-[10px] font-bold transition ${
                   inCart ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-red-100 hover:text-red-700 text-gray-600'
                 }`}
@@ -87,9 +91,9 @@ function BebidaRow() {
 
 // ── Modal "¿Se te olvidó algo?" ────────────────────────────────────────────
 function ForgotModal({ onClose }: { onClose: () => void }) {
-  const bebidas = useBebidas()
+  const promos = usePromos()
   const { addItem, items } = useCart()
-  if (bebidas.length === 0) return null
+  if (promos.length === 0) return null
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-3 sm:p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
@@ -101,19 +105,19 @@ function ForgotModal({ onClose }: { onClose: () => void }) {
           </button>
         </div>
         <div className="p-4 overflow-y-auto grid grid-cols-3 gap-3">
-          {bebidas.map(p => {
-            const price  = p.online_price || p.base_price
+          {promos.map(p => {
+            const price  = p.promotional_price || p.online_price || p.base_price
             const inCart = items.some(i => i.id === p.id)
             return (
               <div key={p.id} className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 mb-1.5">
                   <img src={getImg(p)} alt={p.name} className="w-full h-full object-cover"
-                    onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546173159-315724a31696?w=300&q=70' }} />
+                    onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=300&q=70' }} />
                 </div>
                 <p className="text-[11px] text-gray-700 line-clamp-2 leading-tight mb-1">{p.name}</p>
                 <p className="text-[11px] font-bold text-gray-900 mb-1.5">${price.toLocaleString('es-CL')}</p>
                 <button
-                  onClick={() => addItem({ id: p.id, name: p.name, price, quantity: 1, unit: 'un' })}
+                  onClick={() => addItem({ id: p.id, name: p.name, price, quantity: p.unit === 'kg' ? 0.5 : 1, unit: p.unit || 'un' })}
                   className={`w-full py-1.5 rounded-lg text-[11px] font-bold transition ${
                     inCart ? 'bg-green-100 text-green-700' : 'bg-red-600 hover:bg-red-700 text-white'
                   }`}

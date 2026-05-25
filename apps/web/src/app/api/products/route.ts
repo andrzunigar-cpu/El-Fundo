@@ -17,6 +17,9 @@ export async function GET(request: NextRequest) {
 
     if (categoryId) query = query.eq('category_id', categoryId)
 
+    const isPromo = searchParams.get('is_promo')
+    if (isPromo === 'true') query = query.not('promotional_price', 'is', null)
+
     const { data, error } = await query
 
     if (error) {
