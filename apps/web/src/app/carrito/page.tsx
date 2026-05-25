@@ -550,31 +550,42 @@ export default function CartPage() {
                 <div>
                   <div className="flex items-center gap-2 mb-2">
                     <span className="text-xs font-black uppercase tracking-widest text-green-700 bg-green-50 px-2.5 py-1 rounded-full">🏪 Presencial</span>
-                    {deliveryMode === 'delivery' && (
-                      <span className="text-xs text-gray-400">(algunos solo en local)</span>
-                    )}
                   </div>
                   <div className="space-y-2">
-                    {PAY_PRESENCIAL.filter(p => !(p.pickupOnly && deliveryMode === 'delivery')).map(opt => (
-                      <button
-                        key={opt.id}
-                        onClick={() => setPayMethod(opt.id)}
-                        className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left transition ${
-                          payMethod === opt.id ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
-                        }`}
-                      >
-                        <span className={`shrink-0 ${payMethod === opt.id ? 'text-red-600' : 'text-gray-400'}`}>{opt.icon}</span>
-                        <div className="flex-1">
-                          <p className={`text-sm font-bold ${payMethod === opt.id ? 'text-red-700' : 'text-gray-800'}`}>{opt.label}</p>
-                          <p className="text-xs text-gray-400">{opt.sub}</p>
+                    {PAY_PRESENCIAL.map(opt => {
+                      const disabled = opt.pickupOnly && deliveryMode === 'delivery'
+                      const selected = payMethod === opt.id
+                      if (disabled) return (
+                        <div key={opt.id} className="w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 opacity-50 cursor-not-allowed">
+                          <span className="shrink-0 text-gray-300">{opt.icon}</span>
+                          <div className="flex-1">
+                            <p className="text-sm font-bold text-gray-400">{opt.label}</p>
+                            <p className="text-xs text-gray-400">{opt.sub}</p>
+                          </div>
+                          <span className="text-xs font-bold text-gray-400 bg-gray-200 px-2 py-0.5 rounded-full shrink-0 whitespace-nowrap">Solo en local</span>
                         </div>
-                        <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
-                          payMethod === opt.id ? 'border-red-500 bg-red-500' : 'border-gray-300'
-                        }`}>
-                          {payMethod === opt.id && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
-                        </div>
-                      </button>
-                    ))}
+                      )
+                      return (
+                        <button
+                          key={opt.id}
+                          onClick={() => setPayMethod(opt.id)}
+                          className={`w-full flex items-center gap-3 px-4 py-3.5 rounded-xl border-2 text-left transition ${
+                            selected ? 'border-red-500 bg-red-50' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50'
+                          }`}
+                        >
+                          <span className={`shrink-0 ${selected ? 'text-red-600' : 'text-gray-400'}`}>{opt.icon}</span>
+                          <div className="flex-1">
+                            <p className={`text-sm font-bold ${selected ? 'text-red-700' : 'text-gray-800'}`}>{opt.label}</p>
+                            <p className="text-xs text-gray-400">{opt.sub}</p>
+                          </div>
+                          <div className={`w-4 h-4 rounded-full border-2 flex items-center justify-center shrink-0 ${
+                            selected ? 'border-red-500 bg-red-500' : 'border-gray-300'
+                          }`}>
+                            {selected && <div className="w-1.5 h-1.5 bg-white rounded-full" />}
+                          </div>
+                        </button>
+                      )
+                    })}
                   </div>
                 </div>
 
