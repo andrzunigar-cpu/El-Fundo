@@ -6,10 +6,150 @@ import { Footer } from '@/components/Footer'
 import {
   Trash2, Plus, Minus, ShoppingBag, ArrowLeft, ArrowRight,
   Loader, Lock, Clock, Calendar, Zap, Truck, Store,
-  Banknote, CreditCard, Building2, CheckCircle2,
+  Banknote, CreditCard, Building2, CheckCircle2, X, ShoppingCart,
 } from 'lucide-react'
 import Link from 'next/link'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
+
+// ── Tipos producto bebida ──────────────────────────────────────────────────
+interface BebidaProduct {
+  id: string
+  name: string
+  base_price: number
+  online_price: number
+  image_urls: string
+}
+
+// ── Imagen de bebida ───────────────────────────────────────────────────────
+const BEBIDA_FALLBACK = 'https://images.unsplash.com/photo-1546173159-315724a31696?w=400&q=80'
+function getBebidaImg(p: BebidaProduct) {
+  try {
+    const imgs = JSON.parse(p.image_urls || '[]')
+    if (Array.isArray(imgs) && imgs.length > 0) return imgs[0]
+  } catch {}
+  return BEBIDA_FALLBACK
+}
+
+// ── Hook para cargar bebidas ───────────────────────────────────────────────
+function useBebidas() {
+  const [bebidas, setBebidas] = useState<BebidaProduct[]>([])
+  useEffect(() => {
+    fetch('/api/products?category_id=cat-bebidas')
+      .then(r => r.json())
+      .then(data => {
+        if (Array.isArray(data) && data.length > 0) {
+          const clean = data.map((p: BebidaProduct) => ({
+            ...p,
+            name: p.name.replace(/\s+x(6|12)\b/gi, '').trim(),
+          }))
+          setBebidas(clean.slice(0, 12))
+        }
+      })
+      .catch(() => {})
+  }, [])
+  return bebidas
+}
+
+// ── Mini tarjeta bebida ────────────────────────────────────────────────────
+function BebidaCard({ p, onAdd }: { p: BebidaProduct; onAdd: () => void }) {
+  const { addItem, items } = useCart()
+  const inCart = items.some(i => i.id === p.id)
+  const price = p.online_price || p.base_price
+  const handleAdd = () => {
+    addItem({ id: p.id, name: p.name, price, quantity: 1, unit: 'un' })
+    onAdd()
+  }
+  return (
+    <div className="flex-shrink-0 w-36 bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm">
+      <div className="h-24 overflow-hidden bg-gray-50">
+        <img src={getBebidaImg(p)} alt={p.name}
+          className="w-full h-full object-cover"
+          onError={e => { (e.target as HTMLImageElement).src = BEBIDA_FALLBACK }} />
+      </div>
+      <div className="p-2.5">
+        <p className="text-xs font-semibold text-gray-800 line-clamp-2 leading-tight mb-1">{p.name}</p>
+        <p className="text-xs font-black text-gray-900 mb-2">${price.toLocaleString('es-CL')}</p>
+        <button
+          onClick={handleAdd}
+          className={`w-full flex items-center justify-center gap-1 py-1.5 rounded-lg text-xs font-bold transition ${
+            inCart ? 'bg-green-100 text-green-700' : 'bg-red-600 hover:bg-red-700 text-white'
+          }`}
+        >
+          {inCart ? '✓ En carrito' : <><Plus className="w-3 h-3" /> Agregar</>}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+// ── Sección inline "¿Se te olvidó algo?" ──────────────────────────────────
+function ForgotSection() {
+  const bebidas = useBebidas()
+  if (bebidas.length === 0) return null
+  return (
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
+      <div className="px-5 py-4 border-b border-gray-100 flex items-center gap-2">
+        <span className="text-lg">🥤</span>
+        <div>
+          <h3 className="font-bold text-gray-900 text-sm">¿Se te olvidó algo?</h3>
+          <p className="text-xs text-gray-400">Agrega una bebida para acompañar</p>
+        </div>
+      </div>
+      <div className="px-4 py-4">
+        <div className="flex gap-3 overflow-x-auto pb-1 scrollbar-hide">
+          {bebidas.map(p => <BebidaCard key={p.id} p={p} onAdd={() => {}} />)}
+        </div>
+      </div>
+    </div>
+  )
+}
+
+// ── Modal "¿Se te olvidó algo?" ────────────────────────────────────────────
+function ForgotModal({ onClose }: { onClose: () => void }) {
+  const bebidas = useBebidas()
+  const [added, setAdded] = useState(false)
+  if (bebidas.length === 0) return null
+  return (
+    <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-4">
+      {/* Backdrop */}
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      {/* Modal */}
+      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-lg max-h-[80vh] flex flex-col overflow-hidden">
+        {/* Header */}
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <div>
+            <p className="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-0.5">Antes de pagar</p>
+            <h3 className="text-xl font-black text-gray-900">¿Se te olvidó algo? 🥤</h3>
+          </div>
+          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition text-gray-400 hover:text-gray-600">
+            <X className="w-5 h-5" />
+          </button>
+        </div>
+        {/* Productos */}
+        <div className="p-4 overflow-y-auto flex-1">
+          <p className="text-sm text-gray-500 mb-4">Agrega una bebida para acompañar tu pedido</p>
+          <div className="grid grid-cols-3 gap-3">
+            {bebidas.map(p => (
+              <BebidaCard key={p.id} p={p} onAdd={() => setAdded(true)} />
+            ))}
+          </div>
+        </div>
+        {/* Footer */}
+        <div className="px-5 py-4 border-t border-gray-100 flex gap-3">
+          <button onClick={onClose}
+            className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition">
+            No gracias
+          </button>
+          <button onClick={onClose}
+            className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition flex items-center justify-center gap-2">
+            <ShoppingCart className="w-4 h-4" />
+            {added ? 'Continuar al pago' : 'Ir al pago'}
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
 
 // ── helpers ────────────────────────────────────────────────────────────────
 function toDateStr(d: Date) {
@@ -83,6 +223,8 @@ export default function CartPage() {
   const [orderId,       setOrderId]       = useState('')
   const [webpayLoading, setWebpayLoading] = useState(false)
   const [webpayError,   setWebpayError]   = useState('')
+  const [showForgot,    setShowForgot]    = useState(false)
+  const forgotShown = useRef(false)
 
   useEffect(() => {
     fetch('/api/settings')
@@ -95,6 +237,22 @@ export default function CartPage() {
       })
       .catch(() => {})
   }, [])
+
+  // Abrir modal "¿Se te olvidó algo?" al entrar al checkout (solo 1 vez)
+  useEffect(() => {
+    if (forgotShown.current || items.length === 0) return
+    const hasBebida = items.some(i =>
+      i.id.startsWith('beb-') || i.name.toLowerCase().includes('bebida') ||
+      i.name.toLowerCase().includes('coca') || i.name.toLowerCase().includes('agua') ||
+      i.name.toLowerCase().includes('jugo')
+    )
+    if (hasBebida) return
+    const timer = setTimeout(() => {
+      setShowForgot(true)
+      forgotShown.current = true
+    }, 800)
+    return () => clearTimeout(timer)
+  }, [items])
 
   const shippingCost = deliveryMode === 'delivery' ? deliveryPrice : 0
   const grandTotal   = total() + shippingCost
@@ -272,6 +430,7 @@ export default function CartPage() {
   // ── checkout layout ──────────────────────────────────────────────────────
   return (
     <>
+      {showForgot && <ForgotModal onClose={() => setShowForgot(false)} />}
       <Header />
       <main className="min-h-screen bg-gray-100">
         <div className="max-w-6xl mx-auto px-4 py-8">
@@ -319,6 +478,9 @@ export default function CartPage() {
                   ))}
                 </div>
               </div>
+
+              {/* ¿Se te olvidó algo? — sección inline */}
+              <ForgotSection />
 
               {/* Tipo de entrega */}
               <div className="bg-white rounded-2xl p-6 shadow-sm">
