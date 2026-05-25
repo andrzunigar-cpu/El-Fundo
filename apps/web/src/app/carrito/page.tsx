@@ -476,7 +476,9 @@ export default function CartPage() {
             <ArrowLeft className="w-4 h-4" /> Volver al catálogo
           </Link>
 
-          <div className="grid lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px] gap-4 sm:gap-5 items-start">
+          <BebidaRow />
+
+          <div className="grid lg:grid-cols-[1fr_340px] xl:grid-cols-[1fr_380px] gap-4 sm:gap-5 items-start mt-4 sm:mt-5">
 
             {/* ═══ COLUMNA IZQUIERDA ═══ */}
             <div className="space-y-3 sm:space-y-4">
@@ -530,9 +532,6 @@ export default function CartPage() {
                   ))}
                 </div>
               </div>
-
-              {/* ¿Se te olvidó algo? */}
-              <BebidaRow />
 
               {/* Tipo de entrega */}
               <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
