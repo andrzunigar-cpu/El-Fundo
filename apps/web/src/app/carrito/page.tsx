@@ -11,92 +11,75 @@ import {
 import Link from 'next/link'
 import { useState, useMemo, useEffect, useRef } from 'react'
 
-// ── Tipos producto bebida ──────────────────────────────────────────────────
+// ── Bebidas ────────────────────────────────────────────────────────────────
 interface BebidaProduct {
-  id: string
-  name: string
-  base_price: number
-  online_price: number
-  image_urls: string
+  id: string; name: string; base_price: number; online_price: number; image_urls: string
 }
 
-// ── Imagen de bebida ───────────────────────────────────────────────────────
-const BEBIDA_FALLBACK = 'https://images.unsplash.com/photo-1546173159-315724a31696?w=400&q=80'
-function getBebidaImg(p: BebidaProduct) {
-  try {
-    const imgs = JSON.parse(p.image_urls || '[]')
-    if (Array.isArray(imgs) && imgs.length > 0) return imgs[0]
-  } catch {}
-  return BEBIDA_FALLBACK
-}
-
-// ── Hook para cargar bebidas ───────────────────────────────────────────────
 function useBebidas() {
   const [bebidas, setBebidas] = useState<BebidaProduct[]>([])
   useEffect(() => {
     fetch('/api/products?category_id=cat-bebidas')
       .then(r => r.json())
       .then(data => {
-        if (Array.isArray(data) && data.length > 0) {
-          const clean = data.map((p: BebidaProduct) => ({
-            ...p,
-            name: p.name.replace(/\s+x(6|12)\b/gi, '').trim(),
-          }))
-          setBebidas(clean.slice(0, 12))
-        }
-      })
-      .catch(() => {})
+        if (Array.isArray(data) && data.length > 0)
+          setBebidas(data.slice(0, 12).map((p: BebidaProduct) => ({
+            ...p, name: p.name.replace(/\s+x(6|12)\b/gi, '').trim(),
+          })))
+      }).catch(() => {})
   }, [])
   return bebidas
 }
 
-// ── Mini tarjeta bebida ────────────────────────────────────────────────────
-// BebidaCard compacta — fila horizontal con miniatura
-function BebidaCard({ p, onAdd }: { p: BebidaProduct; onAdd: () => void }) {
-  const { addItem, items } = useCart()
-  const inCart = items.some(i => i.id === p.id)
-  const price = p.online_price || p.base_price
-  const handleAdd = () => {
-    addItem({ id: p.id, name: p.name, price, quantity: 1, unit: 'un' })
-    onAdd()
-  }
-  return (
-    <button
-      onClick={handleAdd}
-      className={`flex-shrink-0 flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full border transition text-left ${
-        inCart
-          ? 'border-green-300 bg-green-50'
-          : 'border-gray-200 bg-white hover:border-red-300 hover:bg-red-50'
-      }`}
-    >
-      <img
-        src={getBebidaImg(p)} alt={p.name}
-        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
-        onError={e => { (e.target as HTMLImageElement).src = BEBIDA_FALLBACK }}
-      />
-      <div className="min-w-0">
-        <p className="text-[11px] font-semibold text-gray-800 truncate max-w-[90px]">{p.name}</p>
-        <p className="text-[11px] text-gray-500">${price.toLocaleString('es-CL')}</p>
-      </div>
-      <span className={`text-xs font-black ml-1 ${inCart ? 'text-green-600' : 'text-red-600'}`}>
-        {inCart ? '✓' : '+'}
-      </span>
-    </button>
-  )
+function getImg(p: BebidaProduct) {
+  try { const a = JSON.parse(p.image_urls || '[]'); if (a[0]) return a[0] } catch {}
+  return 'https://images.unsplash.com/photo-1546173159-315724a31696?w=300&q=70'
 }
 
-// ── Sección inline "¿Se te olvidó algo?" ──────────────────────────────────
-function ForgotSection() {
+// ── Sección "¿Se te olvidó algo?" ─────────────────────────────────────────
+function BebidaRow() {
   const bebidas = useBebidas()
+  const { addItem, items } = useCart()
   if (bebidas.length === 0) return null
+
   return (
-    <div className="bg-white rounded-2xl px-4 sm:px-5 py-3 shadow-sm">
-      <p className="text-xs font-semibold text-gray-400 mb-2.5">🥤 ¿Se te olvidó algo?</p>
+    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
+      <div className="px-4 py-2.5 border-b border-gray-50 flex items-center gap-1.5">
+        <span className="text-sm">🥤</span>
+        <span className="text-xs font-semibold text-gray-500">¿Se te olvidó una bebida?</span>
+      </div>
       <div
-        className="flex overflow-x-auto"
-        style={{ gap: '6px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+        className="flex px-3 py-3"
+        style={{ gap: '8px', overflowX: 'auto', scrollbarWidth: 'none' }}
       >
-        {bebidas.map(p => <BebidaCard key={p.id} p={p} onAdd={() => {}} />)}
+        {bebidas.map(p => {
+          const price   = p.online_price || p.base_price
+          const inCart  = items.some(i => i.id === p.id)
+          return (
+            <div
+              key={p.id}
+              className="flex-shrink-0 w-20 flex flex-col items-center text-center"
+            >
+              <div className="w-14 h-14 rounded-xl overflow-hidden bg-gray-100 mb-1.5">
+                <img
+                  src={getImg(p)} alt={p.name}
+                  className="w-full h-full object-cover"
+                  onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546173159-315724a31696?w=300&q=70' }}
+                />
+              </div>
+              <p className="text-[10px] text-gray-700 leading-tight line-clamp-2 mb-1 w-full">{p.name}</p>
+              <p className="text-[10px] font-bold text-gray-900 mb-1.5">${price.toLocaleString('es-CL')}</p>
+              <button
+                onClick={() => addItem({ id: p.id, name: p.name, price, quantity: 1, unit: 'un' })}
+                className={`w-full py-1 rounded-lg text-[10px] font-bold transition ${
+                  inCart ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-red-100 hover:text-red-700 text-gray-600'
+                }`}
+              >
+                {inCart ? '✓' : '+ Agregar'}
+              </button>
+            </div>
+          )
+        })}
       </div>
     </div>
   )
@@ -105,43 +88,48 @@ function ForgotSection() {
 // ── Modal "¿Se te olvidó algo?" ────────────────────────────────────────────
 function ForgotModal({ onClose }: { onClose: () => void }) {
   const bebidas = useBebidas()
-  const [added, setAdded] = useState(false)
+  const { addItem, items } = useCart()
   if (bebidas.length === 0) return null
   return (
     <div className="fixed inset-0 z-[60] flex items-end sm:items-center justify-center p-3 sm:p-4">
-      {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-      {/* Modal */}
-      <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-lg max-h-[85vh] flex flex-col overflow-hidden">
-        {/* Header */}
-        <div className="flex items-center justify-between px-4 sm:px-5 py-4 border-b border-gray-100">
-          <div>
-            <p className="text-xs font-semibold text-blue-600 uppercase tracking-widest mb-0.5">Antes de pagar</p>
-            <h3 className="text-lg sm:text-xl font-black text-gray-900">¿Se te olvidó algo? 🥤</h3>
-          </div>
-          <button onClick={onClose} className="p-2 hover:bg-gray-100 rounded-xl transition text-gray-400 hover:text-gray-600">
-            <X className="w-5 h-5" />
+      <div className="relative bg-white rounded-2xl sm:rounded-3xl shadow-2xl w-full max-w-md max-h-[80vh] flex flex-col overflow-hidden">
+        <div className="flex items-center justify-between px-5 py-4 border-b border-gray-100">
+          <h3 className="font-black text-gray-900">🥤 ¿Se te olvidó algo?</h3>
+          <button onClick={onClose} className="p-1.5 hover:bg-gray-100 rounded-lg transition">
+            <X className="w-4 h-4 text-gray-400" />
           </button>
         </div>
-        {/* Productos */}
-        <div className="p-3 sm:p-4 overflow-y-auto flex-1">
-          <p className="text-sm text-gray-500 mb-3 sm:mb-4">Agrega una bebida para acompañar tu pedido</p>
-          <div className="flex flex-wrap gap-2 justify-start">
-            {bebidas.map(p => (
-              <BebidaCard key={p.id} p={p} onAdd={() => setAdded(true)} />
-            ))}
-          </div>
+        <div className="p-4 overflow-y-auto grid grid-cols-3 gap-3">
+          {bebidas.map(p => {
+            const price  = p.online_price || p.base_price
+            const inCart = items.some(i => i.id === p.id)
+            return (
+              <div key={p.id} className="flex flex-col items-center text-center">
+                <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 mb-1.5">
+                  <img src={getImg(p)} alt={p.name} className="w-full h-full object-cover"
+                    onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1546173159-315724a31696?w=300&q=70' }} />
+                </div>
+                <p className="text-[11px] text-gray-700 line-clamp-2 leading-tight mb-1">{p.name}</p>
+                <p className="text-[11px] font-bold text-gray-900 mb-1.5">${price.toLocaleString('es-CL')}</p>
+                <button
+                  onClick={() => addItem({ id: p.id, name: p.name, price, quantity: 1, unit: 'un' })}
+                  className={`w-full py-1.5 rounded-lg text-[11px] font-bold transition ${
+                    inCart ? 'bg-green-100 text-green-700' : 'bg-red-600 hover:bg-red-700 text-white'
+                  }`}
+                >
+                  {inCart ? '✓ Listo' : '+ Agregar'}
+                </button>
+              </div>
+            )
+          })}
         </div>
-        {/* Footer */}
-        <div className="px-4 sm:px-5 py-3.5 border-t border-gray-100 flex gap-2.5">
-          <button onClick={onClose}
-            className="flex-1 py-3 rounded-xl border-2 border-gray-200 text-gray-600 font-bold text-sm hover:bg-gray-50 transition">
+        <div className="px-5 py-3 border-t border-gray-100 flex gap-2.5">
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl border border-gray-200 text-gray-600 text-sm font-semibold hover:bg-gray-50 transition">
             No gracias
           </button>
-          <button onClick={onClose}
-            className="flex-1 py-3 rounded-xl bg-red-600 hover:bg-red-700 text-white font-bold text-sm transition flex items-center justify-center gap-2">
-            <ShoppingCart className="w-4 h-4" />
-            {added ? 'Continuar' : 'Ir al pago'}
+          <button onClick={onClose} className="flex-1 py-2.5 rounded-xl bg-red-600 hover:bg-red-700 text-white text-sm font-bold transition">
+            Ir al pago
           </button>
         </div>
       </div>
@@ -519,8 +507,8 @@ export default function CartPage() {
                 </div>
               </div>
 
-              {/* ¿Se te olvidó algo? — sección inline */}
-              <ForgotSection />
+              {/* ¿Se te olvidó algo? */}
+              <BebidaRow />
 
               {/* Tipo de entrega */}
               <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
