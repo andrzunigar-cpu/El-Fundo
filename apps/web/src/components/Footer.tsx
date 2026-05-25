@@ -62,7 +62,7 @@ export function Footer() {
               <li className="flex items-start gap-2">
                 <MapPin className="w-4 h-4 mt-0.5 shrink-0" />
                 <a
-                  href="https://www.google.com/maps/search/?api=1&query=Av.+Parque+Central+06441+Puente+Alto"
+                  href="https://www.google.com/maps/dir/?api=1&destination=Av+Parque+Central+06441+Puente+Alto+Chile"
                   target="_blank"
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-white"

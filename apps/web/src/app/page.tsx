@@ -689,20 +689,43 @@ export default function Home() {
                 </div>
                 <div className="p-5">
                   <p className="font-bold text-gray-900 mb-0.5">Carnicería El Fundo</p>
-                  <p className="text-gray-500 text-sm mb-4">Av. Parque Central 06441, Puente Alto · Frente a Iglesia Ciudad del Este</p>
-                  <div className="rounded-xl overflow-hidden h-44 bg-gray-100">
+                  <a
+                    href="https://maps.google.com/maps?q=Av+Parque+Central+06441+Puente+Alto+Chile"
+                    target="_blank" rel="noopener noreferrer"
+                    className="text-red-600 hover:text-red-700 text-sm font-medium mb-4 inline-flex items-center gap-1 transition"
+                  >
+                    <MapPin className="w-3.5 h-3.5" />
+                    Av. Parque Central 06441, Puente Alto
+                  </a>
+                  <p className="text-gray-400 text-xs mb-4">Frente a Iglesia Ciudad del Este</p>
+
+                  {/* Mapa embed — búsqueda por dirección exacta */}
+                  <div className="rounded-xl overflow-hidden h-48 bg-gray-100 mb-4">
                     <iframe
-                      src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3328.6!2d-70.5948!3d-33.5833!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662d08c8b7adf3d%3A0x1!2sAv.+Parque+Central+06441%2C+Puente+Alto%2C+Regi%C3%B3n+Metropolitana!5e0!3m2!1ses!2scl!4v1"
+                      src="https://maps.google.com/maps?q=Av+Parque+Central+06441+Puente+Alto+Chile&output=embed&z=17"
                       width="100%" height="100%" style={{ border: 0 }}
                       allowFullScreen loading="lazy" referrerPolicy="no-referrer-when-downgrade"
                       title="Ubicación Carnicería El Fundo"
                     />
                   </div>
-                  <a href="https://www.google.com/maps/search/?api=1&query=Av.+Parque+Central+06441+Puente+Alto"
-                    target="_blank" rel="noopener noreferrer"
-                    className="mt-4 flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-sm transition">
-                    📍 Cómo llegar — Google Maps
-                  </a>
+
+                  {/* Botones de acción */}
+                  <div className="grid grid-cols-2 gap-2">
+                    <a
+                      href="https://www.google.com/maps/dir/?api=1&destination=Av+Parque+Central+06441+Puente+Alto+Chile"
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 bg-red-600 hover:bg-red-700 text-white py-3 rounded-xl font-bold text-sm transition"
+                    >
+                      🧭 Cómo llegar
+                    </a>
+                    <a
+                      href="https://maps.google.com/maps?q=Av+Parque+Central+06441+Puente+Alto+Chile"
+                      target="_blank" rel="noopener noreferrer"
+                      className="flex items-center justify-center gap-2 bg-gray-100 hover:bg-gray-200 text-gray-800 py-3 rounded-xl font-bold text-sm transition"
+                    >
+                      📍 Ver en Maps
+                    </a>
+                  </div>
                 </div>
               </div>
             </div>
