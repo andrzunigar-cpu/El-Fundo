@@ -20,12 +20,20 @@ interface PromoProduct {
 function usePromos() {
   const [promos, setPromos] = useState<PromoProduct[]>([])
   useEffect(() => {
-    fetch('/api/products?is_promo=true')
-      .then(r => r.json())
-      .then(data => {
-        if (Array.isArray(data) && data.length > 0)
-          setPromos(data.slice(0, 16))
-      }).catch(() => {})
+    // Intentar promos primero; si no hay, caer en bebidas
+    Promise.all([
+      fetch('/api/products?is_promo=true').then(r => r.json()).catch(() => []),
+      fetch('/api/products?category_id=cat-bebidas').then(r => r.json()).catch(() => []),
+    ]).then(([promoData, bebidaData]) => {
+      const promoList: PromoProduct[] = Array.isArray(promoData) ? promoData : []
+      const bebidaList: PromoProduct[] = Array.isArray(bebidaData) ? bebidaData : []
+      // Mostrar promos primero; completar con bebidas si hay menos de 4
+      const combined = [
+        ...promoList,
+        ...bebidaList.filter(b => !promoList.some(p => p.id === b.id)),
+      ]
+      if (combined.length > 0) setPromos(combined.slice(0, 16))
+    })
   }, [])
   return promos
 }
