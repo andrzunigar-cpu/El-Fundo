@@ -51,7 +51,7 @@ function useBebidas() {
 }
 
 // ── Mini tarjeta bebida ────────────────────────────────────────────────────
-// BebidaCard sin ancho fijo — el padre controla el tamaño
+// BebidaCard compacta — fila horizontal con miniatura
 function BebidaCard({ p, onAdd }: { p: BebidaProduct; onAdd: () => void }) {
   const { addItem, items } = useCart()
   const inCart = items.some(i => i.id === p.id)
@@ -61,52 +61,42 @@ function BebidaCard({ p, onAdd }: { p: BebidaProduct; onAdd: () => void }) {
     onAdd()
   }
   return (
-    <div className="w-full bg-white rounded-lg overflow-hidden border border-gray-100 flex flex-col">
-      <div className="h-12 overflow-hidden bg-gray-50">
-        <img src={getBebidaImg(p)} alt={p.name}
-          className="w-full h-full object-cover"
-          onError={e => { (e.target as HTMLImageElement).src = BEBIDA_FALLBACK }} />
+    <button
+      onClick={handleAdd}
+      className={`flex-shrink-0 flex items-center gap-2 pl-1 pr-2.5 py-1 rounded-full border transition text-left ${
+        inCart
+          ? 'border-green-300 bg-green-50'
+          : 'border-gray-200 bg-white hover:border-red-300 hover:bg-red-50'
+      }`}
+    >
+      <img
+        src={getBebidaImg(p)} alt={p.name}
+        className="w-8 h-8 rounded-full object-cover flex-shrink-0"
+        onError={e => { (e.target as HTMLImageElement).src = BEBIDA_FALLBACK }}
+      />
+      <div className="min-w-0">
+        <p className="text-[11px] font-semibold text-gray-800 truncate max-w-[90px]">{p.name}</p>
+        <p className="text-[11px] text-gray-500">${price.toLocaleString('es-CL')}</p>
       </div>
-      <div className="p-1.5 flex flex-col flex-1">
-        <p className="text-[10px] font-medium text-gray-700 line-clamp-2 leading-tight mb-1 flex-1">{p.name}</p>
-        <p className="text-[10px] font-black text-gray-900 mb-1">${price.toLocaleString('es-CL')}</p>
-        <button
-          onClick={handleAdd}
-          className={`w-full py-1 rounded text-[10px] font-bold transition ${
-            inCart ? 'bg-green-100 text-green-700' : 'bg-red-600 hover:bg-red-700 text-white'
-          }`}
-        >
-          {inCart ? '✓' : '+ Agregar'}
-        </button>
-      </div>
-    </div>
+      <span className={`text-xs font-black ml-1 ${inCart ? 'text-green-600' : 'text-red-600'}`}>
+        {inCart ? '✓' : '+'}
+      </span>
+    </button>
   )
 }
 
-// ── Sección inline "¿Se te olvidó algo?" — 5 visibles, resto con scroll ──
+// ── Sección inline "¿Se te olvidó algo?" ──────────────────────────────────
 function ForgotSection() {
   const bebidas = useBebidas()
   if (bebidas.length === 0) return null
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm">
-      <div className="px-4 sm:px-5 py-3.5 border-b border-gray-100 flex items-center gap-2">
-        <span className="text-lg">🥤</span>
-        <div>
-          <h3 className="font-bold text-gray-900 text-sm">¿Se te olvidó algo?</h3>
-          <p className="text-xs text-gray-400">Desliza para ver más</p>
-        </div>
-      </div>
-      <div className="px-3 sm:px-4 py-2">
-        <div
-          className="flex overflow-x-auto pb-1"
-          style={{ gap: '6px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
-        >
-          {bebidas.map(p => (
-            <div key={p.id} style={{ flex: '0 0 calc(18% - 5px)', minWidth: '68px' }}>
-              <BebidaCard p={p} onAdd={() => {}} />
-            </div>
-          ))}
-        </div>
+    <div className="bg-white rounded-2xl px-4 sm:px-5 py-3 shadow-sm">
+      <p className="text-xs font-semibold text-gray-400 mb-2.5">🥤 ¿Se te olvidó algo?</p>
+      <div
+        className="flex overflow-x-auto"
+        style={{ gap: '6px', scrollbarWidth: 'none', msOverflowStyle: 'none' }}
+      >
+        {bebidas.map(p => <BebidaCard key={p.id} p={p} onAdd={() => {}} />)}
       </div>
     </div>
   )
@@ -136,7 +126,7 @@ function ForgotModal({ onClose }: { onClose: () => void }) {
         {/* Productos */}
         <div className="p-3 sm:p-4 overflow-y-auto flex-1">
           <p className="text-sm text-gray-500 mb-3 sm:mb-4">Agrega una bebida para acompañar tu pedido</p>
-          <div className="flex flex-wrap gap-2.5 justify-start">
+          <div className="flex flex-wrap gap-2 justify-start">
             {bebidas.map(p => (
               <BebidaCard key={p.id} p={p} onAdd={() => setAdded(true)} />
             ))}
