@@ -38,7 +38,7 @@ export function Header() {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-0.5">
-            <Link href="/#combos" className="px-2.5 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-white/10 rounded-lg transition whitespace-nowrap">
+            <Link href="/productos?cat=cat-combos" className="px-2.5 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-white/10 rounded-lg transition whitespace-nowrap">
               🔥 Combos
             </Link>
             <Link href="/productos?cat=promociones" className="px-2.5 py-2 text-xs font-bold text-yellow-400 hover:text-yellow-300 hover:bg-white/10 rounded-lg transition whitespace-nowrap">
@@ -85,7 +85,7 @@ export function Header() {
 
         {menuOpen && (
           <div className="lg:hidden pb-4 space-y-1 border-t border-white/10 pt-3">
-            <Link href="/#combos" onClick={() => setMenuOpen(false)}
+            <Link href="/productos?cat=cat-combos" onClick={() => setMenuOpen(false)}
               className="block px-4 py-2.5 text-sm font-bold text-red-400 hover:text-red-300 hover:bg-white/10 rounded-lg transition">
               🔥 Combos
             </Link>

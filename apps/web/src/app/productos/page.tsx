@@ -6,7 +6,8 @@ import { Product } from '@/lib/types'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { useCart } from '@/lib/store'
-import { ShoppingCart, Search, Tag, Minus, Plus, Loader } from 'lucide-react'
+import { ShoppingCart, Search, Tag, Minus, Plus, Loader, ArrowRight } from 'lucide-react'
+import Link from 'next/link'
 
 const CATEGORY_IMAGES: Record<string, string> = {
   vacuno:    'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400&q=80',
@@ -14,23 +15,26 @@ const CATEGORY_IMAGES: Record<string, string> = {
   pollo:     'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=400&q=80',
   embutidos: 'https://images.unsplash.com/photo-1623428187969-5da2dcea5ebf?w=400&q=80',
   parrilla:  'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&q=80',
-  congelados:'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=400&q=80',
-  bebidas:   'https://images.unsplash.com/photo-1546173159-315724a31696?w=400&q=80',
+  congelados:      'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=400&q=80',
+  complementarios: 'https://images.unsplash.com/photo-1518110925495-5fe2fda0442c?w=400&q=80',
+  bebidas:         'https://images.unsplash.com/photo-1546173159-315724a31696?w=400&q=80',
   quesos:    'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&q=80',
   combos:    'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400&q=80',
   default:   'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=400&q=80',
 }
 
 const CATEGORIES = [
-  { id: 'all',           label: 'Todos' },
-  { id: 'cat-vacuno',    label: 'Vacuno' },
-  { id: 'cat-cerdo',     label: 'Cerdo' },
-  { id: 'cat-pollo',     label: 'Aves' },
-  { id: 'cat-embutidos', label: 'Embutidos' },
-  { id: 'cat-parrilla',  label: 'Parrilla' },
-  { id: 'cat-combos',    label: 'Combos' },
-  { id: 'cat-bebidas',   label: 'Bebidas' },
-  { id: 'cat-quesos',    label: 'Quesos' },
+  { id: 'all',                  label: 'Todos' },
+  { id: 'cat-vacuno',           label: 'Vacuno' },
+  { id: 'cat-cerdo',            label: 'Cerdo' },
+  { id: 'cat-pollo',            label: 'Aves' },
+  { id: 'cat-embutidos',        label: 'Embutidos' },
+  { id: 'cat-parrilla',         label: 'Parrilla' },
+  { id: 'cat-congelados',       label: 'Congelados' },
+  { id: 'cat-complementarios',  label: 'Complementarios' },
+  { id: 'cat-combos',           label: 'Combos' },
+  { id: 'cat-bebidas',          label: 'Bebidas' },
+  { id: 'cat-quesos',           label: 'Quesos' },
 ]
 
 // Categorías que se venden por unidad por defecto
@@ -58,6 +62,19 @@ const CATALOGO: Product[] = [
   { id: 'prod-emb-003', name: 'Prieta',             category_id: 'cat-embutidos', unit: 'un', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=600&q=80"]' },
   { id: 'prod-cor-001', name: 'Pierna de Cordero',  category_id: 'cat-parrilla',  unit: 'kg', base_price: 100, online_price: 100, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1615937722923-67f6deaf2cc9?w=600&q=80"]' },
   { id: 'prod-cor-002', name: 'Costillar Cordero',  category_id: 'cat-parrilla',  unit: 'kg', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1544025162-d76538485696?w=600&q=80"]' },
+  // ── Congelados ──
+  { id: 'prod-cong-001', name: 'Hamburguesas Congeladas', category_id: 'cat-congelados', unit: 'un', base_price: 100, online_price: 100, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1568901346375-23c9450c58cd?w=600&q=80"]' },
+  { id: 'prod-cong-002', name: 'Pollo Trozado Congelado', category_id: 'cat-congelados', unit: 'kg', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1610057099443-fde8c4d50f91?w=600&q=80"]' },
+  { id: 'prod-cong-003', name: 'Lomo en Cubos Congelado', category_id: 'cat-congelados', unit: 'kg', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1603360946369-dc9bb6258143?w=600&q=80"]' },
+  { id: 'prod-cong-004', name: 'Carne Molida Congelada',  category_id: 'cat-congelados', unit: 'kg', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1602470520998-f4a52199a3d6?w=600&q=80"]' },
+  { id: 'prod-cong-005', name: 'Prietas Congeladas',      category_id: 'cat-congelados', unit: 'un', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1455619452474-d2be8b1e70cd?w=600&q=80"]' },
+  // ── Complementarios ──
+  { id: 'prod-comp-001', name: 'Carbón Vegetal 5 kg',   category_id: 'cat-complementarios', unit: 'un', base_price: 100, online_price: 100, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=600&q=80"]' },
+  { id: 'prod-comp-002', name: 'Carbón Pino 3 kg',      category_id: 'cat-complementarios', unit: 'un', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=600&q=80"]' },
+  { id: 'prod-comp-003', name: 'Sal de Parrilla 500 g', category_id: 'cat-complementarios', unit: 'un', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1518110925495-5fe2fda0442c?w=600&q=80"]' },
+  { id: 'prod-comp-004', name: 'Aliño para Carne 200 g',category_id: 'cat-complementarios', unit: 'un', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1506368249639-73a05d6f6488?w=600&q=80"]' },
+  { id: 'prod-comp-005', name: 'Ajo en Polvo 100 g',    category_id: 'cat-complementarios', unit: 'un', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1518977676601-b53f82aba655?w=600&q=80"]' },
+  { id: 'prod-comp-006', name: 'Chimichurri Seco 80 g', category_id: 'cat-complementarios', unit: 'un', base_price: 100, online_price: 100, is_featured: false, status: 'active', image_urls: '["https://images.unsplash.com/photo-1506368249639-73a05d6f6488?w=600&q=80"]' },
   // ── Coca-Cola ──
   { id: 'beb-001', name: 'Coca-Cola Original Desechable 2,5 lt',       category_id: 'cat-bebidas', unit: 'un', base_price: 12702, online_price: 12702, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1554866585-cd94860890b7?w=600&q=80"]' },
   { id: 'beb-002', name: 'Coca-Cola Original Desechable 1,5 lt',    category_id: 'cat-bebidas', unit: 'un', base_price:  9614, online_price:  9614, is_featured: true,  status: 'active', image_urls: '["https://images.unsplash.com/photo-1554866585-cd94860890b7?w=600&q=80"]' },
@@ -131,7 +148,7 @@ function ProductsContent() {
   const [products, setProducts] = useState<Product[]>(CATALOGO)
   const [syncing, setSyncing] = useState(true)
   const [search, setSearch]     = useState('')
-  const [activeCategory, setActiveCategory] = useState('all')
+  const [activeCategory, setActiveCategory] = useState(() => searchParams.get('cat') || 'all')
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const { addItem, items } = useCart()
 
@@ -149,6 +166,8 @@ function ProductsContent() {
     window.history.pushState({}, '', url)
   }
 
+  const CAT_ORDER = ['cat-vacuno','cat-cerdo','cat-pollo','cat-embutidos','cat-parrilla','cat-congelados','cat-complementarios','cat-bebidas','cat-quesos','cat-combos']
+
   useEffect(() => {
     fetch('/api/products')
       .then(r => r.json())
@@ -158,6 +177,11 @@ function ProductsContent() {
             ...p,
             name: p.name.replace(/\s+x(6|12)\b/gi, '').trim(),
           }))
+          clean.sort((a: Product, b: Product) => {
+            const ai = CAT_ORDER.indexOf(a.category_id)
+            const bi = CAT_ORDER.indexOf(b.category_id)
+            return (ai === -1 ? 99 : ai) - (bi === -1 ? 99 : bi)
+          })
           setProducts(clean)
         }
       })
@@ -513,6 +537,35 @@ function ProductsContent() {
           )}
         </div>
       </main>
+
+      {/* ── Mini barra carrito flotante ── */}
+      {items.length > 0 && (
+        <div className="fixed bottom-0 left-0 right-0 z-40 bg-gray-900 border-t border-gray-700 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.3)]">
+          <div className="max-w-7xl mx-auto flex items-center justify-between gap-4">
+            <div className="flex items-center gap-3 min-w-0">
+              <div className="w-8 h-8 bg-red-600 rounded-lg flex items-center justify-center shrink-0">
+                <ShoppingCart className="w-4 h-4 text-white" />
+                <span className="sr-only">Carrito</span>
+              </div>
+              <div className="min-w-0">
+                <p className="text-white text-xs font-bold">
+                  {items.reduce((s, i) => s + i.quantity, 0).toFixed(2).replace(/\.?0+$/, '')} items · <span className="text-red-400">${items.reduce((s, i) => s + i.price * i.quantity, 0).toLocaleString('es-CL')}</span>
+                </p>
+                <p className="text-gray-400 text-[10px] truncate">
+                  {items.map(i => i.name).join(' · ')}
+                </p>
+              </div>
+            </div>
+            <Link
+              href="/carrito"
+              className="shrink-0 flex items-center gap-1.5 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-xl font-bold text-sm transition"
+            >
+              Ir al carrito <ArrowRight className="w-3.5 h-3.5" />
+            </Link>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   )

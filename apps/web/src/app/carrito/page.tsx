@@ -28,10 +28,20 @@ function usePromos() {
       const promoList: PromoProduct[] = Array.isArray(promoData) ? promoData : []
       const bebidaList: PromoProduct[] = Array.isArray(bebidaData) ? bebidaData : []
       // Mostrar promos primero; completar con bebidas si hay menos de 4
-      const combined = [
+      const seenIds   = new Set<string>()
+      const seenNames = new Set<string>()
+      const combined  = [
         ...promoList,
         ...bebidaList.filter(b => !promoList.some(p => p.id === b.id)),
-      ]
+      ].filter(p => {
+        if (seenIds.has(p.id)) return false
+        seenIds.add(p.id)
+        // deduplica entradas similares (ej. "Coca Cola 1.5L" y "Coca-Cola Original 1,5 lt")
+        const nameKey = p.name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)
+        if (seenNames.has(nameKey)) return false
+        seenNames.add(nameKey)
+        return true
+      })
       if (combined.length > 0) setPromos(combined.slice(0, 16))
     })
   }, [])
@@ -200,9 +210,10 @@ const PAY_PRESENCIAL: PayOption[] = [
 export default function CartPage() {
   const { items, removeItem, updateQuantity, clearCart, total } = useCart()
 
-  const [name,    setName]    = useState('')
-  const [phone,   setPhone]   = useState('')
-  const [address, setAddress] = useState('')
+  const [name,        setName]        = useState('')
+  const [phonePrefix, setPhonePrefix] = useState('+569')
+  const [phone,       setPhone]       = useState('')
+  const [address,     setAddress]     = useState('')
   const [notes,   setNotes]   = useState('')
 
   const [scheduleMode, setScheduleMode] = useState<'asap' | 'scheduled'>('asap')
@@ -291,7 +302,7 @@ export default function CartPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           customer_name:    name,
-          customer_phone:   phone,
+          customer_phone:   `${phonePrefix}${phone.replace(/^\+?56\d?/, '')}`,
           customer_address: address,
           notes,
           payment_method:   payMethod,
@@ -458,12 +469,16 @@ export default function CartPage() {
         <button
           onClick={handleConfirm}
           disabled={webpayLoading || ordering}
-          className="w-full py-3.5 rounded-2xl font-black text-base transition disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 hover:bg-red-700 active:scale-[0.98] text-white flex items-center justify-center gap-2"
+          className={`w-full py-3.5 rounded-2xl font-black text-base transition disabled:opacity-50 disabled:cursor-not-allowed active:scale-[0.98] flex items-center justify-center gap-2 ${
+            canCheckout ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-200 text-gray-500'
+          }`}
         >
           {(webpayLoading || ordering) ? (
             <><Loader className="w-5 h-5 animate-spin" /> {payMethod === 'webpay' ? 'Redirigiendo...' : 'Enviando...'}</>
-          ) : (
+          ) : canCheckout ? (
             <>{payMethod === 'webpay' ? <Lock className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />} Confirmar pedido</>
+          ) : (
+            <>Completa los datos para continuar</>
           )}
         </button>
       </div>
@@ -581,14 +596,24 @@ export default function CartPage() {
                     </div>
                     <div>
                       <label className="text-xs font-medium text-gray-500 mb-1.5 block">Teléfono *</label>
-                      <input
-                        id="field-phone"
-                        type="tel"
-                        placeholder="+56 9 0000 0000"
-                        value={phone}
-                        onChange={e => { setPhone(e.target.value); setShowErrors(false) }}
-                        className={`w-full px-4 py-3 border rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent ${showErrors && !phone ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}
-                      />
+                      <div id="field-phone" className={`flex border rounded-xl overflow-hidden focus-within:ring-2 focus-within:ring-red-500 ${showErrors && !phone ? 'border-red-400 bg-red-50' : 'border-gray-200'}`}>
+                        <select
+                          value={phonePrefix}
+                          onChange={e => setPhonePrefix(e.target.value)}
+                          className="px-2 py-3 text-sm font-semibold bg-gray-50 border-r border-gray-200 text-gray-700 focus:outline-none cursor-pointer"
+                        >
+                          <option value="+569">+569</option>
+                          <option value="+562">+562</option>
+                          <option value="+56">+56</option>
+                        </select>
+                        <input
+                          type="tel"
+                          placeholder="9 1234 5678"
+                          value={phone}
+                          onChange={e => { setPhone(e.target.value.replace(/\D/g, '')); setShowErrors(false) }}
+                          className="flex-1 px-3 py-3 text-sm bg-transparent focus:outline-none"
+                        />
+                      </div>
                     </div>
                   </div>
                   {deliveryMode === 'delivery' && (
@@ -810,10 +835,21 @@ export default function CartPage() {
 
               {/* Botón confirmar — solo visible en desktop */}
               <div className="hidden lg:block space-y-2">
+                {showErrors && !canCheckout && (
+                  <div className="bg-red-50 border border-red-200 rounded-xl px-4 py-3 text-xs text-red-700 space-y-1">
+                    <p className="font-bold">Completa los campos requeridos:</p>
+                    {!name && <p>• Nombre</p>}
+                    {!phone && <p>• Teléfono</p>}
+                    {!addressValid && <p>• Dirección de entrega</p>}
+                    {!scheduleValid && <p>• Día y hora de entrega</p>}
+                  </div>
+                )}
                 <button
                   onClick={handleConfirm}
                   disabled={webpayLoading || ordering}
-                  className="w-full py-4 rounded-2xl font-black text-base transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed bg-red-600 hover:bg-red-700 text-white flex items-center justify-center gap-2"
+                  className={`w-full py-4 rounded-2xl font-black text-base transition shadow-sm disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center gap-2 ${
+                    canCheckout ? 'bg-red-600 hover:bg-red-700 text-white' : 'bg-gray-200 text-gray-500 hover:bg-gray-300'
+                  }`}
                 >
                   {(webpayLoading || ordering) ? (
                     <><Loader className="w-5 h-5 animate-spin" /> {payMethod === 'webpay' ? 'Redirigiendo...' : 'Enviando...'}</>
@@ -821,7 +857,7 @@ export default function CartPage() {
                     <>
                       {payMethod === 'webpay' ? <Lock className="w-4 h-4" /> : <CheckCircle2 className="w-4 h-4" />}
                       <span className="truncate">
-                        Confirmar — ${fmt(grandTotal)}
+                        {canCheckout ? `Confirmar — $${fmt(grandTotal)}` : 'Completa los datos para continuar'}
                       </span>
                     </>
                   )}

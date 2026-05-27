@@ -6,7 +6,6 @@ import { Header } from "@/components/Header"
 import { Footer } from "@/components/Footer"
 import { ArrowRight, Truck, Shield, Zap, Clock, MapPin, Building2, Send, ChefHat, ShoppingCart, Check, Tag, Flame, Timer } from "lucide-react"
 import AsadoCalculator from "@/components/AsadoCalculator"
-import WelcomePopup from "@/components/WelcomePopup"
 import { useCart } from "@/lib/store"
 
 const CATEGORIES = [
@@ -506,7 +505,6 @@ function FlashSection() {
 export default function Home() {
   return (
     <>
-      <WelcomePopup />
       <Header />
       <main className="min-h-screen bg-white">
 
@@ -524,11 +522,11 @@ export default function Home() {
             </h1>
             <p className="text-xl text-gray-300 mb-8 max-w-xl mx-auto">Cortes seleccionados • Frescura garantizada • Despacho a domicilio</p>
             <div className="flex gap-4 flex-wrap justify-center">
-              <Link href="/productos" className="inline-flex items-center gap-2 bg-red-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition group">
+              <Link href="#categorias" className="inline-flex items-center gap-2 bg-red-600 text-white px-8 py-4 rounded-xl font-bold text-lg hover:bg-red-700 transition group">
                 Ver catálogo <ArrowRight className="w-5 h-5 group-hover:translate-x-1 transition" />
               </Link>
-              <Link href="#categorias" className="inline-flex items-center gap-2 bg-white/10 backdrop-blur text-white border border-white/20 px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/20 transition">
-                Ver categorías
+              <Link href="/productos" className="inline-flex items-center gap-2 bg-white/10 backdrop-blur text-white border border-white/20 px-8 py-4 rounded-xl font-bold text-lg hover:bg-white/20 transition">
+                Todos los productos
               </Link>
             </div>
           </div>
