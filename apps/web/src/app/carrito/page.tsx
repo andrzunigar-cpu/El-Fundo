@@ -49,7 +49,11 @@ function usePromos() {
 }
 
 function getImg(p: PromoProduct) {
-  try { const a = JSON.parse(p.image_urls || '[]'); if (a[0]) return a[0] } catch {}
+  try {
+    const raw = p.image_urls
+    const arr = Array.isArray(raw) ? raw : JSON.parse(typeof raw === 'string' ? raw || '[]' : '[]')
+    if (arr[0]) return arr[0]
+  } catch {}
   return 'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=300&q=70'
 }
 
