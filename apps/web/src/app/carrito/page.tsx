@@ -14,101 +14,75 @@ import { useState, useMemo, useEffect, useRef } from 'react'
 // ── Promociones ───────────────────────────────────────────────────────────
 interface PromoProduct {
   id: string; name: string; base_price: number; online_price: number
-  promotional_price?: number; image_urls: string; unit?: string
+  promotional_price?: number; image_urls: unknown; category_id?: string; unit?: string
 }
+
+const CAT_FALLBACK: Record<string, string> = {
+  'cat-bebidas':        'https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400&q=70',
+  'cat-vacuno':         'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400&q=70',
+  'cat-cerdo':          'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=400&q=70',
+  'cat-pollo':          'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=400&q=70',
+  'cat-embutidos':      'https://images.unsplash.com/photo-1623428187969-5da2dcea5ebf?w=400&q=70',
+  'cat-parrilla':       'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&q=70',
+  'cat-combos':         'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&q=70',
+  'cat-congelados':     'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=400&q=70',
+  'cat-complementarios':'https://images.unsplash.com/photo-1518110925495-5fe2fda0442c?w=400&q=70',
+  'default':            'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=400&q=70',
+}
+
+// Productos hardcoded para "¿Se te olvidó algo?" — garantizan imágenes válidas
+const BEBIDAS_CATALOGO: PromoProduct[] = [
+  { id: 'beb-001', name: 'Coca-Cola 2,5 lt',       category_id: 'cat-bebidas', base_price: 12702, online_price: 12702, unit: 'un', image_urls: ['https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400&q=80'] },
+  { id: 'beb-002', name: 'Coca-Cola 1,5 lt',       category_id: 'cat-bebidas', base_price:  9614, online_price:  9614, unit: 'un', image_urls: ['https://images.unsplash.com/photo-1554866585-cd94860890b7?w=400&q=80'] },
+  { id: 'beb-003', name: 'Coca-Cola Lata 350 ml',  category_id: 'cat-bebidas', base_price:  4416, online_price:  4416, unit: 'un', image_urls: ['https://images.unsplash.com/photo-1625772299848-391b6a87d7b3?w=400&q=80'] },
+  { id: 'beb-007', name: 'Fanta Naranja 2,5 lt',   category_id: 'cat-bebidas', base_price: 12702, online_price: 12702, unit: 'un', image_urls: ['https://images.unsplash.com/photo-1569529465828-f66efbcef9c6?w=400&q=80'] },
+  { id: 'beb-013', name: 'Monster Energy 473 ml',  category_id: 'cat-bebidas', base_price:  9295, online_price:  9295, unit: 'un', image_urls: ['https://images.unsplash.com/photo-1630358854434-6c1ca31de37d?w=400&q=80'] },
+  { id: 'beb-018', name: 'Benedictino 500 ml',     category_id: 'cat-bebidas', base_price:  6601, online_price:  6601, unit: 'un', image_urls: ['https://images.unsplash.com/photo-1548839140-29a749e1cf4d?w=400&q=80'] },
+  { id: 'beb-022', name: 'Aquarius Uva 1,6 lt',    category_id: 'cat-bebidas', base_price:  5251, online_price:  5251, unit: 'un', image_urls: ['https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&q=80'] },
+  { id: 'beb-028', name: 'Del Valle Durazno 1,5 lt',category_id:'cat-bebidas', base_price:  7736, online_price:  7736, unit: 'un', image_urls: ['https://images.unsplash.com/photo-1600271886742-f049cd451bba?w=400&q=80'] },
+]
 
 function usePromos() {
   const [promos, setPromos] = useState<PromoProduct[]>([])
   useEffect(() => {
-    // Intentar promos primero; si no hay, caer en bebidas
-    Promise.all([
-      fetch('/api/products?is_promo=true').then(r => r.json()).catch(() => []),
-      fetch('/api/products?category_id=cat-bebidas').then(r => r.json()).catch(() => []),
-    ]).then(([promoData, bebidaData]) => {
-      const promoList: PromoProduct[] = Array.isArray(promoData) ? promoData : []
-      const bebidaList: PromoProduct[] = Array.isArray(bebidaData) ? bebidaData : []
-      // Mostrar promos primero; completar con bebidas si hay menos de 4
-      const seenIds   = new Set<string>()
-      const seenNames = new Set<string>()
-      const combined  = [
-        ...promoList,
-        ...bebidaList.filter(b => !promoList.some(p => p.id === b.id)),
-      ].filter(p => {
-        if (seenIds.has(p.id)) return false
-        seenIds.add(p.id)
-        // deduplica entradas similares (ej. "Coca Cola 1.5L" y "Coca-Cola Original 1,5 lt")
-        const nameKey = p.name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)
-        if (seenNames.has(nameKey)) return false
-        seenNames.add(nameKey)
-        return true
+    fetch('/api/products?is_promo=true')
+      .then(r => r.json())
+      .catch(() => [])
+      .then((promoData) => {
+        const promoList: PromoProduct[] = Array.isArray(promoData) ? promoData : []
+        // Mezclar promos reales con bebidas hardcoded, deduplicando por id y nombre
+        const seenIds   = new Set<string>()
+        const seenNames = new Set<string>()
+        const combined  = [
+          ...promoList,
+          ...BEBIDAS_CATALOGO.filter(b => !promoList.some(p => p.id === b.id)),
+        ].filter(p => {
+          if (seenIds.has(p.id)) return false
+          seenIds.add(p.id)
+          const nameKey = p.name.toLowerCase().replace(/[^a-z0-9]/g, '').slice(0, 8)
+          if (seenNames.has(nameKey)) return false
+          seenNames.add(nameKey)
+          return true
+        })
+        setPromos(combined.slice(0, 16))
       })
-      if (combined.length > 0) setPromos(combined.slice(0, 16))
-    })
   }, [])
   return promos
 }
 
-function getImg(p: PromoProduct) {
+function getImg(p: PromoProduct): string {
   try {
     const raw = p.image_urls
-    const arr = Array.isArray(raw) ? raw : JSON.parse(typeof raw === 'string' ? raw || '[]' : '[]')
-    if (arr[0]) return arr[0]
+    let arr: unknown[] = []
+    if (Array.isArray(raw)) {
+      arr = raw
+    } else if (typeof raw === 'string' && raw.trim()) {
+      arr = JSON.parse(raw)
+    }
+    const url = arr[0]
+    if (typeof url === 'string' && url.startsWith('http')) return url
   } catch {}
-  return 'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=300&q=70'
-}
-
-// ── Sección "¿Se te olvidó algo?" ─────────────────────────────────────────
-function BebidaRow() {
-  const promos = usePromos()
-  const { addItem, items } = useCart()
-  if (promos.length === 0) return null
-
-  return (
-    <div className="bg-white rounded-2xl shadow-sm overflow-hidden">
-      <div className="px-4 py-2.5 border-b border-gray-50 flex items-center gap-1.5">
-        <span className="text-sm">🏷️</span>
-        <span className="text-xs font-semibold text-gray-500">¿Se te olvidó algo?</span>
-      </div>
-      <div
-        className="flex px-3 py-3"
-        style={{ gap: '8px', overflowX: 'auto', scrollbarWidth: 'none' }}
-      >
-        {promos.map(p => {
-          const price      = p.promotional_price || p.online_price || p.base_price
-          const origPrice  = p.promotional_price ? (p.online_price || p.base_price) : null
-          const inCart     = items.some(i => i.id === p.id)
-          return (
-            <div
-              key={p.id}
-              className="flex-shrink-0 flex flex-col items-center text-center"
-              style={{ flex: '0 0 calc(25% - 12px)' }}
-            >
-              <div className="w-full aspect-square rounded-xl overflow-hidden bg-gray-100 mb-1.5">
-                <img
-                  src={getImg(p)} alt={p.name}
-                  className="w-full h-full object-cover"
-                  onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=300&q=70' }}
-                />
-              </div>
-              <p className="text-[10px] text-gray-700 leading-tight line-clamp-2 mb-0.5 w-full">{p.name}</p>
-              {origPrice && (
-                <p className="text-[9px] text-gray-400 line-through leading-none mb-0.5">${origPrice.toLocaleString('es-CL')}</p>
-              )}
-              <p className="text-[10px] font-bold text-red-600 mb-1.5">${price.toLocaleString('es-CL')}</p>
-              <button
-                onClick={() => addItem({ id: p.id, name: p.name, price, quantity: p.unit === 'kg' ? 0.5 : 1, unit: p.unit === 'kg' ? 'kg' : 'un' })}
-                className={`w-full py-1 rounded-lg text-[10px] font-bold transition ${
-                  inCart ? 'bg-green-100 text-green-700' : 'bg-gray-100 hover:bg-red-100 hover:text-red-700 text-gray-600'
-                }`}
-              >
-                {inCart ? '✓' : '+ Agregar'}
-              </button>
-            </div>
-          )
-        })}
-      </div>
-    </div>
-  )
+  return CAT_FALLBACK[p.category_id ?? ''] ?? CAT_FALLBACK['default']
 }
 
 // ── Modal "¿Se te olvidó algo?" ────────────────────────────────────────────
@@ -134,7 +108,13 @@ function ForgotModal({ onClose }: { onClose: () => void }) {
               <div key={p.id} className="flex flex-col items-center text-center">
                 <div className="w-16 h-16 rounded-xl overflow-hidden bg-gray-100 mb-1.5">
                   <img src={getImg(p)} alt={p.name} className="w-full h-full object-cover"
-                    onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=300&q=70' }} />
+                    onError={e => {
+                      const img = e.target as HTMLImageElement
+                      if (!img.dataset.err) {
+                        img.dataset.err = '1'
+                        img.src = CAT_FALLBACK[p.category_id ?? ''] ?? CAT_FALLBACK['default']
+                      }
+                    }} />
                 </div>
                 <p className="text-[11px] text-gray-700 line-clamp-2 leading-tight mb-1">{p.name}</p>
                 <p className="text-[11px] font-bold text-gray-900 mb-1.5">${price.toLocaleString('es-CL')}</p>
