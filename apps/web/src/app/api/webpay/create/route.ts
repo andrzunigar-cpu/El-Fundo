@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { getSupabase } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
@@ -42,6 +43,21 @@ export async function POST(req: NextRequest) {
     if (!res.ok) {
       console.error('[WebPay create] Transbank error:', data)
       return NextResponse.json({ error: data.error_message || 'Error Transbank' }, { status: 502 })
+    }
+
+    // Guardar token al crear — permite recuperarlo en cancelaciones
+    try {
+      const supabase = getSupabase()
+      await supabase.from('webpay_transactions').insert({
+        token:         data.token,
+        buy_order:     buyOrder,
+        session_id:    sessionId,
+        amount:        Math.round(amount),
+        status:        'INITIATED',
+        commerce_code: COMMERCE_CODE,
+      })
+    } catch (dbErr) {
+      console.error('[WebPay create] DB save (non-fatal):', dbErr)
     }
 
     return NextResponse.json({ token: data.token, url: data.url })
