@@ -29,6 +29,13 @@ function ReturnContent() {
     const tbkToken     = searchParams.get('TBK_TOKEN')
     const tbkOrdenCompra = searchParams.get('TBK_ORDEN_COMPRA')
 
+    // Error en formulario (solo producción): llegan token_ws + TBK_TOKEN juntos → NO confirmar
+    if (tbkToken && tokenWs) {
+      setStatus('error')
+      setDetail({ message: 'Sesión de pago expirada. Por favor intenta nuevamente.' })
+      return
+    }
+
     // Cancelación: Transbank envía TBK_TOKEN (sin token_ws) → NO confirmar
     if (tbkToken && !tokenWs) {
       setStatus('error')
