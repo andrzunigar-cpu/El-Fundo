@@ -2,9 +2,17 @@
 
 import Link from 'next/link'
 import Image from 'next/image'
-import { ShoppingCart, Menu, X } from 'lucide-react'
+import { ShoppingCart, Menu, X, ChevronDown } from 'lucide-react'
 import { useCart } from '@/lib/store'
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
+
+const MAS_LINKS = [
+  { href: '/calculadora-asado', label: '🔥 Calculadora de Asado' },
+  { href: '/nosotros',          label: '🏪 Quiénes Somos' },
+  { href: '/como-llegar',       label: '📍 Cómo Llegar' },
+  { href: '/horarios',          label: '🕐 Horarios' },
+  { href: '/proveedores',       label: '🚚 Proveedores' },
+]
 
 const CATEGORIES = [
   { id: 'vacuno',     name: 'Vacuno' },
@@ -20,7 +28,18 @@ const CATEGORIES = [
 export function Header() {
   const { items } = useCart()
   const [menuOpen, setMenuOpen] = useState(false)
+  const [masOpen,  setMasOpen]  = useState(false)
+  const masRef = useRef<HTMLDivElement>(null)
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0)
+
+  // Cerrar dropdown al hacer click fuera
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (masRef.current && !masRef.current.contains(e.target as Node)) setMasOpen(false)
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
 
   return (
     <header className="bg-gray-950 sticky top-0 z-50">
@@ -58,6 +77,30 @@ export function Header() {
             <Link href="/recetas" className="px-2.5 py-2 text-xs font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10 rounded-lg transition whitespace-nowrap">
               Recetas
             </Link>
+            <span className="w-px h-4 bg-white/20 mx-1" />
+            {/* Dropdown Más */}
+            <div ref={masRef} className="relative">
+              <button
+                onClick={() => setMasOpen(o => !o)}
+                className="flex items-center gap-1 px-2.5 py-2 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition whitespace-nowrap"
+              >
+                Más <ChevronDown className={`w-3 h-3 transition-transform ${masOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {masOpen && (
+                <div className="absolute right-0 top-full mt-2 w-52 bg-gray-900 rounded-xl shadow-2xl border border-white/10 overflow-hidden z-50">
+                  {MAS_LINKS.map(l => (
+                    <Link
+                      key={l.href}
+                      href={l.href}
+                      onClick={() => setMasOpen(false)}
+                      className="block px-4 py-2.5 text-xs text-gray-300 hover:text-white hover:bg-white/10 transition"
+                    >
+                      {l.label}
+                    </Link>
+                  ))}
+                </div>
+              )}
+            </div>
           </nav>
 
           <div className="flex items-center gap-3">
@@ -109,6 +152,13 @@ export function Header() {
               className="block px-4 py-2.5 text-sm font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10 rounded-lg transition">
               🍳 Recetas
             </Link>
+            <div className="border-t border-white/10 my-1" />
+            {MAS_LINKS.map(l => (
+              <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)}
+                className="block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition">
+                {l.label}
+              </Link>
+            ))}
           </div>
         )}
       </div>
