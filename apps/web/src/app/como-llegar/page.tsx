@@ -33,7 +33,7 @@ export default function ComoLlegarPage() {
           {/* Mapa */}
           <div className="rounded-3xl overflow-hidden shadow-xl border border-gray-200 h-[420px]">
             <iframe
-              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d53186.04!2d-70.6106!3d-33.6169!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x9662d0a7a1a1a1a1%3A0x1!2sPuente+Alto%2C+Regi%C3%B3n+Metropolitana!5e0!3m2!1ses!2scl!4v1700000000000"
+              src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3329.0!2d-70.6106!3d-33.6169!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x0%3A0x0!2sAv.+Parque+Central+06441%2C+Puente+Alto%2C+Regi%C3%B3n+Metropolitana%2C+Chile!5e0!3m2!1ses!2scl!4v1700000000000&q=Av+Parque+Central+06441+Puente+Alto+Chile"
               width="100%"
               height="100%"
               style={{ border: 0 }}
@@ -54,10 +54,11 @@ export default function ComoLlegarPage() {
                 </div>
                 <div>
                   <h3 className="font-black text-gray-900 text-lg mb-1">Dirección</h3>
-                  <p className="text-gray-600 font-medium">Puente Alto, Región Metropolitana</p>
-                  <p className="text-gray-400 text-sm mt-1">Santiago de Chile</p>
+                  <p className="text-gray-600 font-medium">Av. Parque Central 06441</p>
+                  <p className="text-gray-500 text-sm">Puente Alto, Región Metropolitana</p>
+                  <p className="text-gray-400 text-xs mt-1">Frente a Iglesia Ciudad del Este</p>
                   <a
-                    href="https://maps.google.com/?q=Carniceria+El+Fundo+Puente+Alto"
+                    href="https://www.google.com/maps/dir/?api=1&destination=Av+Parque+Central+06441+Puente+Alto+Chile"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 mt-3 text-sm font-semibold text-red-600 hover:text-red-700 transition"
@@ -76,12 +77,12 @@ export default function ComoLlegarPage() {
                 </div>
                 <div>
                   <h3 className="font-black text-gray-900 text-lg mb-1">Contacto</h3>
-                  <a href="tel:+56964181081" className="text-gray-600 font-medium hover:text-red-600 transition">
-                    +56 9 6418 1081
+                  <a href="tel:+56928239161" className="text-gray-600 font-medium hover:text-red-600 transition">
+                    +56 9 2823 9161
                   </a>
                   <p className="text-gray-400 text-sm mt-1">WhatsApp disponible</p>
                   <a
-                    href="https://wa.me/56964181081"
+                    href="https://wa.me/56928239161"
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 mt-3 text-sm font-semibold text-green-600 hover:text-green-700 transition"

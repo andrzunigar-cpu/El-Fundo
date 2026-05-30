@@ -100,7 +100,7 @@ export default function HorariosPage() {
             <h3 className="text-white font-black text-lg mb-2">¿Tienes dudas?</h3>
             <p className="text-gray-400 text-sm mb-4">Contáctanos y te respondemos de inmediato</p>
             <a
-              href="https://wa.me/56964181081"
+              href="https://wa.me/56928239161"
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 bg-green-500 hover:bg-green-600 text-white font-bold px-6 py-3 rounded-xl transition"
