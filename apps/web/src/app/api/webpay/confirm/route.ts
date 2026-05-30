@@ -52,6 +52,21 @@ export async function POST(req: NextRequest) {
 
     const result = await res.json()
 
+    // Tipo de tarjeta legible desde payment_type_code
+    const cardTypeMap: Record<string, string> = {
+      VD: 'Débito', VN: 'Crédito', VC: 'Crédito', SI: 'Crédito',
+      S2: 'Crédito', NC: 'Crédito', VP: 'Prepago',
+    }
+    const cardType = cardTypeMap[result.payment_type_code] ?? result.payment_type_code ?? null
+
+    // Hora legible en hora Chile
+    const txDate   = result.transaction_date ? new Date(result.transaction_date) : new Date()
+    const txHour   = txDate.toLocaleString('es-CL', {
+      timeZone: 'America/Santiago',
+      day: '2-digit', month: '2-digit', year: 'numeric',
+      hour: '2-digit', minute: '2-digit',
+    })
+
     // Guardar transacción Transbank siempre (aprobada o rechazada)
     const supabase = getSupabase()
     await robustInsert('webpay_transactions', {
@@ -67,6 +82,9 @@ export async function POST(req: NextRequest) {
       payment_type_code:  result.payment_type_code  ?? null,
       commerce_code:      COMMERCE_CODE,
       raw_response:       result,
+      card_type,
+      transaction_hour:   txHour,
+      order_identifier:   result.buy_order          ?? null,
     })
 
     if (!res.ok) {

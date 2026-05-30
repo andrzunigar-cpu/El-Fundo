@@ -49,12 +49,18 @@ export async function POST(req: NextRequest) {
     try {
       const supabase = getSupabase()
       await supabase.from('webpay_transactions').insert({
-        token:         data.token,
-        buy_order:     buyOrder,
-        session_id:    sessionId,
-        amount:        Math.round(amount),
-        status:        'INITIATED',
-        commerce_code: COMMERCE_CODE,
+        token:            data.token,
+        buy_order:        buyOrder,
+        session_id:       sessionId,
+        amount:           Math.round(amount),
+        status:           'INITIATED',
+        commerce_code:    COMMERCE_CODE,
+        order_identifier: buyOrder,
+        transaction_hour: new Date().toLocaleString('es-CL', {
+          timeZone: 'America/Santiago',
+          day: '2-digit', month: '2-digit', year: 'numeric',
+          hour: '2-digit', minute: '2-digit',
+        }),
       })
     } catch (dbErr) {
       console.error('[WebPay create] DB save (non-fatal):', dbErr)
