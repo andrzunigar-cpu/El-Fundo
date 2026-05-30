@@ -43,10 +43,10 @@ function ReturnContent() {
       return
     }
 
-    // Timeout: solo TBK_ORDEN_COMPRA sin ningún token → NO confirmar
-    if (!tokenWs && tbkOrdenCompra) {
+    // Timeout: llegan solo TBK_ID_SESION + TBK_ORDEN_COMPRA, sin token → NO confirmar
+    if (!tokenWs && !tbkToken && tbkOrdenCompra) {
       setStatus('error')
-      setDetail({ message: 'Pago cancelado por el usuario' })
+      setDetail({ message: 'La sesión de pago expiró (más de 5 min sin actividad). Por favor intenta nuevamente.' })
       return
     }
 
