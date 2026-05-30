@@ -25,16 +25,25 @@ function ReturnContent() {
   }>({})
 
   useEffect(() => {
-    const token = searchParams.get('token_ws') || searchParams.get('TBK_TOKEN')
+    const tokenWs      = searchParams.get('token_ws')
+    const tbkToken     = searchParams.get('TBK_TOKEN')
     const tbkOrdenCompra = searchParams.get('TBK_ORDEN_COMPRA')
 
-    // Si viene TBK_ORDEN_COMPRA sin token = pago anulado por el usuario
-    if (!token && tbkOrdenCompra) {
+    // Cancelación: Transbank envía TBK_TOKEN (sin token_ws) → NO confirmar
+    if (tbkToken && !tokenWs) {
       setStatus('error')
       setDetail({ message: 'Pago cancelado por el usuario' })
       return
     }
 
+    // Timeout: solo TBK_ORDEN_COMPRA sin ningún token → NO confirmar
+    if (!tokenWs && tbkOrdenCompra) {
+      setStatus('error')
+      setDetail({ message: 'Pago cancelado por el usuario' })
+      return
+    }
+
+    const token = tokenWs
     if (!token) {
       setStatus('error')
       setDetail({ message: 'Token de pago no encontrado' })
