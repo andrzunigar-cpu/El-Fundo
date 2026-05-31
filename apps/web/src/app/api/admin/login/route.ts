@@ -8,6 +8,14 @@ const attempts = new Map<string, { count: number; resetAt: number }>()
 const MAX_ATTEMPTS = 5
 const WINDOW_MS    = 15 * 60 * 1000
 
+// Comparación en tiempo constante para evitar timing attacks
+function safeEq(a: string, b: string): boolean {
+  if (a.length !== b.length) return false
+  let diff = 0
+  for (let i = 0; i < a.length; i++) diff |= a.charCodeAt(i) ^ b.charCodeAt(i)
+  return diff === 0
+}
+
 function isRateLimited(ip: string): boolean {
   const now   = Date.now()
   const entry = attempts.get(ip) ?? { count: 0, resetAt: now + WINDOW_MS }
@@ -36,15 +44,23 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Solicitud invalida' }, { status: 400 })
   }
 
-  // Trim para eliminar espacios/newlines que Vercel puede agregar
-  const expectedUser = String(process.env.ADMIN_USERNAME ?? '').trim()
-  const expectedPass = String(process.env.ADMIN_PASSWORD ?? '').trim()
+  // Soporta hasta 3 pares de credenciales admin via env:
+  //   ADMIN_USERNAME / ADMIN_PASSWORD            (principal)
+  //   ADMIN_USERNAME_2 / ADMIN_PASSWORD_2        (secundario, opcional)
+  //   ADMIN_USERNAME_3 / ADMIN_PASSWORD_3        (terciario,  opcional)
+  // Si alguno de los pares secundarios no está definido, simplemente se ignora.
+  const pairs: Array<[string, string]> = [
+    [String(process.env.ADMIN_USERNAME   ?? '').trim(), String(process.env.ADMIN_PASSWORD   ?? '').trim()],
+    [String(process.env.ADMIN_USERNAME_2 ?? '').trim(), String(process.env.ADMIN_PASSWORD_2 ?? '').trim()],
+    [String(process.env.ADMIN_USERNAME_3 ?? '').trim(), String(process.env.ADMIN_PASSWORD_3 ?? '').trim()],
+  ].filter(([u, p]) => u && p) as Array<[string, string]>
 
-  if (!expectedUser || !expectedPass) {
+  if (pairs.length === 0) {
     return NextResponse.json({ error: 'Servidor no configurado' }, { status: 503 })
   }
 
-  const ok = username === expectedUser && password === expectedPass
+  // Comparación en tiempo constante por cada par para evitar timing attacks
+  const ok = pairs.some(([u, p]) => safeEq(username, u) && safeEq(password, p))
 
   if (!ok) {
     return NextResponse.json({ error: 'Credenciales incorrectas' }, { status: 401 })
