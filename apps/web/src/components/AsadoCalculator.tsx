@@ -9,7 +9,6 @@ const CARNES = [
   { id: 'vacuno',    label: 'Vacuno',     emoji: '🐄' },
   { id: 'cerdo',     label: 'Cerdo',      emoji: '🐷' },
   { id: 'pollo',     label: 'Pollo/Aves', emoji: '🐔' },
-  { id: 'cordero',   label: 'Cordero',    emoji: '🐑' },
   { id: 'embutidos', label: 'Embutidos',  emoji: '🌭' },
 ]
 const GPP = { hombres: 400, mujeres: 300, ninos: 200, perros: 200 }
@@ -26,21 +25,18 @@ const PRODUCTS_BY_TIER: Record<string, Record<string, ProductDef>> = {
     vacuno:    { id: 'prod-vac-004', name: 'Asado de Tira',      price: 8990,  unit: 'kg' },
     cerdo:     { id: 'prod-cer-001', name: 'Pulpa de Cerdo',      price: 5990,  unit: 'kg' },
     pollo:     { id: 'prod-pol-003', name: 'Trutro de Pollo',     price: 3990,  unit: 'kg' },
-    cordero:   { id: 'prod-cor-002', name: 'Costillar Cordero',   price: 9990,  unit: 'kg' },
     embutidos: { id: 'prod-emb-002', name: 'Chorizo Parrillero',  price: 2490,  unit: 'kg' },
   },
   parrillero: {
     vacuno:    { id: 'prod-vac-001', name: 'Lomo Liso',           price: 11990, unit: 'kg' },
     cerdo:     { id: 'prod-cer-002', name: 'Costillar de Cerdo',  price: 7990,  unit: 'kg' },
     pollo:     { id: 'prod-pol-002', name: 'Pechuga de Pollo',    price: 4990,  unit: 'kg' },
-    cordero:   { id: 'prod-cor-001', name: 'Pierna de Cordero',   price: 14990, unit: 'kg' },
     embutidos: { id: 'prod-emb-001', name: 'Longaniza Casera',    price: 1290,  unit: 'un', gramsPerUnit: 180 },
   },
   premium: {
     vacuno:    { id: 'prod-vac-002', name: 'Lomo Vetado',         price: 12990, unit: 'kg' },
     cerdo:     { id: 'prod-cer-002', name: 'Costillar de Cerdo',  price: 7990,  unit: 'kg' },
     pollo:     { id: 'prod-pol-002', name: 'Pechuga de Pollo',    price: 4990,  unit: 'kg' },
-    cordero:   { id: 'prod-cor-001', name: 'Pierna de Cordero',   price: 14990, unit: 'kg' },
     embutidos: { id: 'prod-emb-001', name: 'Longaniza Casera',    price: 1290,  unit: 'un', gramsPerUnit: 180 },
   },
 }
@@ -163,7 +159,7 @@ export default function AsadoCalculator() {
   const [ninos,   setNinos]   = useState('')
   const [perros,  setPerros]  = useState('')
   const [carnes,  setCarnes]  = useState<Record<string, boolean>>({
-    vacuno: false, cerdo: false, pollo: false, cordero: false, embutidos: false,
+    vacuno: false, cerdo: false, pollo: false, embutidos: false,
   })
   const [result, setResult] = useState<null | Record<string, number>>(null)
 
