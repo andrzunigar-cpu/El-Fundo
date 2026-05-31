@@ -5,12 +5,19 @@ export const dynamic = 'force-dynamic'
 
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, discount_pct } = await request.json()
-    if (!email) return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
+    const { name, email } = await request.json()
+    if (!email || typeof email !== 'string') {
+      return NextResponse.json({ error: 'Email requerido' }, { status: 400 })
+    }
+    // Validación básica de formato email
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return NextResponse.json({ error: 'Email inválido' }, { status: 400 })
+    }
 
+    // discount_pct fijo en servidor — no aceptado del cliente (previene manipulación)
     const { data, error } = await getSupabase()
       .from('subscribers')
-      .upsert({ name: name || '', email, discount_pct: discount_pct || 10 }, { onConflict: 'email' })
+      .upsert({ name: name ? String(name).slice(0, 100) : '', email: email.toLowerCase(), discount_pct: 10 }, { onConflict: 'email' })
       .select()
       .single()
 
@@ -31,7 +38,7 @@ export async function GET(request: NextRequest) {
   // Solo admin puede ver la lista de suscriptores
   const { verifyAdminToken } = await import('@/lib/admin-auth')
   const token = request.cookies.get('admin_auth')?.value ?? ''
-  if (!verifyAdminToken(token)) {
+  if (!(await verifyAdminToken(token))) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 

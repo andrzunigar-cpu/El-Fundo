@@ -12,7 +12,7 @@ const BYPASS = [
   '/sitemap',
 ]
 
-export function middleware(request: NextRequest) {
+export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
   // ── Bloqueo ruta /admin directa ──
@@ -20,10 +20,10 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // ── Protección del dashboard admin ──
+  // ── Protección del dashboard admin (HMAC-SHA256) ──
   if (pathname.startsWith('/admin/dashboard')) {
     const token = request.cookies.get('admin_auth')?.value ?? ''
-    if (!verifyAdminToken(token)) {
+    if (!(await verifyAdminToken(token))) {
       return NextResponse.redirect(new URL('/gestion-elfundo', request.url))
     }
   }

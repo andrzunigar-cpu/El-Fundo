@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase-server'
+import { requireAdmin } from '@/lib/require-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -43,6 +44,9 @@ async function tryUpdate(id: string, payload: Record<string, unknown>, attempts 
 }
 
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const deny = await requireAdmin(request)
+  if (deny) return deny
+
   const { id }   = await params
   const body     = await request.json()
 

@@ -18,15 +18,24 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const { amount, orderId, returnUrl } = await req.json()
+    const { amount, orderId } = await req.json()
 
     if (!amount || !orderId) {
       return NextResponse.json({ error: 'Faltan datos' }, { status: 400 })
     }
 
+    // returnUrl siempre hardcodeado en servidor — nunca desde el cliente (previene SSRF)
+    const RETURN_URL = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://carniceriaelfundo.cl'}/webpay/return`
+
+    // Validar monto: mínimo $50, máximo $5.000.000
+    const amountInt = Math.round(Number(amount))
+    if (!Number.isFinite(amountInt) || amountInt < 50 || amountInt > 5_000_000) {
+      return NextResponse.json({ error: 'Monto inválido' }, { status: 400 })
+    }
+
     const buyOrder  = `EF${Date.now().toString().slice(-9)}`
-    const sessionId = `S${orderId}`
-    const finalReturn = returnUrl || `${process.env.NEXT_PUBLIC_BASE_URL || 'https://carniceriaelfundo.cl'}/webpay/return`
+    const sessionId = `S${String(orderId).slice(0, 50)}`
+    const finalReturn = RETURN_URL
 
     const res = await fetch(`${BASE_URL}/rswebpaytransaction/api/webpay/v1.2/transactions`, {
       method: 'POST',
@@ -38,7 +47,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         buy_order:  buyOrder,
         session_id: sessionId,
-        amount:     Math.round(amount),
+        amount:     amountInt,
         return_url: finalReturn,
       }),
     })
@@ -57,7 +66,7 @@ export async function POST(req: NextRequest) {
         token:            data.token,
         buy_order:        buyOrder,
         session_id:       sessionId,
-        amount:           Math.round(amount),
+        amount:           amountInt,
         status:           'INITIATED',
         commerce_code:    COMMERCE_CODE,
         order_identifier: buyOrder,

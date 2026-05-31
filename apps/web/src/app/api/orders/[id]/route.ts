@@ -1,22 +1,40 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase-server'
+import { requireAdmin } from '@/lib/require-admin'
 
 export const dynamic = 'force-dynamic'
 
+// GET público — permite seguimiento de pedido propio por UUID (no adivinable)
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
+
+  // Validar UUID para prevenir inyección
+  if (!/^[0-9a-f-]{36}$/i.test(id)) {
+    return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+  }
+
   const { data, error } = await getSupabase()
     .from('orders')
-    .select('*, order_items(*)')
+    // Solo campos necesarios para seguimiento de pedido — NO exponer datos internos
+    .select('id, order_number, status, created_at, total_amount, order_items(product_name, quantity, unit_price)')
     .eq('id', id)
     .single()
 
-  if (error) return NextResponse.json({ error: error.message }, { status: 404 })
+  if (error) return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 })
   return NextResponse.json(data)
 }
 
+// PATCH requiere autenticación admin
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const deny = await requireAdmin(request)
+  if (deny) return deny
+
   const { id } = await params
+
+  if (!/^[0-9a-f-]{36}$/i.test(id)) {
+    return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+  }
+
   const body = await request.json()
   const { status } = body
 
@@ -29,7 +47,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     .from('orders')
     .update({ status })
     .eq('id', id)
-    .select()
+    .select('id, status')
     .single()
 
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })

@@ -1,7 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase-server'
+import { requireAdmin } from '@/lib/require-admin'
 
 export const dynamic = 'force-dynamic'
+
+// Claves de configuración permitidas — evita escritura de claves arbitrarias
+const ALLOWED_KEYS = new Set([
+  'store_name', 'store_phone', 'store_address', 'store_hours',
+  'whatsapp', 'delivery_price', 'min_order', 'delivery_active',
+  'store_open', 'webpay_active', 'maintenance_mode',
+])
 
 const DEFAULTS = {
   store_name:      'Carnicería El Fundo',
@@ -38,14 +46,20 @@ export async function GET() {
 }
 
 export async function POST(req: NextRequest) {
+  const deny = await requireAdmin(req)
+  if (deny) return deny
+
   try {
     const body = await req.json()
     const supabase = getSupabase()
 
-    const rows = Object.entries(body).map(([key, value]) => ({
-      key,
-      value: JSON.stringify(value),
-    }))
+    // Solo keys permitidas — previene escritura de claves arbitrarias
+    const rows = Object.entries(body)
+      .filter(([key]) => ALLOWED_KEYS.has(key))
+      .map(([key, value]) => ({
+        key,
+        value: JSON.stringify(value),
+      }))
 
     const { error } = await supabase
       .from('store_settings')

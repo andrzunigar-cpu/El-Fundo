@@ -55,7 +55,7 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ error: 'Credenciales incorrectas' }, { status: 401 })
   }
 
-  const token = getAdminToken()
+  const token = await getAdminToken()
   if (!token) {
     return NextResponse.json({ error: 'ADMIN_SESSION_SECRET no configurado' }, { status: 503 })
   }

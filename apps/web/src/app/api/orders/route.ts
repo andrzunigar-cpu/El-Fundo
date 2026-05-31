@@ -67,7 +67,7 @@ export async function GET(request: NextRequest) {
   // Solo admin puede listar todos los pedidos
   const { verifyAdminToken } = await import('@/lib/admin-auth')
   const token = request.cookies.get('admin_auth')?.value ?? ''
-  if (!verifyAdminToken(token)) {
+  if (!(await verifyAdminToken(token))) {
     return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
   }
 

@@ -72,6 +72,22 @@ export async function POST(req: NextRequest) {
       hour: '2-digit', minute: '2-digit',
     })
 
+    // Solo los 4 últimos dígitos de la tarjeta
+    const cardLast4 = result.card_detail?.card_number
+      ? String(result.card_detail.card_number).slice(-4)
+      : null
+
+    // raw_response: solo campos no sensibles (sin token interno, sin PAN completo)
+    const safeResponse = {
+      buy_order:          result.buy_order,
+      amount:             result.amount,
+      status:             result.status,
+      response_code:      result.response_code,
+      authorization_code: result.authorization_code,
+      payment_type_code:  result.payment_type_code,
+      transaction_date:   result.transaction_date,
+    }
+
     // Guardar transacción Transbank siempre (aprobada o rechazada)
     const supabase = getSupabase()
     await robustInsert('webpay_transactions', {
@@ -82,11 +98,11 @@ export async function POST(req: NextRequest) {
       status:             result.status             ?? 'UNKNOWN',
       response_code:      result.response_code      ?? null,
       authorization_code: result.authorization_code ?? null,
-      card_number:        result.card_detail?.card_number ?? null,
+      card_number:        cardLast4,                           // solo últimos 4 dígitos
       transaction_date:   result.transaction_date   ?? null,
       payment_type_code:  result.payment_type_code  ?? null,
       commerce_code:      COMMERCE_CODE,
-      raw_response:       result,
+      raw_response:       safeResponse,                        // sin datos sensibles
       card_type:          cardType,
       transaction_hour:   txHour,
       order_identifier:   result.buy_order          ?? null,
@@ -166,7 +182,7 @@ export async function POST(req: NextRequest) {
       success:           true,
       amount:            result.amount,
       authorizationCode: result.authorization_code,
-      cardNumber:        result.card_detail?.card_number,
+      cardNumber:        cardLast4,          // solo últimos 4 dígitos al cliente
       transactionDate:   result.transaction_date,
       buyOrder:          result.buy_order,
       orderId,

@@ -1,22 +1,32 @@
 /**
- * Admin session token helpers.
- * The token is derived from ADMIN_SESSION_SECRET env var —
- * never exposed to the client, checked only server-side.
+ * admin-auth.ts — HMAC-SHA256 (Web Crypto, compatible Edge + Node)
+ * El token NO es reversible. Comparación siempre en tiempo constante.
  */
 
-export function getAdminToken(): string {
-  const secret = process.env.ADMIN_SESSION_SECRET || ''
-  if (!secret) return ''
-  // Derive a stable opaque token (not the secret itself)
-  // Using simple base64 encoding so Edge Runtime can handle it without Node crypto
-  return Buffer.from(`admin:${secret}:elfundo`).toString('base64url')
+const TOKEN_CONTEXT = 'elfundo:admin:session:v2'
+
+async function _hmac(secret: string): Promise<string> {
+  const enc = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false, ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, enc.encode(TOKEN_CONTEXT))
+  return btoa(String.fromCharCode(...new Uint8Array(sig)))
+    .replace(/\+/g, '-').replace(/\//g, '_').replace(/=+$/, '')
 }
 
-export function verifyAdminToken(token: string): boolean {
+export async function getAdminToken(): Promise<string> {
+  const secret = process.env.ADMIN_SESSION_SECRET ?? ''
+  if (!secret) return ''
+  return _hmac(secret)
+}
+
+export async function verifyAdminToken(token: string): Promise<boolean> {
   if (!token) return false
-  const expected = getAdminToken()
+  const expected = await getAdminToken()
   if (!expected) return false
-  // Constant-length comparison to prevent trivial timing attacks
   if (token.length !== expected.length) return false
   let diff = 0
   for (let i = 0; i < token.length; i++) {

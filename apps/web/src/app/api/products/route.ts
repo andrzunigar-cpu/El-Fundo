@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase-server'
+import { requireAdmin } from '@/lib/require-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -59,6 +60,9 @@ async function tryInsert(payload: Record<string, unknown>, attempts = 0): Promis
 }
 
 export async function POST(request: NextRequest) {
+  const deny = await requireAdmin(request)
+  if (deny) return deny
+
   try {
     const body = await request.json()
     const result = await tryInsert(body)
