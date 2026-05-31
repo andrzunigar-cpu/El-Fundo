@@ -27,8 +27,9 @@ export async function POST(request: NextRequest) {
     if (payment_method)        orderPayload.payment_method = payment_method
 
     // Insert robusto: si falta cualquier columna, sacarla y reintentar
+    type SbError = { message?: string; code?: string; details?: string; hint?: string }
     let order: { id: string } | null = null
-    let orderError: { message: string } | null = null
+    let orderError: SbError | null = null
     for (let i = 0; i < 5; i++) {
       const res = await getSupabase().from('orders').insert(orderPayload).select().single()
       if (!res.error) { order = res.data; orderError = null; break }
@@ -41,25 +42,43 @@ export async function POST(request: NextRequest) {
       break
     }
 
-    if (orderError || !order) throw orderError || new Error('No se pudo crear el pedido')
+    if (orderError || !order) {
+      // Log completo a Vercel para diagnosticar (no expone al cliente más de lo necesario)
+      console.error('[orders.insert] failed', { error: orderError, payload: orderPayload })
+      const detail = orderError
+        ? [orderError.message, orderError.details, orderError.hint, orderError.code]
+            .filter(Boolean).join(' — ')
+        : 'No se pudo crear el pedido'
+      return NextResponse.json({ error: detail || 'No se pudo crear el pedido' }, { status: 500 })
+    }
 
     if (items?.length) {
       const orderItems = items.map((item: { product_id: string; product_name?: string; quantity: number; unit_price: number }) => ({
         order_id: order.id,
         product_id: item.product_id,
         product_name: item.product_name || item.product_id,
+        // product_sku es NOT NULL en algunas variantes del schema; usar id como fallback
+        product_sku: item.product_id,
         quantity: item.quantity,
         unit_price: item.unit_price,
-        subtotal: item.quantity * item.unit_price,
+        subtotal: Math.round(item.quantity * item.unit_price),
       }))
       const { error: itemsError } = await getSupabase().from('order_items').insert(orderItems)
-      if (itemsError) console.error('Order items error:', itemsError)
+      if (itemsError) console.error('[order_items.insert] failed', itemsError)
     }
 
     return NextResponse.json({ id: order.id, status: 'pending' }, { status: 201 })
   } catch (err: unknown) {
-    const message = err instanceof Error ? err.message : 'Error creating order'
-    return NextResponse.json({ error: message }, { status: 500 })
+    const e = err as { message?: string; code?: string; details?: string; hint?: string } | undefined
+    console.error('[orders.POST] exception', err)
+    const detail =
+      e && typeof e === 'object'
+        ? [e.message, e.details, e.hint, e.code].filter(Boolean).join(' — ')
+        : ''
+    return NextResponse.json(
+      { error: detail || (err instanceof Error ? err.message : 'Error creating order') },
+      { status: 500 }
+    )
   }
 }
 
