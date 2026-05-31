@@ -59,6 +59,9 @@ export function Header() {
             <Link href="/horarios" className="px-2.5 py-2 text-xs font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10 rounded-lg transition whitespace-nowrap">
               Horarios
             </Link>
+            <Link href="/como-llegar" className="px-2.5 py-2 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition whitespace-nowrap">
+              Cómo Llegar
+            </Link>
             <span className="w-px h-4 bg-white/20 mx-1" />
             {/* Dropdown Más */}
             <div ref={masRef} className="relative">
@@ -126,6 +129,10 @@ export function Header() {
             <Link href="/horarios" onClick={() => setMenuOpen(false)}
               className="block px-4 py-2.5 text-sm font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10 rounded-lg transition">
               🕐 Horarios
+            </Link>
+            <Link href="/como-llegar" onClick={() => setMenuOpen(false)}
+              className="block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition">
+              📍 Cómo Llegar
             </Link>
             <div className="border-t border-white/10 my-1" />
             {MAS_LINKS.map(l => (
