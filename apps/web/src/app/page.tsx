@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
+import { FlashSale } from '@/components/FlashSale'
 import { ArrowRight } from 'lucide-react'
 
 const CATEGORIES = [
@@ -42,6 +43,9 @@ export default function Home() {
             </Link>
           </div>
         </section>
+
+        {/* Ofertas Flash — entre el menú/hero y categorías */}
+        <FlashSale />
 
         {/* Categorías */}
         <section className="max-w-7xl mx-auto px-4 py-16">

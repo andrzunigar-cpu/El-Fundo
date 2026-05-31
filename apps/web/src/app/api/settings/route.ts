@@ -9,6 +9,8 @@ const ALLOWED_KEYS = new Set([
   'store_name', 'store_phone', 'store_address', 'store_hours',
   'whatsapp', 'delivery_price', 'min_order', 'delivery_active',
   'store_open', 'webpay_active', 'maintenance_mode',
+  // Ofertas Flash (home)
+  'flash_sale_active', 'flash_sale_ends_at',
 ])
 
 const DEFAULTS = {
