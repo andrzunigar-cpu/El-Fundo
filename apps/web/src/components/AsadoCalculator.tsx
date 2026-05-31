@@ -11,6 +11,7 @@ const CARNES = [
   { id: 'pollo',     label: 'Pollo/Aves', emoji: '🐔' },
   { id: 'cordero',   label: 'Cordero',    emoji: '🐑' },
   { id: 'embutidos', label: 'Embutidos',  emoji: '🌭' },
+  { id: 'perro',     label: 'Perro',      emoji: '🐕' },
 ]
 const GPP = { hombres: 400, mujeres: 300, ninos: 200 }
 
@@ -28,6 +29,7 @@ const PRODUCTS_BY_TIER: Record<string, Record<string, ProductDef>> = {
     pollo:     { id: 'prod-pol-003', name: 'Trutro de Pollo',     price: 3990,  unit: 'kg' },
     cordero:   { id: 'prod-cor-002', name: 'Costillar Cordero',   price: 9990,  unit: 'kg' },
     embutidos: { id: 'prod-emb-002', name: 'Chorizo Parrillero',  price: 2490,  unit: 'kg' },
+    perro:     { id: 'prod-perro-001', name: 'Patitas de Pollo',  price: 990,   unit: 'kg' },
   },
   parrillero: {
     vacuno:    { id: 'prod-vac-001', name: 'Lomo Liso',           price: 11990, unit: 'kg' },
@@ -35,6 +37,7 @@ const PRODUCTS_BY_TIER: Record<string, Record<string, ProductDef>> = {
     pollo:     { id: 'prod-pol-002', name: 'Pechuga de Pollo',    price: 4990,  unit: 'kg' },
     cordero:   { id: 'prod-cor-001', name: 'Pierna de Cordero',   price: 14990, unit: 'kg' },
     embutidos: { id: 'prod-emb-001', name: 'Longaniza Casera',    price: 1290,  unit: 'un', gramsPerUnit: 180 },
+    perro:     { id: 'prod-perro-001', name: 'Patitas de Pollo',  price: 990,   unit: 'kg' },
   },
   premium: {
     vacuno:    { id: 'prod-vac-002', name: 'Lomo Vetado',         price: 12990, unit: 'kg' },
@@ -42,6 +45,7 @@ const PRODUCTS_BY_TIER: Record<string, Record<string, ProductDef>> = {
     pollo:     { id: 'prod-pol-002', name: 'Pechuga de Pollo',    price: 4990,  unit: 'kg' },
     cordero:   { id: 'prod-cor-001', name: 'Pierna de Cordero',   price: 14990, unit: 'kg' },
     embutidos: { id: 'prod-emb-001', name: 'Longaniza Casera',    price: 1290,  unit: 'un', gramsPerUnit: 180 },
+    perro:     { id: 'prod-perro-001', name: 'Patitas de Pollo',  price: 990,   unit: 'kg' },
   },
 }
 
@@ -149,7 +153,7 @@ export default function AsadoCalculator() {
   const [mujeres, setMujeres] = useState('')
   const [ninos,   setNinos]   = useState('')
   const [carnes,  setCarnes]  = useState<Record<string, boolean>>({
-    vacuno: true, cerdo: false, pollo: false, cordero: false, embutidos: false,
+    vacuno: false, cerdo: false, pollo: false, cordero: false, embutidos: false, perro: false,
   })
   const [result, setResult] = useState<null | Record<string, number>>(null)
 
