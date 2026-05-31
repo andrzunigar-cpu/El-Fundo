@@ -67,7 +67,7 @@ export function Footer() {
                   rel="noopener noreferrer"
                   className="text-gray-400 hover:text-white"
                 >
-                  Av. Parque Central 06441<br />
+                  Av. Parque Central 06441, Local 5<br />
                   Puente Alto, RM<br />
                   <span className="text-gray-500 text-xs">Frente a Iglesia Ciudad del Este</span>
                 </a>
