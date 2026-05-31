@@ -3,10 +3,10 @@ import { getAdminToken } from '@/lib/admin-auth'
 
 export const dynamic = 'force-dynamic'
 
-// ── In-memory rate limiting (per IP, per server instance) ─────────────────
+// ── In-memory rate limiting (per IP, resets cada 15 min) ──────────────────
 const attempts = new Map<string, { count: number; resetAt: number }>()
 const MAX_ATTEMPTS = 5
-const WINDOW_MS    = 15 * 60 * 1000   // 15 min
+const WINDOW_MS    = 15 * 60 * 1000
 
 function isRateLimited(ip: string): boolean {
   const now   = Date.now()
@@ -30,28 +30,23 @@ export async function POST(req: NextRequest) {
   let username = '', password = ''
   try {
     const body = await req.json()
-    username = body.username ?? ''
-    password = body.password ?? ''
+    username = String(body.username ?? '').trim()
+    password = String(body.password ?? '')
   } catch {
-    return NextResponse.json({ error: 'Solicitud inválida' }, { status: 400 })
+    return NextResponse.json({ error: 'Solicitud invalida' }, { status: 400 })
   }
 
-  const expectedUser = process.env.ADMIN_USERNAME ?? ''
-  const expectedPass = process.env.ADMIN_PASSWORD ?? ''
+  // Trim para eliminar espacios/newlines que Vercel puede agregar
+  const expectedUser = String(process.env.ADMIN_USERNAME ?? '').trim()
+  const expectedPass = String(process.env.ADMIN_PASSWORD ?? '').trim()
 
   if (!expectedUser || !expectedPass) {
-    console.error('[admin/login] ADMIN_USERNAME or ADMIN_PASSWORD env vars not set')
     return NextResponse.json({ error: 'Servidor no configurado' }, { status: 503 })
   }
 
-  // Constant-time comparison to avoid timing attacks
-  const userMatch = username.length === expectedUser.length &&
-    username.split('').every((c, i) => c === expectedUser[i])
-  const passMatch = password.length === expectedPass.length &&
-    password.split('').every((c, i) => c === expectedPass[i])
+  const ok = username === expectedUser && password === expectedPass
 
-  if (!userMatch || !passMatch) {
-    // Generic message — don't reveal which field is wrong
+  if (!ok) {
     return NextResponse.json({ error: 'Credenciales incorrectas' }, { status: 401 })
   }
 
@@ -62,10 +57,10 @@ export async function POST(req: NextRequest) {
 
   const res = NextResponse.json({ ok: true })
   res.cookies.set('admin_auth', token, {
-    httpOnly: true,                                     // JS cannot read this cookie
-    secure:   process.env.NODE_ENV === 'production',   // HTTPS only in prod
+    httpOnly: true,
+    secure:   process.env.NODE_ENV === 'production',
     sameSite: 'strict',
-    maxAge:   60 * 60 * 8,                             // 8 hours
+    maxAge:   60 * 60 * 8,
     path:     '/',
   })
   return res
