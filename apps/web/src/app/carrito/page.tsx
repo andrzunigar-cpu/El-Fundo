@@ -199,7 +199,7 @@ export default function CartPage() {
   const [schedDate, setSchedDate] = useState('')
   const [schedTime, setSchedTime] = useState('')
 
-  const [deliveryMode,  setDeliveryMode]  = useState<'delivery' | 'pickup'>('delivery')
+  const [deliveryMode,  setDeliveryMode]  = useState<'delivery' | 'pickup' | ''>('')
   const [deliveryPrice, setDeliveryPrice] = useState(2990)
   const [storeAddress,  setStoreAddress]  = useState('Av. Parque Central 06441, Puente Alto')
 
@@ -268,8 +268,8 @@ export default function CartPage() {
   }, [scheduleMode, schedDate, schedTime])
 
   const scheduleValid  = scheduleMode === 'asap' || (!!schedDate && !!schedTime && timeOptions.length > 0)
-  const addressValid   = deliveryMode === 'pickup' || !!address.trim()
-  const canCheckout    = !!name && !!phone && scheduleValid && addressValid
+  const addressValid   = deliveryMode === 'pickup' || (deliveryMode === 'delivery' && !!address.trim())
+  const canCheckout    = !!name && !!phone && scheduleValid && addressValid && deliveryMode !== ''
 
   // ── pedido sin webpay ────────────────────────────────────────────────────
   const handleOrder = async () => {
