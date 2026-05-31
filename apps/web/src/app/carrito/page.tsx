@@ -162,7 +162,7 @@ function fmtQty(qty: number, unit?: string) {
 function fmt(n: number) { return n.toLocaleString('es-CL') }
 
 // ── tipos de pago ──────────────────────────────────────────────────────────
-type PayMethod = 'webpay' | 'efectivo' | 'transferencia' | 'tarjeta_local' | 'amipass' | 'edenred' | 'pluxee' | 'machbank'
+type PayMethod = 'webpay' | 'efectivo' | 'tarjeta_local' | 'amipass' | 'edenred' | 'pluxee' | 'machbank'
 
 interface PayOption {
   id: PayMethod
@@ -175,7 +175,6 @@ interface PayOption {
 
 const PAY_ONLINE: PayOption[] = [
   { id: 'webpay',        label: 'WebPay',          sub: 'Débito, crédito y prepago',         icon: <Lock className="w-5 h-5" /> },
-  { id: 'transferencia', label: 'Transferencia',   sub: 'Te enviamos los datos por WhatsApp', icon: <Building2 className="w-5 h-5" /> },
   { id: 'amipass',       label: 'Amipass',         sub: 'Tarjeta de beneficios online',      icon: <span className="text-base">🎫</span>, soon: true },
   { id: 'pluxee',        label: 'Pluxee',          sub: 'Tarjeta de beneficios online',      icon: <span className="text-base">🎫</span>, soon: true },
   { id: 'edenred',       label: 'Edenred',         sub: 'Tarjeta de beneficios online',      icon: <span className="text-base">🎫</span>, soon: true },
