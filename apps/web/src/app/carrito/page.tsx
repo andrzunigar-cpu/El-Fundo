@@ -199,7 +199,8 @@ export default function CartPage() {
   const [schedDate, setSchedDate] = useState('')
   const [schedTime, setSchedTime] = useState('')
 
-  const [deliveryMode,  setDeliveryMode]  = useState<'delivery' | 'pickup' | ''>('')
+  const [deliveryMode,  setDeliveryMode]  = useState<'delivery' | 'pickup'>('delivery')
+  const [deliverySelected, setDeliverySelected] = useState(false)
   const [deliveryPrice, setDeliveryPrice] = useState(2990)
   const [storeAddress,  setStoreAddress]  = useState('Av. Parque Central 06441, Puente Alto')
 
@@ -268,8 +269,8 @@ export default function CartPage() {
   }, [scheduleMode, schedDate, schedTime])
 
   const scheduleValid  = scheduleMode === 'asap' || (!!schedDate && !!schedTime && timeOptions.length > 0)
-  const addressValid   = deliveryMode === 'pickup' || (deliveryMode === 'delivery' && !!address.trim())
-  const canCheckout    = !!name && !!phone && scheduleValid && addressValid && deliveryMode !== ''
+  const addressValid   = deliveryMode === 'pickup' || !!address.trim()
+  const canCheckout    = !!name && !!phone && scheduleValid && addressValid && deliverySelected
 
   // ── pedido sin webpay ────────────────────────────────────────────────────
   const handleOrder = async () => {
@@ -530,14 +531,14 @@ export default function CartPage() {
                   ].map(opt => (
                     <button
                       key={opt.mode}
-                      onClick={() => setDeliveryMode(opt.mode)}
+                      onClick={() => { setDeliveryMode(opt.mode); setDeliverySelected(true) }}
                       className={`flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 rounded-xl border-2 text-left transition ${
-                        deliveryMode === opt.mode
+                        deliverySelected && deliveryMode === opt.mode
                           ? 'border-red-500 bg-red-50 text-red-700'
                           : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
                       }`}
                     >
-                      <span className={`shrink-0 ${deliveryMode === opt.mode ? 'text-red-600' : 'text-gray-400'}`}>{opt.icon}</span>
+                      <span className={`shrink-0 ${deliverySelected && deliveryMode === opt.mode ? 'text-red-600' : 'text-gray-400'}`}>{opt.icon}</span>
                       <div className="min-w-0">
                         <p className="text-sm font-bold leading-tight">{opt.label}</p>
                         <p className="text-xs opacity-70 mt-0.5">{opt.sub}</p>
