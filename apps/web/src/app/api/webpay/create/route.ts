@@ -3,8 +3,13 @@ import { getSupabase } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
-const COMMERCE_CODE = process.env.WEBPAY_COMMERCE_CODE
-const API_KEY       = process.env.WEBPAY_API_KEY
+// Credenciales públicas de integración Transbank (no cobran dinero real).
+// Si en Vercel se setean WEBPAY_COMMERCE_CODE/WEBPAY_API_KEY, esos tienen prioridad.
+const TBK_TEST_COMMERCE_CODE = '597055555532'
+const TBK_TEST_API_KEY       = '579B532A7440BB0C9079DED94D31EA1615BACEB56610332264630D42D0A36B1C'
+
+const COMMERCE_CODE = process.env.WEBPAY_COMMERCE_CODE || TBK_TEST_COMMERCE_CODE
+const API_KEY       = process.env.WEBPAY_API_KEY       || TBK_TEST_API_KEY
 const IS_PROD       = process.env.WEBPAY_ENV === 'production'
 
 const BASE_URL = IS_PROD

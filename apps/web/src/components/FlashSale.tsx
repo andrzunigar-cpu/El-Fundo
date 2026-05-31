@@ -66,6 +66,7 @@ export function FlashSale() {
   const [endsAt, setEndsAt] = useState<Date | null>(null)
   const [active, setActive] = useState(true)
   const [loading, setLoading] = useState(true)
+  const [hasRealPromos, setHasRealPromos] = useState(false)
   const [now, setNow] = useState(() => Date.now())
 
   useEffect(() => {
@@ -73,7 +74,7 @@ export function FlashSale() {
     Promise.all([
       fetch('/api/settings').then(r => r.json()).catch(() => ({} as SettingsResponse)),
       fetch('/api/products?is_promo=true').then(r => r.json()).catch(() => [] as PromoProduct[]),
-    ]).then(([settings, prods]: [SettingsResponse, PromoProduct[] | { error: string }]) => {
+    ]).then(async ([settings, promoProds]: [SettingsResponse, PromoProduct[] | { error: string }]) => {
       if (cancelled) return
       if (settings.flash_sale_active === false) setActive(false)
 
@@ -89,8 +90,24 @@ export function FlashSale() {
         setEndsAt(end)
       }
 
-      const list = Array.isArray(prods) ? prods : []
-      setProducts(list.slice(0, 8))
+      const promoList = Array.isArray(promoProds) ? promoProds : []
+      if (promoList.length > 0) {
+        setProducts(promoList.slice(0, 8))
+        setHasRealPromos(true)
+        setLoading(false)
+        return
+      }
+
+      // Fallback: no hay productos con promotional_price seteado.
+      // Mostramos los primeros 8 productos como "DESTACADOS DEL DÍA".
+      try {
+        const all = await fetch('/api/products').then(r => r.json()).catch(() => [])
+        const allList = Array.isArray(all) ? all : []
+        setProducts(allList.slice(0, 8))
+        setHasRealPromos(false)
+      } catch {
+        setProducts([])
+      }
       setLoading(false)
     })
     return () => { cancelled = true }
@@ -128,30 +145,36 @@ export function FlashSale() {
             <div className="flex items-center justify-center sm:justify-start gap-2 mb-2">
               <Flame className="w-5 h-5 sm:w-6 sm:h-6 text-yellow-300 animate-pulse" />
               <p className="text-yellow-300 text-[11px] sm:text-xs font-black uppercase tracking-[0.18em]">
-                Tiempo limitado
+                {hasRealPromos ? 'Tiempo limitado' : 'Lo más pedido'}
               </p>
             </div>
             <h2 className="text-3xl sm:text-4xl md:text-5xl font-black text-white leading-none">
-              OFERTAS <span className="text-yellow-300">FLASH</span>
+              {hasRealPromos ? (
+                <>OFERTAS <span className="text-yellow-300">FLASH</span></>
+              ) : (
+                <>DESTACADOS <span className="text-yellow-300">DEL DÍA</span></>
+              )}
             </h2>
             <p className="text-red-100 text-xs sm:text-sm mt-1.5">
-              ¡Aprovecha antes que se acaben!
+              {hasRealPromos ? '¡Aprovecha antes que se acaben!' : 'Los favoritos de El Fundo, frescos para ti.'}
             </p>
           </div>
 
-          <div className="relative flex items-center gap-1 sm:gap-1.5 bg-black/35 backdrop-blur px-3 sm:px-5 py-2.5 sm:py-3 rounded-2xl border border-white/15 shadow-inner">
-            {showDays && (
-              <>
-                <TimerBlock value={pad(t.d)} label="días" />
-                <span className="text-white/40 font-black -mt-3">:</span>
-              </>
-            )}
-            <TimerBlock value={pad(t.h)} label="hrs" />
-            <span className="text-white/40 font-black -mt-3">:</span>
-            <TimerBlock value={pad(t.m)} label="min" />
-            <span className="text-white/40 font-black -mt-3">:</span>
-            <TimerBlock value={pad(t.s)} label="seg" />
-          </div>
+          {hasRealPromos && (
+            <div className="relative flex items-center gap-1 sm:gap-1.5 bg-black/35 backdrop-blur px-3 sm:px-5 py-2.5 sm:py-3 rounded-2xl border border-white/15 shadow-inner">
+              {showDays && (
+                <>
+                  <TimerBlock value={pad(t.d)} label="días" />
+                  <span className="text-white/40 font-black -mt-3">:</span>
+                </>
+              )}
+              <TimerBlock value={pad(t.h)} label="hrs" />
+              <span className="text-white/40 font-black -mt-3">:</span>
+              <TimerBlock value={pad(t.m)} label="min" />
+              <span className="text-white/40 font-black -mt-3">:</span>
+              <TimerBlock value={pad(t.s)} label="seg" />
+            </div>
+          )}
         </div>
 
         {/* ── Grid de productos ───────────────────────────────────────────── */}
@@ -185,9 +208,11 @@ export function FlashSale() {
                       <Zap className="w-3 h-3 fill-current" /> -{pct}%
                     </div>
                   )}
-                  <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow">
-                    Flash
-                  </div>
+                  {hasRealPromos && (
+                    <div className="absolute top-2 right-2 bg-red-600 text-white text-[10px] font-black px-2 py-0.5 rounded-full uppercase tracking-wider shadow">
+                      Flash
+                    </div>
+                  )}
                 </div>
                 <div className="p-3 flex-1 flex flex-col">
                   <p className="text-sm font-bold text-gray-900 line-clamp-2 mb-2 min-h-[2.5rem]">
