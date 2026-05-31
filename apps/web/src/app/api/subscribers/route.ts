@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from 'next/server'
+import { type NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
@@ -27,7 +27,14 @@ export async function POST(request: NextRequest) {
   }
 }
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Solo admin puede ver la lista de suscriptores
+  const { verifyAdminToken } = await import('@/lib/admin-auth')
+  const token = request.cookies.get('admin_auth')?.value ?? ''
+  if (!verifyAdminToken(token)) {
+    return NextResponse.json({ error: 'No autorizado' }, { status: 401 })
+  }
+
   const { data, error } = await getSupabase()
     .from('subscribers')
     .select('*')

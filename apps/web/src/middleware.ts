@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
+import { verifyAdminToken } from '@/lib/admin-auth'
 
 const BYPASS = [
   '/mantencion',
-  '/gestion-elfundo', // ruta privada del admin
+  '/gestion-elfundo',
   '/api',
   '/_next',
   '/favicon',
@@ -13,17 +14,18 @@ const BYPASS = [
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
-  const hasAdminCookie = request.cookies.get('admin_auth')?.value === 'true'
 
   // ── Bloqueo ruta /admin directa ──
-  // /admin (login antiguo) → redirige al home
   if (pathname === '/admin') {
     return NextResponse.redirect(new URL('/', request.url))
   }
 
-  // /admin/dashboard/* sin cookie → redirige a login privado
-  if (pathname.startsWith('/admin/dashboard') && !hasAdminCookie) {
-    return NextResponse.redirect(new URL('/gestion-elfundo', request.url))
+  // ── Protección del dashboard admin ──
+  if (pathname.startsWith('/admin/dashboard')) {
+    const token = request.cookies.get('admin_auth')?.value ?? ''
+    if (!verifyAdminToken(token)) {
+      return NextResponse.redirect(new URL('/gestion-elfundo', request.url))
+    }
   }
 
   // ── Bypass mantenimiento ──

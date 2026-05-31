@@ -4,29 +4,39 @@ import { useState } from 'react'
 import { useRouter } from 'next/navigation'
 import { Lock, User, Eye, EyeOff } from 'lucide-react'
 
-const ADMIN_USER = 'elfundo_adm'
-const ADMIN_PASS = 'C4rn!c3r1a.Fundo26'
+// ⚠️  Credenciales NO están aquí — se validan únicamente en el servidor.
+//     Configurar en Vercel: ADMIN_USERNAME, ADMIN_PASSWORD, ADMIN_SESSION_SECRET
 
 export default function AdminLogin() {
   const router = useRouter()
   const [username, setUsername] = useState('')
   const [password, setPassword] = useState('')
   const [showPass, setShowPass] = useState(false)
-  const [error, setError] = useState('')
-  const [loading, setLoading] = useState(false)
+  const [error,    setError]    = useState('')
+  const [loading,  setLoading]  = useState(false)
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     setError('')
-    await new Promise(r => setTimeout(r, 400))
 
-    if (username.trim() === ADMIN_USER && password === ADMIN_PASS) {
-      try { localStorage.setItem('admin_auth', 'true') } catch {}
-      document.cookie = `admin_auth=true; path=/; max-age=${60 * 60 * 8}; SameSite=Lax`
-      router.push('/admin/dashboard')
-    } else {
-      setError('Usuario o contraseña incorrectos')
+    try {
+      const res = await fetch('/api/admin/login', {
+        method:  'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body:    JSON.stringify({ username: username.trim(), password }),
+      })
+
+      if (res.ok) {
+        // Cookie HttpOnly ya fue seteada por el servidor
+        router.push('/admin/dashboard')
+      } else {
+        const data = await res.json().catch(() => ({}))
+        setError(data.error ?? 'Error al iniciar sesión')
+        setLoading(false)
+      }
+    } catch {
+      setError('Error de conexión. Intenta de nuevo.')
       setLoading(false)
     }
   }
@@ -45,9 +55,15 @@ export default function AdminLogin() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Usuario</label>
             <div className="relative">
               <User className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type="text" value={username} onChange={e => setUsername(e.target.value)}
+              <input
+                type="text"
+                value={username}
+                onChange={e => setUsername(e.target.value)}
                 className="w-full pl-10 pr-4 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                placeholder="Usuario" autoComplete="username" required />
+                placeholder="Usuario"
+                autoComplete="username"
+                required
+              />
             </div>
           </div>
 
@@ -55,22 +71,36 @@ export default function AdminLogin() {
             <label className="block text-sm font-medium text-gray-700 mb-1">Contraseña</label>
             <div className="relative">
               <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-              <input type={showPass ? 'text' : 'password'} value={password} onChange={e => setPassword(e.target.value)}
+              <input
+                type={showPass ? 'text' : 'password'}
+                value={password}
+                onChange={e => setPassword(e.target.value)}
                 className="w-full pl-10 pr-10 py-2.5 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-red-500 focus:border-transparent"
-                placeholder="••••••••" autoComplete="current-password" required />
-              <button type="button" onClick={() => setShowPass(!showPass)}
-                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600">
+                placeholder="••••••••"
+                autoComplete="current-password"
+                required
+              />
+              <button
+                type="button"
+                onClick={() => setShowPass(!showPass)}
+                className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+              >
                 {showPass ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
               </button>
             </div>
           </div>
 
           {error && (
-            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">{error}</div>
+            <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-red-700 text-sm">
+              {error}
+            </div>
           )}
 
-          <button type="submit" disabled={loading}
-            className="w-full bg-red-600 text-white py-2.5 rounded-lg font-semibold hover:bg-red-700 transition disabled:opacity-50">
+          <button
+            type="submit"
+            disabled={loading}
+            className="w-full bg-red-600 text-white py-2.5 rounded-lg font-semibold hover:bg-red-700 transition disabled:opacity-50"
+          >
             {loading ? 'Ingresando...' : 'Ingresar'}
           </button>
         </form>
