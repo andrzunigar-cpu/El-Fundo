@@ -54,7 +54,7 @@ export default function ComoLlegarPage() {
                 </div>
                 <div>
                   <h3 className="font-black text-gray-900 text-lg mb-1">Dirección</h3>
-                  <p className="text-gray-600 font-medium">Av. Parque Central 06441</p>
+                  <p className="text-gray-600 font-medium">Av. Parque Central 06441, Local 5</p>
                   <p className="text-gray-500 text-sm">Puente Alto, Región Metropolitana</p>
                   <p className="text-gray-400 text-xs mt-1">Frente a Iglesia Ciudad del Este</p>
                   <a
