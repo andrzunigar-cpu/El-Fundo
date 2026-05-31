@@ -377,11 +377,6 @@ export default function CartPage() {
             </div>
 
             {/* Info según medio de pago */}
-            {payMethod === 'transferencia' && (
-              <p className="text-sm text-blue-700 bg-blue-50 rounded-xl px-4 py-3 mb-4">
-                📲 Te enviaremos los datos de transferencia por WhatsApp al <strong>{phone}</strong>.
-              </p>
-            )}
             {payMethod === 'efectivo' && (
               <p className="text-sm text-green-700 bg-green-50 rounded-xl px-4 py-3 mb-4">
                 💵 Pago en efectivo al {deliveryMode === 'pickup' ? 'retirar en local' : 'momento de la entrega'}.
@@ -442,7 +437,7 @@ export default function CartPage() {
           </div>
           <div className="text-right">
             <p className="text-xs text-gray-400">{items.length} producto{items.length !== 1 ? 's' : ''}</p>
-            <p className="text-xs text-gray-500">{payMethod === 'webpay' ? '🔒 WebPay' : payMethod === 'transferencia' ? '🏦 Transferencia' : payMethod === 'efectivo' ? '💵 Efectivo' : payMethod === 'tarjeta_local' ? '💳 Tarjeta' : payMethod.charAt(0).toUpperCase() + payMethod.slice(1)}</p>
+            <p className="text-xs text-gray-500">{payMethod === 'webpay' ? '🔒 WebPay' : payMethod === 'efectivo' ? '💵 Efectivo' : payMethod === 'tarjeta_local' ? '💳 Tarjeta' : payMethod.charAt(0).toUpperCase() + payMethod.slice(1)}</p>
           </div>
         </div>
         <button
