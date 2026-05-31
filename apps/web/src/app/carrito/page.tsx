@@ -174,11 +174,7 @@ interface PayOption {
 }
 
 const PAY_ONLINE: PayOption[] = [
-  { id: 'webpay',        label: 'WebPay',          sub: 'Débito, crédito y prepago',         icon: <Lock className="w-5 h-5" /> },
-  { id: 'amipass',       label: 'Amipass',         sub: 'Tarjeta de beneficios online',      icon: <span className="text-base">🎫</span>, soon: true },
-  { id: 'pluxee',        label: 'Pluxee',          sub: 'Tarjeta de beneficios online',      icon: <span className="text-base">🎫</span>, soon: true },
-  { id: 'edenred',       label: 'Edenred',         sub: 'Tarjeta de beneficios online',      icon: <span className="text-base">🎫</span>, soon: true },
-  { id: 'machbank',      label: 'Mach / Bank',     sub: 'App de pagos móvil',                icon: <span className="text-base">📱</span>, soon: true },
+  { id: 'webpay', label: 'WebPay', sub: 'Débito, crédito y prepago', icon: <Lock className="w-5 h-5" /> },
 ]
 
 const PAY_PRESENCIAL: PayOption[] = [
