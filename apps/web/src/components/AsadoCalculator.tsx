@@ -11,9 +11,8 @@ const CARNES = [
   { id: 'pollo',     label: 'Pollo/Aves', emoji: '🐔' },
   { id: 'cordero',   label: 'Cordero',    emoji: '🐑' },
   { id: 'embutidos', label: 'Embutidos',  emoji: '🌭' },
-  { id: 'perro',     label: 'Perro',      emoji: '🐕' },
 ]
-const GPP = { hombres: 400, mujeres: 300, ninos: 200 }
+const GPP = { hombres: 400, mujeres: 300, ninos: 200, perros: 200 }
 
 // ── Producto por tipo de carne y tier ─────────────────────────────────────
 // Cada tier define qué producto usar para cada tipo de carne
@@ -29,7 +28,6 @@ const PRODUCTS_BY_TIER: Record<string, Record<string, ProductDef>> = {
     pollo:     { id: 'prod-pol-003', name: 'Trutro de Pollo',     price: 3990,  unit: 'kg' },
     cordero:   { id: 'prod-cor-002', name: 'Costillar Cordero',   price: 9990,  unit: 'kg' },
     embutidos: { id: 'prod-emb-002', name: 'Chorizo Parrillero',  price: 2490,  unit: 'kg' },
-    perro:     { id: 'prod-perro-001', name: 'Patitas de Pollo',  price: 990,   unit: 'kg' },
   },
   parrillero: {
     vacuno:    { id: 'prod-vac-001', name: 'Lomo Liso',           price: 11990, unit: 'kg' },
@@ -37,7 +35,6 @@ const PRODUCTS_BY_TIER: Record<string, Record<string, ProductDef>> = {
     pollo:     { id: 'prod-pol-002', name: 'Pechuga de Pollo',    price: 4990,  unit: 'kg' },
     cordero:   { id: 'prod-cor-001', name: 'Pierna de Cordero',   price: 14990, unit: 'kg' },
     embutidos: { id: 'prod-emb-001', name: 'Longaniza Casera',    price: 1290,  unit: 'un', gramsPerUnit: 180 },
-    perro:     { id: 'prod-perro-001', name: 'Patitas de Pollo',  price: 990,   unit: 'kg' },
   },
   premium: {
     vacuno:    { id: 'prod-vac-002', name: 'Lomo Vetado',         price: 12990, unit: 'kg' },
@@ -45,7 +42,6 @@ const PRODUCTS_BY_TIER: Record<string, Record<string, ProductDef>> = {
     pollo:     { id: 'prod-pol-002', name: 'Pechuga de Pollo',    price: 4990,  unit: 'kg' },
     cordero:   { id: 'prod-cor-001', name: 'Pierna de Cordero',   price: 14990, unit: 'kg' },
     embutidos: { id: 'prod-emb-001', name: 'Longaniza Casera',    price: 1290,  unit: 'un', gramsPerUnit: 180 },
-    perro:     { id: 'prod-perro-001', name: 'Patitas de Pollo',  price: 990,   unit: 'kg' },
   },
 }
 
@@ -66,10 +62,10 @@ function fmtQty(q: number, u: 'kg' | 'un') {
 // ── Tarjeta de pack ─────────────────────────────────────────────────────────
 function PackCard({
   tier, nombre, emoji, color, badge,
-  selectedCarnes, totalGramos, totalPersonas,
+  selectedCarnes, totalGramos, totalPersonas, totalPerros,
 }: {
   tier: string; nombre: string; emoji: string; color: string; badge: string
-  selectedCarnes: string[]; totalGramos: number; totalPersonas: number
+  selectedCarnes: string[]; totalGramos: number; totalPersonas: number; totalPerros: number
 }) {
   const { addItem } = useCart()
   const [added, setAdded] = useState(false)
@@ -92,13 +88,20 @@ function PackCard({
     }).filter(Boolean) as (ProductDef & { quantity: number })[]
   }, [tier, selectedCarnes, gPerType])
 
+  const patitasQty  = totalPerros > 0 ? roundKg(totalPerros * GPP.perros) : 0
+  const patitasItem = patitasQty > 0
+    ? { id: 'prod-perro-001', name: 'Patitas de Pollo', price: 990, unit: 'kg' as const, quantity: patitasQty }
+    : null
+
   const total = items.reduce((s, i) => s + i.price * i.quantity, 0)
+    + (patitasItem ? patitasItem.price * patitasItem.quantity : 0)
 
   const handleAdd = () => {
     items.forEach(item => addItem({
       id: item.id, name: item.name,
       price: item.price, quantity: item.quantity, unit: item.unit,
     }))
+    if (patitasItem) addItem(patitasItem)
     setAdded(true)
     setTimeout(() => setAdded(false), 2500)
   }
@@ -130,6 +133,12 @@ function PackCard({
             <span className="font-bold text-gray-900 ml-2 shrink-0">{fmtQty(item.quantity, item.unit)}</span>
           </li>
         ))}
+        {patitasItem && (
+          <li className="flex justify-between items-center text-xs bg-amber-50 rounded-lg px-2 py-1">
+            <span className="text-amber-700">🐕 Patitas de Pollo</span>
+            <span className="font-bold text-amber-800 ml-2 shrink-0">{fmtQty(patitasItem.quantity, 'kg')}</span>
+          </li>
+        )}
       </ul>
 
       <button
@@ -152,12 +161,15 @@ export default function AsadoCalculator() {
   const [hombres, setHombres] = useState('')
   const [mujeres, setMujeres] = useState('')
   const [ninos,   setNinos]   = useState('')
+  const [perros,  setPerros]  = useState('')
   const [carnes,  setCarnes]  = useState<Record<string, boolean>>({
-    vacuno: false, cerdo: false, pollo: false, cordero: false, embutidos: false, perro: false,
+    vacuno: false, cerdo: false, pollo: false, cordero: false, embutidos: false,
   })
   const [result, setResult] = useState<null | Record<string, number>>(null)
 
   const totalPersonas  = (parseInt(hombres) || 0) + (parseInt(mujeres) || 0) + (parseInt(ninos) || 0)
+  const totalPerros    = parseInt(perros) || 0
+  const gramosPerros   = totalPerros * GPP.perros
   const totalGramos    = useMemo(() =>
     (parseInt(hombres) || 0) * GPP.hombres +
     (parseInt(mujeres) || 0) * GPP.mujeres +
@@ -170,6 +182,7 @@ export default function AsadoCalculator() {
     const gpc = Math.round(totalGramos / selectedCarnes.length)
     const res: Record<string, number> = {}
     selectedCarnes.forEach(id => { res[id] = gpc })
+    if (gramosPerros > 0) res['perro'] = gramosPerros
     setResult(res)
   }
 
@@ -193,11 +206,12 @@ export default function AsadoCalculator() {
               <Users className="w-4 h-4 text-gray-500" />
               <h4 className="font-bold text-gray-900 text-sm">¿Cuántos son?</h4>
             </div>
-            <div className="grid grid-cols-3 gap-3">
+            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
               {[
                 { key: 'hombres', label: 'Hombres', emoji: '👨', val: hombres, set: setHombres, g: 400 },
                 { key: 'mujeres', label: 'Mujeres', emoji: '👩', val: mujeres, set: setMujeres, g: 300 },
                 { key: 'ninos',   label: 'Niños',   emoji: '👦', val: ninos,   set: setNinos,   g: 200 },
+                { key: 'perros',  label: 'Perros',  emoji: '🐕', val: perros,  set: setPerros,  g: 200 },
               ].map(p => (
                 <div key={p.key} className="text-center">
                   <div className="text-2xl mb-1">{p.emoji}</div>
@@ -210,10 +224,19 @@ export default function AsadoCalculator() {
                 </div>
               ))}
             </div>
-            {totalPersonas > 0 && (
-              <p className="text-xs text-gray-500 text-center mt-2 bg-gray-50 rounded-xl py-2">
-                Total: <strong>{totalPersonas} personas</strong> · <strong>{totalGramos.toLocaleString('es-CL')} g</strong> de carne
-              </p>
+            {(totalPersonas > 0 || totalPerros > 0) && (
+              <div className="mt-2 space-y-1">
+                {totalPersonas > 0 && (
+                  <p className="text-xs text-gray-500 text-center bg-gray-50 rounded-xl py-2">
+                    👥 <strong>{totalPersonas} personas</strong> · <strong>{totalGramos.toLocaleString('es-CL')} g</strong>
+                  </p>
+                )}
+                {totalPerros > 0 && (
+                  <p className="text-xs text-amber-700 text-center bg-amber-50 rounded-xl py-2">
+                    🐕 <strong>{totalPerros} perro{totalPerros !== 1 ? 's' : ''}</strong> · <strong>{gramosPerros.toLocaleString('es-CL')} g</strong> de Patitas de Pollo
+                  </p>
+                )}
+              </div>
             )}
           </div>
 
@@ -252,6 +275,12 @@ export default function AsadoCalculator() {
                     <span className="font-black text-orange-700">{formatKg(result[c.id])}</span>
                   </div>
                 ))}
+                {result['perro'] && (
+                  <div className="flex items-center justify-between bg-amber-50 rounded-xl px-4 py-2.5">
+                    <span className="text-sm font-medium text-amber-800">🐕 Patitas de Pollo (perros)</span>
+                    <span className="font-black text-amber-700">{formatKg(result['perro'])}</span>
+                  </div>
+                )}
                 <div className="border-t border-orange-200 pt-2 flex justify-between font-bold text-sm text-orange-900">
                   <span>Total</span>
                   <span>{formatKg(Object.values(result).reduce((a, b) => a + b, 0))}</span>
@@ -287,6 +316,7 @@ export default function AsadoCalculator() {
               selectedCarnes={selectedCarnes}
               totalGramos={totalGramos}
               totalPersonas={totalPersonas}
+              totalPerros={totalPerros}
             />
           ))}
         </div>
