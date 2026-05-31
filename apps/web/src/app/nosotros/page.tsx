@@ -40,8 +40,41 @@ export default function NosotrosPage() {
           <Link href="/" className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-red-600 transition mb-8">
             <ArrowLeft className="w-4 h-4" /> Volver al inicio
           </Link>
-          <h1 className="text-4xl font-black text-gray-900 mb-2">Nosotros</h1>
-          <p className="text-gray-500 mb-12">Carnicería El Fundo · Puente Alto, Chile</p>
+          <h1 className="text-4xl font-black text-gray-900 mb-2">Quiénes Somos</h1>
+          <p className="text-gray-500 mb-8">Carnicería El Fundo · Puente Alto, Chile</p>
+
+          {/* Presentación */}
+          <div className="bg-white rounded-3xl p-8 shadow-sm border border-gray-100 mb-10">
+            <h2 className="text-2xl font-black text-gray-900 mb-4">Bienvenidos a Carnicería El Fundo</h2>
+            <p className="text-gray-600 leading-relaxed mb-4">
+              En Carnicería El Fundo nos dedicamos a ofrecer carnes frescas y de calidad, seleccionadas
+              cuidadosamente para garantizar el mejor sabor y frescura en tu mesa. Nuestro compromiso es
+              brindar productos confiables, una atención cercana y una excelente experiencia de compra.
+            </p>
+            <p className="text-gray-600 leading-relaxed mb-8">
+              Trabajamos diariamente para entregar los mejores cortes y mantener altos estándares de higiene,
+              calidad y servicio, convirtiéndonos en una alternativa de confianza para nuestros clientes.
+            </p>
+
+            <div className="grid sm:grid-cols-2 gap-6">
+              <div className="bg-red-50 rounded-2xl p-6 border border-red-100">
+                <h3 className="font-black text-red-700 text-lg mb-2">🎯 Nuestra Misión</h3>
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  Ofrecer carnes frescas y de calidad, junto con una atención cercana y confiable para cada cliente.
+                </p>
+              </div>
+              <div className="bg-gray-950 rounded-2xl p-6">
+                <h3 className="font-black text-white text-lg mb-2">🏆 Nuestra Visión</h3>
+                <p className="text-gray-400 text-sm leading-relaxed">
+                  Ser una carnicería reconocida por la calidad de sus productos y la confianza de sus clientes.
+                </p>
+              </div>
+            </div>
+
+            <p className="text-center text-gray-500 text-sm italic mt-8 pt-6 border-t border-gray-100">
+              En Carnicería El Fundo, calidad, tradición y buen servicio son parte de nuestro compromiso diario.
+            </p>
+          </div>
 
           {/* Beneficios */}
           <div className="bg-gray-950 rounded-3xl p-8 mb-12">
