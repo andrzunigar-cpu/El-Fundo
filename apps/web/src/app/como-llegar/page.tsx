@@ -1,6 +1,6 @@
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { MapPin, Phone, Clock, Bus, Car } from 'lucide-react'
+import { MapPin, Phone, Clock } from 'lucide-react'
 
 export const metadata = { title: 'Cómo Llegar · Carnicería El Fundo' }
 
@@ -111,19 +111,6 @@ export default function ComoLlegarPage() {
               </div>
             </div>
 
-            {/* Cómo llegar */}
-            <div className="grid grid-cols-2 gap-4">
-              <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <Bus className="w-6 h-6 text-purple-600 mb-3" />
-                <h4 className="font-black text-gray-900 mb-2">En micro / Metro</h4>
-                <p className="text-gray-500 text-sm">Metro Línea 4 hasta Puente Alto. Desde ahí en micro o taxi.</p>
-              </div>
-              <div className="bg-white rounded-2xl p-5 border border-gray-100 shadow-sm">
-                <Car className="w-6 h-6 text-orange-600 mb-3" />
-                <h4 className="font-black text-gray-900 mb-2">En auto</h4>
-                <p className="text-gray-500 text-sm">Acceso por Av. Concha y Toro o Av. Gabriela. Estacionamiento disponible.</p>
-              </div>
-            </div>
           </div>
         </section>
       </main>
