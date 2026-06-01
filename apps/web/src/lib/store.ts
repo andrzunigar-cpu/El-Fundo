@@ -42,7 +42,10 @@ export const useCart = create<CartStore>()(
           i.id === id ? { ...i, quantity: Math.max(0, quantity) } : i
         ).filter(i => i.quantity > 0),
       })),
-      clearCart: () => set({ items: [] }),
+      clearCart: () => {
+        set({ items: [] })
+        try { localStorage.removeItem('elfundo-cart') } catch {}
+      },
       total: () => {
         const { items } = get()
         return items.reduce((sum, item) => sum + (item.price * item.quantity), 0)
