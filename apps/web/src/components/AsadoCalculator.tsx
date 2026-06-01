@@ -202,17 +202,18 @@ export default function AsadoCalculator() {
         </div>
 
         <div className="p-6 space-y-6">
+
+          {/* ── Asistentes humanos ── */}
           <div>
             <div className="flex items-center gap-2 mb-3">
               <Users className="w-4 h-4 text-gray-500" />
-              <h4 className="font-bold text-gray-900 text-sm">¿Cuántos son?</h4>
+              <h4 className="font-bold text-gray-900 text-sm">¿Cuántos asistentes?</h4>
             </div>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+            <div className="grid grid-cols-3 gap-3">
               {[
                 { key: 'hombres', label: 'Hombres', emoji: '👨', val: hombres, set: setHombres, g: 400 },
                 { key: 'mujeres', label: 'Mujeres', emoji: '👩', val: mujeres, set: setMujeres, g: 300 },
                 { key: 'ninos',   label: 'Niños',   emoji: '👦', val: ninos,   set: setNinos,   g: 200 },
-                { key: 'perros',  label: 'Perros',  emoji: '🐕', val: perros,  set: setPerros,  g: 200 },
               ].map(p => (
                 <div key={p.key} className="text-center">
                   <div className="text-2xl mb-1">{p.emoji}</div>
@@ -225,19 +226,54 @@ export default function AsadoCalculator() {
                 </div>
               ))}
             </div>
-            {(totalPersonas > 0 || totalPerros > 0) && (
-              <div className="mt-2 space-y-1">
-                {totalPersonas > 0 && (
-                  <p className="text-xs text-gray-500 text-center bg-gray-50 rounded-xl py-2">
-                    👥 <strong>{totalPersonas} personas</strong> · <strong>{totalGramos.toLocaleString('es-CL')} g</strong>
-                  </p>
-                )}
-                {totalPerros > 0 && (
-                  <p className="text-xs text-amber-700 text-center bg-amber-50 rounded-xl py-2">
-                    🐕 <strong>{totalPerros} perro{totalPerros !== 1 ? 's' : ''}</strong> · <strong>{gramosPerros.toLocaleString('es-CL')} g</strong> de Patitas de Pollo
-                  </p>
-                )}
+            {totalPersonas > 0 && (
+              <p className="text-xs text-gray-500 text-center bg-gray-50 rounded-xl py-2 mt-2">
+                👥 <strong>{totalPersonas} personas</strong> · <strong>{totalGramos.toLocaleString('es-CL')} g</strong> de carne para el asado
+              </p>
+            )}
+          </div>
+
+          {/* ── Sección mascotas — separada visualmente ── */}
+          <div className="border border-amber-200 bg-amber-50 rounded-2xl p-4">
+            <div className="flex items-start justify-between mb-3">
+              <div className="flex items-center gap-2">
+                <span className="text-lg">🐾</span>
+                <div>
+                  <h4 className="font-bold text-amber-900 text-sm">¿Vendrán mascotas?</h4>
+                  <p className="text-xs text-amber-700 mt-0.5">Somos pet friendly 🐕</p>
+                </div>
               </div>
+              {/* Tooltip informativo */}
+              <div className="relative group">
+                <button className="w-5 h-5 rounded-full bg-amber-200 text-amber-700 text-xs font-black flex items-center justify-center hover:bg-amber-300 transition flex-shrink-0 mt-0.5">
+                  i
+                </button>
+                <div className="absolute right-0 top-7 w-64 bg-gray-900 text-white text-xs rounded-xl p-3 shadow-xl z-10 opacity-0 group-hover:opacity-100 pointer-events-none transition-opacity leading-relaxed">
+                  No calculamos consumo de carne para mascotas. Solo recomendamos snacks, premios, huesos recreativos u otros productos disponibles para ellas. 🦴
+                </div>
+              </div>
+            </div>
+
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
+              <div className="text-center">
+                <div className="text-2xl mb-1">🐕</div>
+                <label className="block text-xs font-medium text-amber-800 mb-1.5">Perros acompañantes</label>
+                <input type="number" min="0" placeholder="0" value={perros}
+                  onChange={e => { setPerros(e.target.value); setResult(null) }}
+                  className="w-full px-2 py-2 border border-amber-300 bg-white rounded-xl text-center text-sm font-bold focus:outline-none focus:ring-2 focus:ring-amber-400"
+                />
+              </div>
+            </div>
+
+            <p className="text-xs text-amber-700 mt-3 leading-relaxed">
+              ⚠️ Las mascotas <strong>no se consideran</strong> en el cálculo de carne del asado.
+              Esta información se usa únicamente para sugerir productos pet friendly.
+            </p>
+
+            {totalPerros > 0 && (
+              <p className="text-xs text-amber-800 text-center bg-amber-100 rounded-xl py-2 mt-2 font-medium">
+                🐕 {totalPerros} mascota{totalPerros !== 1 ? 's' : ''} — sugeriremos productos pet friendly en los packs
+              </p>
             )}
           </div>
 
