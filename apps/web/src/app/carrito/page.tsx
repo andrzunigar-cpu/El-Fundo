@@ -308,6 +308,23 @@ export default function CartPage() {
     }
   }
 
+  // Defensa: cuando la consulta termina en éxito, garantizar limpieza total
+  // (carrito + formulario) por si algún re-mount intentara restaurar estado.
+  useEffect(() => {
+    if (!ordered) return
+    clearCart()
+    try { localStorage.removeItem('elfundo-cart') } catch {}
+    try { sessionStorage.removeItem('webpay_order') } catch {}
+    setName('')
+    setPhone('')
+    setAddress('')
+    setNotes('')
+    setSchedDate('')
+    setSchedTime('')
+    setScheduleMode('asap')
+    setDeliverySelected(false)
+  }, [ordered, clearCart])
+
   // ── webpay ───────────────────────────────────────────────────────────────
   const handleWebpay = async () => {
     setWebpayError('')
@@ -433,7 +450,7 @@ export default function CartPage() {
       <div className="lg:hidden fixed bottom-0 left-0 right-0 z-40 bg-white border-t border-gray-200 px-4 py-3 shadow-[0_-4px_20px_rgba(0,0,0,0.08)]">
         <div className="flex items-center justify-between mb-2.5">
           <div>
-            <p className="text-xs text-gray-400">{deliveryMode === 'delivery' ? 'Con despacho' : 'Retiro en local'}</p>
+            <p className="text-xs text-gray-400">{deliveryMode === 'delivery' ? 'Con Delivery' : 'Retiro en local'}</p>
             <p className="text-xl font-black text-gray-900">${fmt(grandTotal)}</p>
           </div>
           <div className="text-right">
@@ -526,7 +543,7 @@ export default function CartPage() {
                 <h2 className="font-bold text-gray-900 mb-3 sm:mb-4">¿Cómo lo recibes?</h2>
                 <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
                   {[
-                    { mode: 'delivery' as const, icon: <Truck className="w-5 h-5" />, label: 'Despacho', sub: deliveryPrice > 0 ? `+ $${fmt(deliveryPrice)}` : 'Gratis' },
+                    { mode: 'delivery' as const, icon: <Truck className="w-5 h-5" />, label: 'Delivery', sub: deliveryPrice > 0 ? `+ $${fmt(deliveryPrice)}` : 'Gratis' },
                     { mode: 'pickup'   as const, icon: <Store className="w-5 h-5" />, label: 'Retiro en local', sub: 'Sin costo extra' },
                   ].map(opt => (
                     <button
@@ -706,7 +723,7 @@ export default function CartPage() {
                     <span className="text-gray-800">${fmt(total())}</span>
                   </div>
                   <div className="flex justify-between text-sm">
-                    <span className="text-gray-500">{deliveryMode === 'delivery' ? 'Despacho' : 'Retiro'}</span>
+                    <span className="text-gray-500">{deliveryMode === 'delivery' ? 'Delivery' : 'Retiro'}</span>
                     <span className={shippingCost === 0 ? 'text-green-600 font-semibold' : 'text-gray-800'}>
                       {shippingCost > 0 ? `$${fmt(shippingCost)}` : 'Gratis'}
                     </span>
@@ -763,7 +780,7 @@ export default function CartPage() {
                 {/* ── Presencial ── */}
                 <div>
                   <span className="text-xs font-black uppercase tracking-widest text-green-700 bg-green-50 px-2.5 py-1 rounded-full inline-block mb-2">
-                    🏪 Presencial
+                    💵 Pago a contra entrega
                   </span>
                   <div className="space-y-1.5">
                     {PAY_PRESENCIAL.map(opt => {
