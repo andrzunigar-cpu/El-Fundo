@@ -26,18 +26,21 @@ const PRODUCTS_BY_TIER: Record<string, Record<string, ProductDef>> = {
     cerdo:     { id: 'prod-cer-001', name: 'Pulpa de Cerdo',      price: 5990,  unit: 'kg' },
     pollo:     { id: 'prod-pol-003', name: 'Trutro de Pollo',     price: 3990,  unit: 'kg' },
     embutidos: { id: 'prod-emb-002', name: 'Chorizo Parrillero',  price: 2490,  unit: 'kg' },
+    perro:     { id: 'prod-pelet-001', name: 'Pelet Económico',   price: 2490,  unit: 'kg' },
   },
   parrillero: {
     vacuno:    { id: 'prod-vac-001', name: 'Lomo Liso',           price: 11990, unit: 'kg' },
     cerdo:     { id: 'prod-cer-002', name: 'Costillar de Cerdo',  price: 7990,  unit: 'kg' },
     pollo:     { id: 'prod-pol-002', name: 'Pechuga de Pollo',    price: 4990,  unit: 'kg' },
     embutidos: { id: 'prod-emb-001', name: 'Longaniza Casera',    price: 1290,  unit: 'un', gramsPerUnit: 180 },
+    perro:     { id: 'prod-pelet-002', name: 'Pelet Medio',       price: 3990,  unit: 'kg' },
   },
   premium: {
     vacuno:    { id: 'prod-vac-002', name: 'Lomo Vetado',         price: 12990, unit: 'kg' },
     cerdo:     { id: 'prod-cer-002', name: 'Costillar de Cerdo',  price: 7990,  unit: 'kg' },
     pollo:     { id: 'prod-pol-002', name: 'Pechuga de Pollo',    price: 4990,  unit: 'kg' },
     embutidos: { id: 'prod-emb-001', name: 'Longaniza Casera',    price: 1290,  unit: 'un', gramsPerUnit: 180 },
+    perro:     { id: 'prod-pelet-003', name: 'Pelet Premium',     price: 5990,  unit: 'kg' },
   },
 }
 
@@ -84,25 +87,27 @@ function PackCard({
     }).filter(Boolean) as (ProductDef & { quantity: number })[]
   }, [tier, selectedCarnes, gPerType])
 
-  const patitasQty  = totalPerros > 0 ? roundKg(totalPerros * GPP.perros) : 0
-  const patitasItem = patitasQty > 0
-    ? { id: 'prod-perro-001', name: 'Patitas de Pollo', price: 990, unit: 'kg' as const, quantity: patitasQty }
+  // Producto para perros según tier
+  const tierProducts  = PRODUCTS_BY_TIER[tier]
+  const perroDef      = tierProducts['perro']
+  const perroItem     = totalPerros > 0 && perroDef
+    ? { ...perroDef, quantity: roundKg(totalPerros * GPP.perros) }
     : null
 
   const total = items.reduce((s, i) => s + i.price * i.quantity, 0)
-    + (patitasItem ? patitasItem.price * patitasItem.quantity : 0)
+    + (perroItem ? perroItem.price * perroItem.quantity : 0)
 
   const handleAdd = () => {
     items.forEach(item => addItem({
       id: item.id, name: item.name,
       price: item.price, quantity: item.quantity, unit: item.unit,
     }))
-    if (patitasItem) addItem(patitasItem)
+    if (perroItem) addItem({ id: perroItem.id, name: perroItem.name, price: perroItem.price, quantity: perroItem.quantity, unit: perroItem.unit })
     setAdded(true)
     setTimeout(() => setAdded(false), 2500)
   }
 
-  if (items.length === 0) return null
+  if (items.length === 0 && !perroItem) return null
 
   return (
     <div className={`rounded-2xl border-2 p-5 ${color}`}>
@@ -129,10 +134,10 @@ function PackCard({
             <span className="font-bold text-gray-900 ml-2 shrink-0">{fmtQty(item.quantity, item.unit)}</span>
           </li>
         ))}
-        {patitasItem && (
+        {perroItem && (
           <li className="flex justify-between items-center text-xs bg-amber-50 rounded-lg px-2 py-1">
-            <span className="text-amber-700">🐕 Patitas de Pollo</span>
-            <span className="font-bold text-amber-800 ml-2 shrink-0">{fmtQty(patitasItem.quantity, 'kg')}</span>
+            <span className="text-amber-700">🐕 {perroItem.name}</span>
+            <span className="font-bold text-amber-800 ml-2 shrink-0">{fmtQty(perroItem.quantity, 'kg')}</span>
           </li>
         )}
       </ul>
@@ -273,7 +278,7 @@ export default function AsadoCalculator() {
                 ))}
                 {result['perro'] && (
                   <div className="flex items-center justify-between bg-amber-50 rounded-xl px-4 py-2.5">
-                    <span className="text-sm font-medium text-amber-800">🐕 Patitas de Pollo (perros)</span>
+                    <span className="text-sm font-medium text-amber-800">🐕 Alimento para perros</span>
                     <span className="font-black text-amber-700">{formatKg(result['perro'])}</span>
                   </div>
                 )}
