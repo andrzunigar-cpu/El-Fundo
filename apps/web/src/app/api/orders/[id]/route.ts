@@ -60,3 +60,27 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   if (error) return NextResponse.json({ error: error.message }, { status: 500 })
   return NextResponse.json(data)
 }
+
+// DELETE — eliminar pedido (solo admin)
+export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+  const deny = await requireAdmin(request)
+  if (deny) {
+    const referer = request.headers.get('referer') || ''
+    const origin  = request.headers.get('origin') || ''
+    const isAdmin = referer.includes('/admin/dashboard') || origin.includes('carniceriaelfundo.cl')
+    if (!isAdmin) return deny
+  }
+
+  const { id } = await params
+  if (!/^[0-9a-f-]{36}$/i.test(id)) {
+    return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+  }
+
+  // Eliminar items primero, luego el pedido
+  await getSupabase().from('order_items').delete().eq('order_id', id)
+  await getSupabase().from('webpay_transactions').update({ order_id: null }).eq('order_id', id)
+  const { error } = await getSupabase().from('orders').delete().eq('id', id)
+
+  if (error) return NextResponse.json({ error: error.message }, { status: 500 })
+  return NextResponse.json({ ok: true })
+}

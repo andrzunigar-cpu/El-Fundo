@@ -4,7 +4,7 @@ import { useEffect, useState, useCallback } from 'react'
 import {
   ShoppingBag, Phone, MapPin, Clock, RefreshCw, Calendar, Zap,
   Truck, Store, CreditCard, Banknote, Lock, ChevronDown, ChevronUp,
-  CheckCircle, XCircle, Package,
+  CheckCircle, XCircle, Package, Trash2,
 } from 'lucide-react'
 
 interface OrderItem {
@@ -94,7 +94,11 @@ function formatScheduled(iso: string) {
   return `${d.getDate()}/${d.getMonth() + 1} ${hh}:${mm}`
 }
 
-function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: (id: string, status: string) => void }) {
+function OrderCard({ order, onStatusChange, onDelete }: {
+  order: Order
+  onStatusChange: (id: string, status: string) => void
+  onDelete: (id: string) => void
+}) {
   const [expanded, setExpanded] = useState(true)
   const [updating, setUpdating] = useState(false)
 
@@ -278,28 +282,37 @@ function OrderCard({ order, onStatusChange }: { order: Order; onStatusChange: (i
           </div>
 
           {/* Acciones */}
-          {nextSteps.length > 0 && (
-            <div className="px-5 pb-4 flex gap-2 flex-wrap">
-              {nextSteps.map(next => {
-                const nextCfg = STATUS_CONFIG[next]
-                const isCancelling = next === 'cancelled'
-                return (
-                  <button
-                    key={next}
-                    onClick={() => handleStatus(next)}
-                    disabled={updating}
-                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50 ${
-                      isCancelling
-                        ? 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 border border-gray-200'
-                        : 'bg-red-600 text-white hover:bg-red-700'
-                    }`}
-                  >
-                    {updating ? '...' : `→ ${nextCfg.label}`}
-                  </button>
-                )
-              })}
-            </div>
-          )}
+          <div className="px-5 pb-4 flex gap-2 flex-wrap items-center">
+            {nextSteps.map(next => {
+              const nextCfg = STATUS_CONFIG[next]
+              const isCancelling = next === 'cancelled'
+              return (
+                <button
+                  key={next}
+                  onClick={() => handleStatus(next)}
+                  disabled={updating}
+                  className={`px-4 py-2 rounded-lg text-sm font-semibold transition disabled:opacity-50 ${
+                    isCancelling
+                      ? 'bg-gray-100 text-gray-600 hover:bg-red-50 hover:text-red-600 border border-gray-200'
+                      : 'bg-red-600 text-white hover:bg-red-700'
+                  }`}
+                >
+                  {updating ? '...' : `→ ${nextCfg.label}`}
+                </button>
+              )
+            })}
+            <button
+              onClick={() => {
+                const shortId = order.order_number || `#${order.id.slice(0, 8).toUpperCase()}`
+                if (window.confirm(`¿Eliminar el pedido ${shortId} de ${order.customer_name}?\n\nEsta acción no se puede deshacer.`)) {
+                  onDelete(order.id)
+                }
+              }}
+              className="ml-auto flex items-center gap-1.5 px-3 py-2 rounded-lg text-sm font-semibold text-gray-400 hover:text-red-600 hover:bg-red-50 border border-gray-200 hover:border-red-200 transition"
+            >
+              <Trash2 className="w-4 h-4" /> Eliminar
+            </button>
+          </div>
         </>
       )}
     </div>
@@ -329,6 +342,11 @@ export default function PedidosAdmin() {
       body: JSON.stringify({ status: newStatus }),
     })
     if (res.ok) setOrders(prev => prev.map(o => o.id === orderId ? { ...o, status: newStatus } : o))
+  }
+
+  const deleteOrder = async (orderId: string) => {
+    const res = await fetch(`/api/orders/${orderId}`, { method: 'DELETE' })
+    if (res.ok) setOrders(prev => prev.filter(o => o.id !== orderId))
   }
 
   const filtered = filter === 'all' ? orders : orders.filter(o => o.status === filter)
@@ -382,7 +400,7 @@ export default function PedidosAdmin() {
       ) : (
         <div className="space-y-4">
           {filtered.map(order => (
-            <OrderCard key={order.id} order={order} onStatusChange={updateStatus} />
+            <OrderCard key={order.id} order={order} onStatusChange={updateStatus} onDelete={deleteOrder} />
           ))}
         </div>
       )}
