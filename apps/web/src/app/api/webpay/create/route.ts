@@ -32,9 +32,9 @@ export async function POST(req: NextRequest) {
     // returnUrl siempre hardcodeado en servidor — nunca desde el cliente (previene SSRF)
     const RETURN_URL = `${process.env.NEXT_PUBLIC_BASE_URL || 'https://carniceriaelfundo.cl'}/webpay/return`
 
-    // Validar monto: mínimo $50, máximo $5.000.000
+    // Validar monto: mínimo $1, máximo $5.000.000
     const amountInt = Math.round(Number(amount))
-    if (!Number.isFinite(amountInt) || amountInt < 50 || amountInt > 5_000_000) {
+    if (!Number.isFinite(amountInt) || amountInt < 1 || amountInt > 5_000_000) {
       return NextResponse.json({ error: 'Monto inválido' }, { status: 400 })
     }
 
