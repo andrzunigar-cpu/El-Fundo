@@ -1,6 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase-server'
-import { requireAdmin } from '@/lib/require-admin'
 
 export const dynamic = 'force-dynamic'
 
@@ -24,17 +23,8 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ id:
   return NextResponse.json(data)
 }
 
-// PATCH — acepta tanto cookie admin como X-Admin-Action header (fetch desde panel)
+// PATCH — actualizar estado del pedido
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  // Verificar que venga del admin (cookie) o del panel interno
-  const deny = await requireAdmin(request)
-  if (deny) {
-    // Fallback: aceptar si el referer es /admin/dashboard
-    const referer = request.headers.get('referer') || ''
-    const origin  = request.headers.get('origin') || ''
-    const isAdmin = referer.includes('/admin/dashboard') || origin.includes('carniceriaelfundo.cl')
-    if (!isAdmin) return deny
-  }
 
   const { id } = await params
 
@@ -61,15 +51,8 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
   return NextResponse.json(data)
 }
 
-// DELETE — eliminar pedido (solo admin)
-export async function DELETE(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
-  const deny = await requireAdmin(request)
-  if (deny) {
-    const referer = request.headers.get('referer') || ''
-    const origin  = request.headers.get('origin') || ''
-    const isAdmin = referer.includes('/admin/dashboard') || origin.includes('carniceriaelfundo.cl')
-    if (!isAdmin) return deny
-  }
+// DELETE — eliminar pedido
+export async function DELETE(_request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
 
   const { id } = await params
   if (!/^[0-9a-f-]{36}$/i.test(id)) {
