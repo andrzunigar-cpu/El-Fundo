@@ -4,7 +4,41 @@ import { useState } from 'react'
 import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
-import { ChefHat, Flame, ArrowRight } from 'lucide-react'
+import { ChefHat, Flame, ArrowRight, BookOpen } from 'lucide-react'
+
+const CORTES = [
+  { nombre: 'Abastero',          olla: true,  parrilla: true,  horno: true,  sarten: false },
+  { nombre: 'Asado Carnicero',   olla: true,  parrilla: false, horno: true,  sarten: false },
+  { nombre: 'Asado de Tira',     olla: true,  parrilla: true,  horno: false, sarten: false },
+  { nombre: 'Asiento',           olla: true,  parrilla: true,  horno: true,  sarten: true  },
+  { nombre: 'Choclillo',         olla: true,  parrilla: true,  horno: true,  sarten: false },
+  { nombre: 'Entraña',           olla: false, parrilla: true,  horno: true,  sarten: true  },
+  { nombre: 'Filete',            olla: false, parrilla: true,  horno: true,  sarten: true  },
+  { nombre: 'Huachalomo',        olla: true,  parrilla: false, horno: true,  sarten: false },
+  { nombre: 'Lomo Liso',         olla: false, parrilla: true,  horno: true,  sarten: true  },
+  { nombre: 'Lomo Vetado',       olla: false, parrilla: true,  horno: true,  sarten: true  },
+  { nombre: 'Osobuco Paleta',    olla: true,  parrilla: false, horno: false, sarten: false },
+  { nombre: 'Osobuco de Pierna', olla: true,  parrilla: false, horno: false, sarten: false },
+  { nombre: 'Palanca',           olla: true,  parrilla: true,  horno: true,  sarten: true  },
+  { nombre: 'Plateada',          olla: true,  parrilla: true,  horno: true,  sarten: false },
+  { nombre: 'Pollo Ganso',       olla: true,  parrilla: false, horno: false, sarten: false },
+  { nombre: 'Posta Negra',       olla: true,  parrilla: false, horno: false, sarten: true  },
+  { nombre: 'Posta Paleta',      olla: true,  parrilla: true,  horno: true,  sarten: true  },
+  { nombre: 'Posta Rosada',      olla: true,  parrilla: false, horno: false, sarten: true  },
+  { nombre: 'Punta de Paleta',   olla: true,  parrilla: true,  horno: true,  sarten: true  },
+  { nombre: 'Punta de Ganso',    olla: true,  parrilla: true,  horno: true,  sarten: true  },
+  { nombre: 'Punta Picana',      olla: true,  parrilla: true,  horno: true,  sarten: true  },
+  { nombre: 'Sobrecostilla',     olla: true,  parrilla: true,  horno: false, sarten: false },
+  { nombre: 'Tapapecho',         olla: true,  parrilla: false, horno: false, sarten: false },
+  { nombre: 'Tapabarriga',       olla: true,  parrilla: true,  horno: true,  sarten: false },
+]
+
+const METODOS = [
+  { key: 'olla',     emoji: '🍲', label: 'Olla / Guiso' },
+  { key: 'parrilla', emoji: '🔥', label: 'Parrilla' },
+  { key: 'horno',    emoji: '🫕', label: 'Horno' },
+  { key: 'sarten',   emoji: '🍳', label: 'Sartén / Plancha' },
+]
 
 const RECETAS_CASA = [
   {
@@ -228,7 +262,7 @@ function RecetaCard({ r }: { r: typeof RECETAS_CASA[0] }) {
 }
 
 export default function RecetasPage() {
-  const [tab, setTab] = useState<'casa' | 'parrilla'>('casa')
+  const [tab, setTab] = useState<'casa' | 'parrilla' | 'guia'>('casa')
 
   return (
     <>
@@ -254,6 +288,10 @@ export default function RecetasPage() {
             <button onClick={() => setTab('parrilla')}
               className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition ${tab === 'parrilla' ? 'bg-red-600 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
               <Flame className="w-4 h-4" /> Para la parrilla
+            </button>
+            <button onClick={() => setTab('guia')}
+              className={`flex items-center gap-2 px-5 py-2.5 rounded-xl font-bold text-sm transition ${tab === 'guia' ? 'bg-gray-900 text-white' : 'text-gray-600 hover:bg-gray-100'}`}>
+              <BookOpen className="w-4 h-4" /> Guía de Cortes
             </button>
           </div>
         </div>
@@ -282,6 +320,60 @@ export default function RecetasPage() {
             </>
           )}
         </div>
+
+          {tab === 'guia' && (
+            <>
+              <div className="flex items-center gap-3 mb-6">
+                <BookOpen className="w-6 h-6 text-gray-700" />
+                <h2 className="text-2xl font-black text-gray-900">Guía de Cortes de Vacuno</h2>
+              </div>
+              <p className="text-gray-500 text-sm mb-6">Descubre el mejor método de preparación para cada corte.</p>
+              <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-x-auto">
+                <table className="w-full text-sm min-w-[500px]">
+                  <thead>
+                    <tr className="bg-gray-950">
+                      <th className="px-5 py-4 text-left">
+                        <div className="flex flex-col">
+                          <span className="text-gray-400 text-xs font-semibold text-right">Preparación</span>
+                          <div className="border-t border-gray-600 my-1.5" />
+                          <span className="text-gray-400 text-xs font-semibold">Corte</span>
+                        </div>
+                      </th>
+                      {METODOS.map(m => (
+                        <th key={m.key} className="px-4 py-4 text-center">
+                          <div className="flex flex-col items-center gap-1">
+                            <span className="text-2xl">{m.emoji}</span>
+                            <span className="text-white text-[11px] font-bold leading-tight hidden sm:block">{m.label}</span>
+                          </div>
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-gray-50">
+                    {CORTES.map((corte, i) => (
+                      <tr key={corte.nombre} className={i % 2 === 0 ? 'bg-white' : 'bg-gray-50'}>
+                        <td className="px-5 py-3 font-medium text-gray-800">{corte.nombre}</td>
+                        {METODOS.map(m => (
+                          <td key={m.key} className="px-4 py-3 text-center">
+                            {corte[m.key as keyof typeof corte]
+                              ? <span className="inline-block w-3 h-3 rounded-full bg-red-600" />
+                              : <span className="inline-block w-3 h-3" />}
+                          </td>
+                        ))}
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="mt-6 flex flex-wrap gap-4">
+                {METODOS.map(m => (
+                  <span key={m.key} className="flex items-center gap-2 text-sm text-gray-500">
+                    <span className="text-lg">{m.emoji}</span> {m.label}
+                  </span>
+                ))}
+              </div>
+            </>
+          )}
 
         {/* CTA */}
         <div className="bg-red-50 border-t border-red-100 py-12 text-center">

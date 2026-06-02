@@ -8,7 +8,7 @@ import { useState, useRef, useEffect } from 'react'
 
 const MAS_LINKS = [
   { href: '/calculadora-asado', label: '🔥 Calculadora de Asado' },
-  { href: '/guia-cortes',       label: '🥩 Guía de Cortes' },
+  { href: '/recetas',           label: '🥩 Guía de Cortes' },
   { href: '/nosotros',          label: '🏪 Quiénes Somos' },
   { href: '/proveedores',       label: '🚚 Proveedores' },
 ]
