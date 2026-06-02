@@ -54,18 +54,25 @@ export async function POST(request: NextRequest) {
     }
 
     if (items?.length) {
-      const orderItems = items.map((item: { product_id: string; product_name?: string; quantity: number; unit_price: number }) => ({
-        order_id: order.id,
-        product_id: item.product_id,
-        product_name: item.product_name || item.product_id,
-        // product_sku es NOT NULL en algunas variantes del schema; usar id como fallback
-        product_sku: item.product_id,
-        quantity: item.quantity,
-        unit_price: item.unit_price,
-        subtotal: Math.round(item.quantity * item.unit_price),
-      }))
-      const { error: itemsError } = await getSupabase().from('order_items').insert(orderItems)
-      if (itemsError) console.error('[order_items.insert] failed', itemsError)
+      // Insertar con robustInsert para ignorar columnas que no existen en el schema
+      for (const item of items as Array<{ product_id: string; product_name?: string; quantity: number; unit_price: number }>) {
+        const payload: Record<string, unknown> = {
+          order_id:     order.id,
+          product_id:   item.product_id,
+          product_name: item.product_name || item.product_id,
+          quantity:     item.quantity,
+          unit_price:   item.unit_price,
+          subtotal:     Math.round(item.quantity * item.unit_price),
+        }
+        for (let attempt = 0; attempt < 5; attempt++) {
+          const { error } = await getSupabase().from('order_items').insert(payload)
+          if (!error) break
+          const col = error.message.match(/['"]([a-z_]+)['"]/i)?.[1]
+          if (col && col in payload) { delete payload[col]; continue }
+          console.error('[order_items.insert]', error.message)
+          break
+        }
+      }
     }
 
     // Notificar por WhatsApp (non-blocking)
