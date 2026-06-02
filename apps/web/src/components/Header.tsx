@@ -12,6 +12,7 @@ const MAS_LINKS = [
   { href: '/como-llegar',       label: '📍 Cómo Llegar' },
   { href: '/horarios',          label: '🕐 Horarios' },
   { href: '/proveedores',       label: '🚚 Proveedores' },
+  { href: '/productos?cat=cat-mascotas', label: '🐾 Para Mascotas', pet: true },
 ]
 
 
@@ -61,6 +62,10 @@ export function Header() {
             </Link>
             <Link href="/como-llegar" className="px-2.5 py-2 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition whitespace-nowrap">
               Cómo Llegar
+            </Link>
+            <span className="w-px h-4 bg-white/20 mx-1" />
+            <Link href="/mascotas" className="px-2.5 py-2 text-xs font-medium text-amber-400 hover:text-amber-300 hover:bg-white/10 rounded-lg transition whitespace-nowrap">
+              🐾 Mascotas
             </Link>
             <span className="w-px h-4 bg-white/20 mx-1" />
             {/* Dropdown Más */}
@@ -133,6 +138,11 @@ export function Header() {
             <Link href="/como-llegar" onClick={() => setMenuOpen(false)}
               className="block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition">
               📍 Cómo Llegar
+            </Link>
+            <div className="border-t border-amber-500/30 my-1" />
+            <Link href="/mascotas" onClick={() => setMenuOpen(false)}
+              className="block px-4 py-2.5 text-sm font-bold text-amber-400 hover:text-amber-300 hover:bg-white/10 rounded-lg transition">
+              🐾 Para Mascotas
             </Link>
             <div className="border-t border-white/10 my-1" />
             {MAS_LINKS.map(l => (

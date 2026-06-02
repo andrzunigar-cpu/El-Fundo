@@ -35,6 +35,7 @@ const CATEGORIES = [
   { id: 'cat-combos',           label: 'Combos' },
   { id: 'cat-bebidas',          label: 'Bebidas' },
   { id: 'cat-quesos',           label: 'Quesos' },
+  { id: 'cat-mascotas',         label: '🐾 Mascotas' },
 ]
 
 // Categorías que se venden por unidad por defecto
