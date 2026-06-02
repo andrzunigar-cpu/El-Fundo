@@ -8,11 +8,9 @@ import { useState, useRef, useEffect } from 'react'
 
 const MAS_LINKS = [
   { href: '/calculadora-asado', label: '🔥 Calculadora de Asado' },
+  { href: '/guia-cortes',       label: '🥩 Guía de Cortes' },
   { href: '/nosotros',          label: '🏪 Quiénes Somos' },
-  { href: '/como-llegar',       label: '📍 Cómo Llegar' },
-  { href: '/horarios',          label: '🕐 Horarios' },
   { href: '/proveedores',       label: '🚚 Proveedores' },
-  { href: '/productos?cat=cat-mascotas', label: '🐾 Para Mascotas', pet: true },
 ]
 
 
