@@ -26,21 +26,21 @@ const PRODUCTS_BY_TIER: Record<string, Record<string, ProductDef>> = {
     cerdo:     { id: 'prod-cer-001', name: 'Pulpa de Cerdo',      price: 5990,  unit: 'kg' },
     pollo:     { id: 'prod-pol-003', name: 'Trutro de Pollo',     price: 3990,  unit: 'kg' },
     embutidos: { id: 'prod-emb-002', name: 'Chorizo Parrillero',  price: 2490,  unit: 'kg' },
-    perro:     { id: 'prod-pelet-001', name: 'Pelet Económico',   price: 2490,  unit: 'kg' },
+    perro:     { id: 'prod-pelet-001', name: 'Alimento Seco Económico para Perro (Kibble)',  price: 2490,  unit: 'kg' },
   },
   parrillero: {
     vacuno:    { id: 'prod-vac-001', name: 'Lomo Liso',           price: 11990, unit: 'kg' },
     cerdo:     { id: 'prod-cer-002', name: 'Costillar de Cerdo',  price: 7990,  unit: 'kg' },
     pollo:     { id: 'prod-pol-002', name: 'Pechuga de Pollo',    price: 4990,  unit: 'kg' },
     embutidos: { id: 'prod-emb-001', name: 'Longaniza Casera',    price: 1290,  unit: 'un', gramsPerUnit: 180 },
-    perro:     { id: 'prod-pelet-002', name: 'Pelet Medio',       price: 3990,  unit: 'kg' },
+    perro:     { id: 'prod-pelet-002', name: 'Alimento Seco Estándar para Perro (Kibble)', price: 3990,  unit: 'kg' },
   },
   premium: {
     vacuno:    { id: 'prod-vac-002', name: 'Lomo Vetado',         price: 12990, unit: 'kg' },
     cerdo:     { id: 'prod-cer-002', name: 'Costillar de Cerdo',  price: 7990,  unit: 'kg' },
     pollo:     { id: 'prod-pol-002', name: 'Pechuga de Pollo',    price: 4990,  unit: 'kg' },
     embutidos: { id: 'prod-emb-001', name: 'Longaniza Casera',    price: 1290,  unit: 'un', gramsPerUnit: 180 },
-    perro:     { id: 'prod-pelet-003', name: 'Pelet Premium',     price: 5990,  unit: 'kg' },
+    perro:     { id: 'prod-pelet-003', name: 'Alimento Seco Premium para Perro (Kibble)',  price: 5990,  unit: 'kg' },
   },
 }
 
