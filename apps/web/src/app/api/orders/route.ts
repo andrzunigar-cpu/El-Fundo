@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase-server'
+import { notifyNewOrder } from '@/lib/whatsapp-notify'
 
 export const dynamic = 'force-dynamic'
 
@@ -66,6 +67,26 @@ export async function POST(request: NextRequest) {
       const { error: itemsError } = await getSupabase().from('order_items').insert(orderItems)
       if (itemsError) console.error('[order_items.insert] failed', itemsError)
     }
+
+    // Notificar por WhatsApp (non-blocking)
+    notifyNewOrder({
+      orderId:        order.id,
+      customerName:   customer_name,
+      customerPhone:  customer_phone,
+      customerAddress: customer_address,
+      deliveryType:   delivery_type,
+      paymentMethod:  payment_method,
+      totalAmount:    total_amount,
+      shippingCost:   shipping_cost,
+      scheduledFor:   scheduled_for,
+      notes,
+      items: items?.map((i: { product_id: string; product_name?: string; quantity: number; unit_price: number }) => ({
+        product_name: i.product_name || i.product_id,
+        quantity:     i.quantity,
+        unit_price:   i.unit_price,
+        subtotal:     Math.round(i.quantity * i.unit_price),
+      })),
+    }).catch(() => {}) // silenciar errores de notificación
 
     return NextResponse.json({ id: order.id, status: 'pending' }, { status: 201 })
   } catch (err: unknown) {

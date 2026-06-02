@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { getSupabase } from '@/lib/supabase-server'
+import { notifyNewOrder } from '@/lib/whatsapp-notify'
 
 export const dynamic = 'force-dynamic'
 
@@ -177,6 +178,27 @@ export async function POST(req: NextRequest) {
             .eq('token', token)
 
           orderId = order.id
+
+          // Notificar por WhatsApp (pedido WebPay pagado)
+          notifyNewOrder({
+            orderId:        order.id,
+            customerName:   orderData.customer_name,
+            customerPhone:  orderData.customer_phone,
+            customerAddress: orderData.customer_address,
+            deliveryType:   orderData.delivery_type,
+            paymentMethod:  'webpay',
+            paymentStatus:  'paid',
+            totalAmount:    result.amount,
+            shippingCost:   orderData.shipping_cost,
+            scheduledFor:   orderData.scheduled_for,
+            notes:          orderData.notes,
+            items: orderData.items?.map((i: { id: string; name: string; quantity: number; price: number }) => ({
+              product_name: i.name,
+              quantity:     i.quantity,
+              unit_price:   i.price,
+              subtotal:     Math.round(i.quantity * i.price),
+            })),
+          }).catch(() => {})
         }
       } catch (dbErr) {
         console.error('[WebPay confirm] DB error (non-fatal):', dbErr)
