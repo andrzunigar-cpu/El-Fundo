@@ -10,14 +10,14 @@ import { ShoppingCart, Search, Tag, Minus, Plus, Loader, ArrowRight } from 'luci
 import Link from 'next/link'
 
 const CATEGORY_IMAGES: Record<string, string> = {
-  vacuno:    'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400&q=80',
+  vacuno:    'https://images.unsplash.com/photo-1547592180-85f173990554?w=400&q=80',
   cerdo:     'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=400&q=80',
   pollo:     'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=400&q=80',
   embutidos: 'https://images.unsplash.com/photo-1623428187969-5da2dcea5ebf?w=400&q=80',
   parrilla:  'https://images.unsplash.com/photo-1555939594-58d7cb561ad1?w=400&q=80',
   congelados:      'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=400&q=80',
   complementarios: 'https://images.unsplash.com/photo-1518110925495-5fe2fda0442c?w=400&q=80',
-  bebidas:         'https://images.unsplash.com/photo-1546173159-315724a31696?w=400&q=80',
+  bebidas:         'https://images.unsplash.com/photo-1499638673689-79a0b5115d87?w=400&q=80',
   quesos:    'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=400&q=80',
   combos:    'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=400&q=80',
   default:   'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=400&q=80',

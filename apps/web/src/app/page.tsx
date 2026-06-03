@@ -5,13 +5,13 @@ import { FlashSale } from '@/components/FlashSale'
 import { ArrowRight } from 'lucide-react'
 
 const CATEGORIES = [
-  { id: 'vacuno',    name: 'Vacuno',     desc: 'Cortes premium de res',   image: 'https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?w=600&q=80' },
+  { id: 'vacuno',    name: 'Vacuno',     desc: 'Cortes premium de res',   image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80' },
   { id: 'cerdo',     name: 'Cerdo',      desc: 'Carnes selectas',          image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=600&q=80' },
   { id: 'pollo',     name: 'Aves',       desc: 'Pollo fresco y pavo',      image: 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=600&q=80' },
   { id: 'embutidos', name: 'Embutidos',  desc: 'Longanizas y chorizos',    image: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&q=80' },
   { id: 'parrilla',  name: 'Parrilla',   desc: 'Para tu asado perfecto',   image: 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&q=80' },
   { id: 'congelados',name: 'Congelados', desc: 'Listos para cocinar',      image: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=600&q=80' },
-  { id: 'bebidas',   name: 'Bebidas',    desc: 'Para acompañar',           image: 'https://images.unsplash.com/photo-1546173159-315724a31696?w=600&q=80' },
+  { id: 'bebidas',   name: 'Bebidas',    desc: 'Para acompañar',           image: 'https://images.unsplash.com/photo-1499638673689-79a0b5115d87?w=600&q=80' },
   { id: 'quesos',    name: 'Quesos',     desc: 'Selección artesanal',      image: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=600&q=80' },
 ]
 
