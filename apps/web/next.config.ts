@@ -50,7 +50,7 @@ const nextConfig: NextConfig = {
   reactStrictMode: true,
   images: {
     unoptimized: false,
-    domains: ['carniceriaelfundo.cl', 'localhost', 'images.unsplash.com'],
+    domains: ['carniceriaelfundo.cl', 'localhost', 'images.unsplash.com', 'tubrjgkzookemtnvpvdg.supabase.co'],
   },
   compress:       true,
   poweredByHeader: false,   // No exponer X-Powered-By: Next.js
