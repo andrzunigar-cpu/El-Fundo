@@ -10,7 +10,7 @@ import { ShoppingCart, Search, Tag, Minus, Plus, Loader, ArrowRight } from 'luci
 import Link from 'next/link'
 
 const CATEGORY_IMAGES: Record<string, string> = {
-  vacuno:    'https://images.unsplash.com/photo-1547592180-85f173990554?w=400&q=80',
+  vacuno:    'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=400&q=80',
   cerdo:     'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=400&q=80',
   pollo:     'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=400&q=80',
   embutidos: 'https://images.unsplash.com/photo-1623428187969-5da2dcea5ebf?w=400&q=80',

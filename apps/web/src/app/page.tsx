@@ -5,7 +5,7 @@ import { FlashSale } from '@/components/FlashSale'
 import { ArrowRight } from 'lucide-react'
 
 const CATEGORIES = [
-  { id: 'vacuno',    name: 'Vacuno',     desc: 'Cortes premium de res',   image: 'https://images.unsplash.com/photo-1547592180-85f173990554?w=600&q=80' },
+  { id: 'vacuno',    name: 'Vacuno',     desc: 'Cortes premium de res',   image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80' },
   { id: 'cerdo',     name: 'Cerdo',      desc: 'Carnes selectas',          image: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=600&q=80' },
   { id: 'pollo',     name: 'Aves',       desc: 'Pollo fresco y pavo',      image: 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=600&q=80' },
   { id: 'embutidos', name: 'Embutidos',  desc: 'Longanizas y chorizos',    image: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&q=80' },
