@@ -119,8 +119,9 @@ function ComboCard({ combo }: { combo: typeof COMBOS[0] }) {
     setTimeout(() => setAdded(false), 2000)
   }
   return (
-    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow">
-      <div className="relative h-44 overflow-hidden">
+    <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 flex flex-col hover:shadow-md transition-shadow h-full">
+      {/* Imagen fija */}
+      <div className="relative h-44 overflow-hidden shrink-0">
         <img src={combo.image} alt={combo.nombre} className="w-full h-full object-cover"
           onError={e => { (e.target as HTMLImageElement).src = 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&q=80' }} />
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent" />
@@ -132,19 +133,24 @@ function ComboCard({ combo }: { combo: typeof COMBOS[0] }) {
           <p className="text-white/80 text-xs mt-0.5">{combo.personas}</p>
         </div>
       </div>
-      <div className="p-5 flex-1 flex flex-col">
-        <ul className="space-y-2 mb-5 flex-1">
+
+      {/* Contenido — crece para empujar el precio al fondo */}
+      <div className="p-5 flex flex-col flex-1">
+        {/* Lista de ítems con altura mínima fija */}
+        <ul className="space-y-2 flex-1 min-h-[96px]">
           {combo.items.map((item, j) => (
             <li key={j} className="flex items-center justify-between gap-3">
               <div className="flex items-center gap-2.5">
-                <span className="text-xl">{item.emoji}</span>
+                <span className="text-xl leading-none">{item.emoji}</span>
                 <span className="text-sm font-medium text-gray-800">{item.producto}</span>
               </div>
               <span className="text-sm font-black text-gray-900 bg-gray-100 px-2.5 py-0.5 rounded-lg shrink-0">{item.cantidad}</span>
             </li>
           ))}
         </ul>
-        <div className="border-t border-gray-100 pt-4">
+
+        {/* Precio — siempre anclado al fondo */}
+        <div className="border-t border-gray-100 pt-4 mt-4 shrink-0">
           <div className="flex items-end justify-between mb-3">
             <div>
               <p className="text-xs text-gray-400">Precio del pack</p>
@@ -178,7 +184,7 @@ export default function CombosPage() {
             <h1 className="text-4xl font-black text-gray-900">Combos</h1>
             <p className="text-gray-500 mt-2">Todo listo para cocinar · Los mejores cortes juntos</p>
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 items-stretch">
             {COMBOS.map(combo => <ComboCard key={combo.id} combo={combo} />)}
           </div>
           <p className="text-center text-xs text-gray-400 mt-6">

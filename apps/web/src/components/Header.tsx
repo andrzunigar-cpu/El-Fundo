@@ -122,7 +122,7 @@ export function Header() {
             </Link>
             <Link href="/promociones" onClick={() => setMenuOpen(false)}
               className="block px-4 py-2.5 text-sm font-bold text-yellow-400 hover:text-yellow-300 hover:bg-white/10 rounded-lg transition">
-              🏷️ Promociones
+              🏷️ Promos
             </Link>
             <Link href="/productos" onClick={() => setMenuOpen(false)}
               className="block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition">
