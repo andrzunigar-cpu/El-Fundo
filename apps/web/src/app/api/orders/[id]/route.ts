@@ -3,23 +3,30 @@ import { getSupabase } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
-// GET público — permite seguimiento de pedido propio por UUID (no adivinable)
+// GET público — permite seguimiento de pedido por UUID completo o ID corto (8 chars)
 export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
 
-  // Validar UUID para prevenir inyección
-  if (!/^[0-9a-f-]{36}$/i.test(id)) {
+  if (!id || id.length < 6) {
     return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
   }
 
-  const { data, error } = await getSupabase()
+  const sb = getSupabase()
+  let query = sb
     .from('orders')
-    // Solo campos necesarios para seguimiento de pedido — NO exponer datos internos
-    .select('id, order_number, status, created_at, total_amount, order_items(product_name, quantity, unit_price)')
-    .eq('id', id)
-    .single()
+    .select('id, order_number, status, created_at, total_amount, shipping_cost, delivery_type, payment_method, customer_name, customer_phone, customer_address, notes, scheduled_for, order_items(id, product_name, product_id, quantity, unit_price, subtotal)')
 
-  if (error) return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 })
+  // Si es UUID completo (36 chars) buscar exacto, si es corto buscar por prefijo
+  if (/^[0-9a-f-]{36}$/i.test(id)) {
+    query = query.eq('id', id)
+  } else {
+    // Búsqueda por los primeros 8 caracteres del UUID (case-insensitive)
+    query = query.ilike('id', `${id.toLowerCase()}%`)
+  }
+
+  const { data, error } = await query.single()
+
+  if (error || !data) return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 })
   return NextResponse.json(data)
 }
 
