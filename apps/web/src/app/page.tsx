@@ -13,6 +13,7 @@ const CATEGORIES = [
   { id: 'congelados',name: 'Congelados', desc: 'Listos para cocinar',      image: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=600&q=80' },
   { id: 'bebidas',   name: 'Bebidas',    desc: 'Para acompañar',           image: 'https://images.unsplash.com/photo-1499638673689-79a0b5115d87?w=600&q=80' },
   { id: 'quesos',    name: 'Quesos',     desc: 'Selección artesanal',      image: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=600&q=80' },
+  { id: 'mascotas',  name: '🐾 Mascotas', desc: 'Productos para tus perritos', image: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80' },
 ]
 
 export default function Home() {
@@ -63,7 +64,7 @@ export default function Home() {
             {CATEGORIES.map((cat, i) => (
               <Link
                 key={cat.id}
-                href={`/categoria/${cat.id}`}
+                href={cat.id === 'mascotas' ? '/mascotas' : `/categoria/${cat.id}`}
                 className={`group relative overflow-hidden rounded-2xl ${i === 0 ? 'col-span-2 row-span-2' : ''}`}
                 style={{ minHeight: i === 0 ? '400px' : '180px' }}
               >
