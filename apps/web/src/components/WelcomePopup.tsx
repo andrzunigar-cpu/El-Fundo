@@ -14,9 +14,7 @@ export default function WelcomePopup() {
   const [discount, setDiscount] = useState(10) // % desde admin
 
   useEffect(() => {
-    const seen = localStorage.getItem(STORAGE_KEY)
-    if (seen) return
-    // Abrir popup después de 3s
+    // Mostrar siempre al entrar — solo esperar 3s
     const t = setTimeout(() => setOpen(true), 3000)
     // Cargar % de descuento desde configuración
     fetch('/api/settings')
@@ -27,7 +25,6 @@ export default function WelcomePopup() {
   }, [])
 
   const dismiss = () => {
-    localStorage.setItem(STORAGE_KEY, '1')
     setOpen(false)
   }
 
@@ -44,7 +41,6 @@ export default function WelcomePopup() {
     } catch {}
     setSent(true)
     setLoading(false)
-    localStorage.setItem(STORAGE_KEY, '1')
     setTimeout(() => setOpen(false), 3500)
   }
 
