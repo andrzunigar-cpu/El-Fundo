@@ -500,13 +500,14 @@ function ProductsContent() {
           })()
         )}
 
-        {/* ── Vista inicial: grid de categorías ── */}
+        {/* ── Vista inicial: grid de categorías (mismo diseño que el home) ── */}
         {showCategoryGrid && (
-          <div className="max-w-7xl mx-auto px-4 py-10">
-            <div className="mb-8">
-              <p className="text-red-600 font-semibold text-sm uppercase tracking-widest mb-2">Carnicería El Fundo</p>
-              <h1 className="text-4xl font-black text-gray-900">Productos</h1>
-              <p className="text-gray-500 mt-2">Selecciona una categoría para explorar</p>
+          <section className="max-w-7xl mx-auto px-4 py-16">
+            <div className="flex items-end justify-between mb-8">
+              <div>
+                <p className="text-red-600 font-semibold text-sm uppercase tracking-widest mb-2">Nuestro catálogo</p>
+                <h1 className="text-4xl font-black text-gray-900">Explora por categoría</h1>
+              </div>
             </div>
             <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
               {CATEGORY_GRID.map((cat, i) => (
@@ -520,7 +521,7 @@ function ProductsContent() {
                     className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                   <div className="absolute bottom-0 left-0 right-0 p-5">
-                    <h3 className="text-white font-black text-xl mb-0.5">{cat.emoji} {cat.label}</h3>
+                    <h3 className="text-white font-black text-xl mb-0.5">{cat.label}</h3>
                     <p className="text-gray-300 text-sm">{cat.desc}</p>
                     <div className="flex items-center gap-1 text-red-400 text-sm font-semibold mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       Ver productos <ArrowRight className="w-3 h-3" />
@@ -529,7 +530,7 @@ function ProductsContent() {
                 </button>
               ))}
             </div>
-          </div>
+          </section>
         )}
 
         {/* ── Filtros y catálogo ── */}
