@@ -247,6 +247,7 @@ function ProductsContent() {
     })
   }
 
+  const promos    = products.filter(p => (p as any).promotional_price)
   const isPromos  = activeCategory === 'promos'
   const isInCart  = (id: string) => items.some(i => i.id === id)
 
