@@ -206,7 +206,7 @@ export function Header() {
             <Link href="/promociones" className="px-2.5 py-2 text-xs font-bold text-yellow-400 hover:text-yellow-300 hover:bg-white/10 rounded-lg transition whitespace-nowrap">
               🏷️ Promos
             </Link>
-            <Link href="/productos" className="px-2.5 py-2 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition whitespace-nowrap">
+            <Link href="/#categorias" className="px-2.5 py-2 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition whitespace-nowrap">
               Productos
             </Link>
             <Link href="/horarios" className="px-2.5 py-2 text-xs font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10 rounded-lg transition whitespace-nowrap">
@@ -292,7 +292,7 @@ export function Header() {
               className="block px-4 py-2.5 text-sm font-bold text-yellow-400 hover:text-yellow-300 hover:bg-white/10 rounded-lg transition">
               🏷️ Promos
             </Link>
-            <Link href="/productos" onClick={() => setMenuOpen(false)}
+            <Link href="/#categorias" onClick={() => setMenuOpen(false)}
               className="block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition">
               Productos
             </Link>

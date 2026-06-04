@@ -51,7 +51,7 @@ export default function Home() {
         <FlashSale />
 
         {/* Categorías */}
-        <section className="max-w-7xl mx-auto px-4 py-16">
+        <section id="categorias" className="max-w-7xl mx-auto px-4 py-16">
           <div className="flex items-end justify-between mb-8">
             <div>
               <p className="text-red-600 font-semibold text-sm uppercase tracking-widest mb-2">Nuestro catálogo</p>
