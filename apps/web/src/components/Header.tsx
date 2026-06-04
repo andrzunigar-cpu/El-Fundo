@@ -70,7 +70,7 @@ function OrderTrackModal({ onClose }: { onClose: () => void }) {
                   value={code}
                   onChange={e => setCode(e.target.value.toUpperCase())}
                   onKeyDown={e => e.key === 'Enter' && search()}
-                  placeholder="ej: 2CAF79E3"
+                  placeholder="Código ej: 2CAF79E3 o tu teléfono"
                   maxLength={36}
                   className="w-full pl-7 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm font-mono focus:outline-none focus:border-red-400 focus:ring-1 focus:ring-red-200"
                 />
@@ -85,7 +85,7 @@ function OrderTrackModal({ onClose }: { onClose: () => void }) {
               </button>
             </div>
             <p className="text-[11px] text-gray-400 mt-1.5">
-              El número lo recibiste al confirmar tu compra o en el comprobante de pago.
+              Ingresa el código del pedido (ej: 2CAF79E3) <strong>o tu número de teléfono</strong> con el que hiciste el pedido.
             </p>
           </div>
 

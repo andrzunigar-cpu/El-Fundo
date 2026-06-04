@@ -3,31 +3,42 @@ import { getSupabase } from '@/lib/supabase-server'
 
 export const dynamic = 'force-dynamic'
 
-// GET público — permite seguimiento de pedido por UUID completo o ID corto (8 chars)
-export async function GET(_req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
+// GET público — busca pedido por UUID, código corto (8 chars) o teléfono
+export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   const { id } = await params
-
-  if (!id || id.length < 6) {
-    return NextResponse.json({ error: 'ID inválido' }, { status: 400 })
+  if (!id || id.length < 4) {
+    return NextResponse.json({ error: 'Ingresa un código de pedido o teléfono válido' }, { status: 400 })
   }
 
+  const SELECT = 'id, order_number, status, created_at, total_amount, shipping_cost, delivery_type, payment_method, customer_name, customer_phone, customer_address, notes, scheduled_for, order_items(id, product_name, product_id, quantity, unit_price, subtotal)'
   const sb = getSupabase()
-  let query = sb
-    .from('orders')
-    .select('id, order_number, status, created_at, total_amount, shipping_cost, delivery_type, payment_method, customer_name, customer_phone, customer_address, notes, scheduled_for, order_items(id, product_name, product_id, quantity, unit_price, subtotal)')
 
-  // Si es UUID completo (36 chars) buscar exacto, si es corto buscar por prefijo
+  // 1. UUID completo (36 chars)
   if (/^[0-9a-f-]{36}$/i.test(id)) {
-    query = query.eq('id', id)
-  } else {
-    // Búsqueda por los primeros 8 caracteres del UUID (case-insensitive)
-    query = query.ilike('id', `${id.toLowerCase()}%`)
+    const { data } = await sb.from('orders').select(SELECT).eq('id', id).single()
+    if (data) return NextResponse.json(data)
   }
 
-  const { data, error } = await query.single()
+  // 2. Código corto (primeros 6-8 chars del UUID)
+  if (id.length >= 6 && /^[0-9a-f]+$/i.test(id)) {
+    const { data } = await sb.from('orders').select(SELECT)
+      .ilike('id', `${id.toLowerCase()}%`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+    if (data && data.length > 0) return NextResponse.json(data[0])
+  }
 
-  if (error || !data) return NextResponse.json({ error: 'Pedido no encontrado' }, { status: 404 })
-  return NextResponse.json(data)
+  // 3. Búsqueda por número de teléfono (últimos 8 dígitos)
+  const digits = id.replace(/\D/g, '')
+  if (digits.length >= 7) {
+    const { data } = await sb.from('orders').select(SELECT)
+      .ilike('customer_phone', `%${digits.slice(-8)}%`)
+      .order('created_at', { ascending: false })
+      .limit(1)
+    if (data && data.length > 0) return NextResponse.json(data[0])
+  }
+
+  return NextResponse.json({ error: 'Pedido no encontrado. Prueba con el número de teléfono que usaste al pedir.' }, { status: 404 })
 }
 
 // PATCH — actualizar estado del pedido
