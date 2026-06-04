@@ -16,7 +16,21 @@ const BASE_URL = IS_PROD
   ? 'https://webpay3g.transbank.cl'
   : 'https://webpay3gint.transbank.cl'
 
+const ALLOWED_ORIGINS = [
+  'https://carniceriaelfundo.cl',
+  'https://el-fundo-web.vercel.app',
+  'https://www.carniceriaelfundo.cl',
+]
+
 export async function POST(req: NextRequest) {
+  if (process.env.NODE_ENV === 'production') {
+    const origin = req.headers.get('origin') ?? ''
+    if (origin && !ALLOWED_ORIGINS.some(o => origin.startsWith(o))) {
+      console.warn('[webpay/create] Origin rechazado:', origin)
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
   if (!COMMERCE_CODE || !API_KEY) {
     console.error('[webpay/create] WEBPAY_COMMERCE_CODE o WEBPAY_API_KEY no configurados')
     return NextResponse.json({ error: 'Pago no disponible en este momento' }, { status: 503 })

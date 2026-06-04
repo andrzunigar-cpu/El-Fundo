@@ -35,7 +35,23 @@ async function robustInsert(
   return null
 }
 
+// Orígenes permitidos para llamadas Webpay (CSRF ligero)
+const ALLOWED_ORIGINS = [
+  'https://carniceriaelfundo.cl',
+  'https://el-fundo-web.vercel.app',
+  'https://www.carniceriaelfundo.cl',
+]
+
 export async function POST(req: NextRequest) {
+  // Validación de origen (CSRF) — solo en producción
+  if (process.env.NODE_ENV === 'production') {
+    const origin = req.headers.get('origin') ?? ''
+    if (origin && !ALLOWED_ORIGINS.some(o => origin.startsWith(o))) {
+      console.warn('[webpay/confirm] Origin rechazado:', origin)
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
+  }
+
   if (!COMMERCE_CODE || !API_KEY) {
     console.error('[webpay/confirm] WEBPAY_COMMERCE_CODE o WEBPAY_API_KEY no configurados')
     return NextResponse.json({ error: 'Pago no disponible en este momento' }, { status: 503 })
@@ -44,11 +60,25 @@ export async function POST(req: NextRequest) {
   try {
     const { token, orderData } = await req.json()
 
-    if (!token) {
-      return NextResponse.json({ error: 'Token requerido' }, { status: 400 })
+    if (!token || typeof token !== 'string' || token.length > 128) {
+      return NextResponse.json({ error: 'Token inválido' }, { status: 400 })
     }
 
-    // Confirmar con Transbank (PUT)
+    const supabase = getSupabase()
+
+    // ── Idempotencia: si el token ya fue procesado, retornar resultado existente ──
+    const { data: existingTx } = await supabase
+      .from('webpay_transactions')
+      .select('order_id, status, amount')
+      .eq('token', token)
+      .maybeSingle()
+
+    if (existingTx?.order_id && existingTx.status === 'AUTHORIZED') {
+      console.log('[webpay/confirm] Token ya procesado — retornando idempotente:', token.slice(0, 12))
+      return NextResponse.json({ success: true, orderId: existingTx.order_id, idempotent: true })
+    }
+
+    // ── Confirmar con Transbank (PUT)
     const res = await fetch(
       `${BASE_URL}/rswebpaytransaction/api/webpay/v1.2/transactions/${token}`,
       {
@@ -94,8 +124,15 @@ export async function POST(req: NextRequest) {
       transaction_date:   result.transaction_date,
     }
 
-    // Guardar transacción Transbank siempre (aprobada o rechazada)
-    const supabase = getSupabase()
+    // ── Validación de monto: Transbank debe retornar el mismo monto que se inició ──
+    if (existingTx?.amount && result.amount && result.amount !== existingTx.amount) {
+      console.error('[webpay/confirm] Discrepancia de monto:', {
+        esperado: existingTx.amount, recibido: result.amount, token: token.slice(0, 12),
+      })
+      return NextResponse.json({ error: 'Monto no coincide — transacción rechazada' }, { status: 400 })
+    }
+
+    // ── Guardar transacción Transbank siempre (aprobada o rechazada) ──
     await robustInsert('webpay_transactions', {
       token,
       buy_order:          result.buy_order          ?? null,

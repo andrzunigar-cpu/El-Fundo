@@ -162,7 +162,7 @@ function fmtQty(qty: number, unit?: string) {
 function fmt(n: number) { return n.toLocaleString('es-CL') }
 
 // ── tipos de pago ──────────────────────────────────────────────────────────
-type PayMethod = 'webpay' | 'efectivo' | 'tarjeta_local' | 'amipass' | 'edenred' | 'pluxee' | 'machbank'
+type PayMethod = 'webpay' | 'efectivo' | 'tarjeta_local' | 'transferencia' | 'amipass' | 'edenred' | 'pluxee'
 
 interface PayOption {
   id: PayMethod
@@ -178,11 +178,12 @@ const PAY_ONLINE: PayOption[] = [
 ]
 
 const PAY_PRESENCIAL: PayOption[] = [
-  { id: 'tarjeta_local', label: 'Tarjeta',  sub: 'Débito, crédito y cuenta RUT',      icon: <CreditCard className="w-5 h-5" /> },
-  { id: 'efectivo',      label: 'Efectivo', sub: 'Pago al recibir o en local',         icon: <Banknote className="w-5 h-5" /> },
-  { id: 'amipass',       label: 'Amipass',  sub: 'Tarjeta de beneficios al recibir',   icon: <span className="text-base">🎫</span> },
-  { id: 'pluxee',        label: 'Pluxee',   sub: 'Tarjeta de beneficios al recibir',   icon: <span className="text-base">🎫</span> },
-  { id: 'edenred',       label: 'Edenred',  sub: 'Tarjeta de beneficios al recibir',   icon: <span className="text-base">🎫</span> },
+  { id: 'tarjeta_local',  label: 'Tarjeta',       sub: 'Débito, crédito y cuenta RUT',      icon: <CreditCard className="w-5 h-5" /> },
+  { id: 'efectivo',       label: 'Efectivo',      sub: 'Pago al recibir o en local',         icon: <Banknote className="w-5 h-5" /> },
+  { id: 'transferencia',  label: 'Transferencia', sub: 'Transferencia bancaria previa',      icon: <Building2 className="w-5 h-5" /> },
+  { id: 'amipass',        label: 'Amipass',       sub: 'Tarjeta de beneficios al recibir',   icon: <span className="text-base">🎫</span> },
+  { id: 'pluxee',         label: 'Pluxee',        sub: 'Tarjeta de beneficios al recibir',   icon: <span className="text-base">🎫</span> },
+  { id: 'edenred',        label: 'Edenred',       sub: 'Tarjeta de beneficios al recibir',   icon: <span className="text-base">🎫</span> },
 ]
 
 // ── componente principal ───────────────────────────────────────────────────
@@ -327,13 +328,16 @@ export default function CartPage() {
 
   // ── webpay ───────────────────────────────────────────────────────────────
   const handleWebpay = async () => {
+    if (webpayLoading) return          // guard contra doble-clic
     setWebpayError('')
     setWebpayLoading(true)
     try {
+      const fullPhone = `${phonePrefix}${phone.replace(/^\+?56\d?/, '')}`
       sessionStorage.setItem('webpay_order', JSON.stringify({
-        customer_name: name, customer_phone: phone, customer_address: address,
+        customer_name: name, customer_phone: fullPhone, customer_address: address,
         notes, items: items.map(i => ({ id: i.id, name: i.name, quantity: i.quantity, price: i.price, unit: i.unit })),
         scheduled_for: scheduledFor, delivery_type: deliveryMode, shipping_cost: shippingCost,
+        expected_amount: grandTotal,   // para validación server-side de monto
       }))
       const res  = await fetch('/api/webpay/create', {
         method: 'POST',
@@ -398,6 +402,21 @@ export default function CartPage() {
             {payMethod === 'efectivo' && (
               <p className="text-sm text-green-700 bg-green-50 rounded-xl px-4 py-3 mb-4">
                 💵 Pago en efectivo al {deliveryMode === 'pickup' ? 'retirar en local' : 'momento de la entrega'}.
+              </p>
+            )}
+            {payMethod === 'tarjeta_local' && (
+              <p className="text-sm text-blue-700 bg-blue-50 rounded-xl px-4 py-3 mb-4">
+                💳 Pago con tarjeta al {deliveryMode === 'pickup' ? 'retirar en local' : 'momento de la entrega'}.
+              </p>
+            )}
+            {payMethod === 'transferencia' && (
+              <p className="text-sm text-purple-700 bg-purple-50 rounded-xl px-4 py-3 mb-4">
+                🏦 Te enviaremos los datos bancarios para realizar la transferencia. El pedido se confirma al acreditar el pago.
+              </p>
+            )}
+            {(payMethod === 'amipass' || payMethod === 'pluxee' || payMethod === 'edenred') && (
+              <p className="text-sm text-orange-700 bg-orange-50 rounded-xl px-4 py-3 mb-4">
+                🎫 Pago con {payMethod.charAt(0).toUpperCase() + payMethod.slice(1)} al {deliveryMode === 'pickup' ? 'retirar en local' : 'momento de la entrega'}.
               </p>
             )}
 

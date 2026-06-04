@@ -4,7 +4,7 @@ import { useEffect, useState } from 'react'
 import { useRouter, usePathname } from 'next/navigation'
 import Link from 'next/link'
 import Image from 'next/image'
-import { LayoutDashboard, Package, Tag, LogOut, ChevronRight, ShoppingBag, Percent, Settings, Menu, X, Mail } from 'lucide-react'
+import { LayoutDashboard, Package, Tag, LogOut, ChevronRight, ShoppingBag, Percent, Settings, Menu, X, Mail, BarChart3, AtSign } from 'lucide-react'
 import NewOrderNotifier from '@/components/NewOrderNotifier'
 
 const LOGIN_URL = '/gestion-elfundo'
@@ -16,6 +16,8 @@ const NAV = [
   { href: '/admin/dashboard/promociones',   label: 'Promociones',    icon: Percent },
   { href: '/admin/dashboard/categorias',    label: 'Categorías',     icon: Tag },
   { href: '/admin/dashboard/suscriptores',  label: 'Suscriptores',   icon: Mail },
+  { href: '/admin/dashboard/correos',       label: 'Correos',        icon: AtSign },
+  { href: '/admin/dashboard/reportes',      label: 'Reportes POS',   icon: BarChart3 },
   { href: '/admin/dashboard/configuracion', label: 'Configuración',  icon: Settings },
 ]
 
