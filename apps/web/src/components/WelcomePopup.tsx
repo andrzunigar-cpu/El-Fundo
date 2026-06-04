@@ -17,13 +17,19 @@ export default function WelcomePopup() {
 
   useEffect(() => {
     // Solo en la página principal
-    if (pathname !== '/') return
-    // Ya se mostró en esta sesión (navegar y volver no lo vuelve a mostrar)
+    if (pathname !== '/') {
+      setOpen(false) // cerrar si el usuario navegó a otra página
+      return
+    }
+    // Ya se mostró en esta sesión
     if (sessionStorage.getItem(SESSION_KEY)) return
 
+    // Marcar de inmediato para evitar duplicados si navega y vuelve
+    sessionStorage.setItem(SESSION_KEY, '1')
+
     const t = setTimeout(() => {
-      setOpen(true)
-      sessionStorage.setItem(SESSION_KEY, '1')
+      // Verificar que el usuario sigue en la home antes de abrir
+      if (window.location.pathname === '/') setOpen(true)
     }, 3000)
 
     fetch('/api/settings')
