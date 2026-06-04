@@ -178,16 +178,18 @@ export function Header() {
   // Clase de nav link: mismo color base para todos, rojo activo
   const navLink = (href: string) => {
     const isActive = pathname === href || (href !== '/' && pathname.startsWith(href))
-    return isActive
-      ? 'px-2.5 py-2 text-xs font-bold text-white bg-red-600 rounded-lg transition whitespace-nowrap'
-      : 'px-2.5 py-2 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition whitespace-nowrap'
+    const isPromos = href === '/promociones'
+    if (isActive && isPromos) return 'px-2.5 py-2 text-xs font-bold text-gray-900 bg-yellow-400 rounded-lg transition whitespace-nowrap'
+    if (isActive)             return 'px-2.5 py-2 text-xs font-bold text-white bg-red-600 rounded-lg transition whitespace-nowrap'
+    return 'px-2.5 py-2 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition whitespace-nowrap'
   }
 
   const mobileNavLink = (href: string) => {
     const isActive = pathname === href || (href !== '/' && pathname.startsWith(href))
-    return isActive
-      ? 'block px-4 py-2.5 text-sm font-bold text-white bg-red-600 rounded-lg transition'
-      : 'block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition'
+    const isPromos = href === '/promociones'
+    if (isActive && isPromos) return 'block px-4 py-2.5 text-sm font-bold text-gray-900 bg-yellow-400 rounded-lg transition'
+    if (isActive)             return 'block px-4 py-2.5 text-sm font-bold text-white bg-red-600 rounded-lg transition'
+    return 'block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition'
   }
 
   // Cerrar dropdown al hacer click fuera
