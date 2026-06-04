@@ -1,28 +1,38 @@
 'use client'
 
 import { useEffect, useState } from 'react'
+import { usePathname } from 'next/navigation'
 import { X, Gift, Tag } from 'lucide-react'
 
-const STORAGE_KEY = 'elfundo_welcome_seen'
+const SESSION_KEY = 'elfundo_welcome_shown'
 
 export default function WelcomePopup() {
+  const pathname = usePathname()
   const [open, setOpen]       = useState(false)
   const [name, setName]       = useState('')
   const [email, setEmail]     = useState('')
   const [sent, setSent]       = useState(false)
   const [loading, setLoading] = useState(false)
-  const [discount, setDiscount] = useState(10) // % desde admin
+  const [discount, setDiscount] = useState(10)
 
   useEffect(() => {
-    // Mostrar siempre al entrar — solo esperar 3s
-    const t = setTimeout(() => setOpen(true), 3000)
-    // Cargar % de descuento desde configuración
+    // Solo en la página principal
+    if (pathname !== '/') return
+    // Ya se mostró en esta sesión (navegar y volver no lo vuelve a mostrar)
+    if (sessionStorage.getItem(SESSION_KEY)) return
+
+    const t = setTimeout(() => {
+      setOpen(true)
+      sessionStorage.setItem(SESSION_KEY, '1')
+    }, 3000)
+
     fetch('/api/settings')
       .then(r => r.json())
       .then(d => { if (typeof d.new_user_discount === 'number') setDiscount(d.new_user_discount) })
       .catch(() => {})
+
     return () => clearTimeout(t)
-  }, [])
+  }, [pathname])
 
   const dismiss = () => {
     setOpen(false)
