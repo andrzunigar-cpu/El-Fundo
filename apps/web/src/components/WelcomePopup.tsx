@@ -1,13 +1,11 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { usePathname } from 'next/navigation'
 import { X, Gift, Tag } from 'lucide-react'
 
 const SESSION_KEY = 'elfundo_welcome_shown'
 
 export default function WelcomePopup() {
-  const pathname = usePathname()
   const [open, setOpen]       = useState(false)
   const [name, setName]       = useState('')
   const [email, setEmail]     = useState('')
@@ -16,21 +14,11 @@ export default function WelcomePopup() {
   const [discount, setDiscount] = useState(10)
 
   useEffect(() => {
-    // Solo en la página principal
-    if (pathname !== '/') {
-      setOpen(false) // cerrar si el usuario navegó a otra página
-      return
-    }
-    // Ya se mostró en esta sesión
+    // Solo una vez por sesión
     if (sessionStorage.getItem(SESSION_KEY)) return
-
-    // Marcar de inmediato para evitar duplicados si navega y vuelve
     sessionStorage.setItem(SESSION_KEY, '1')
 
-    const t = setTimeout(() => {
-      // Verificar que el usuario sigue en la home antes de abrir
-      if (window.location.pathname === '/') setOpen(true)
-    }, 3000)
+    const t = setTimeout(() => setOpen(true), 3000)
 
     fetch('/api/settings')
       .then(r => r.json())
@@ -38,11 +26,9 @@ export default function WelcomePopup() {
       .catch(() => {})
 
     return () => clearTimeout(t)
-  }, [pathname])
+  }, [])
 
-  const dismiss = () => {
-    setOpen(false)
-  }
+  const dismiss = () => setOpen(false)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

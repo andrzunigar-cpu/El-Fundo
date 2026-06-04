@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 import './globals.css'
 import WhatsAppButton from '@/components/WhatsAppButton'
-import WelcomePopup from '@/components/WelcomePopup'
 
 export const metadata: Metadata = {
   title: 'Carnicería El Fundo | Carnes de Calidad en Puente Alto',
@@ -28,7 +27,6 @@ export default function RootLayout({
       <body>
         {children}
         <WhatsAppButton />
-        <WelcomePopup />
       </body>
     </html>
   )

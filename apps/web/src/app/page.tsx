@@ -3,6 +3,7 @@ import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { FlashSale } from '@/components/FlashSale'
 import { ArrowRight } from 'lucide-react'
+import WelcomePopup from '@/components/WelcomePopup'
 
 const CATEGORIES = [
   { id: 'vacuno',    name: 'Vacuno',     desc: 'Cortes premium de res',   image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80' },
@@ -20,6 +21,7 @@ export default function Home() {
   return (
     <>
       <Header />
+      <WelcomePopup />
       <main className="min-h-screen bg-white">
 
         {/* Hero */}
