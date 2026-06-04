@@ -5,7 +5,7 @@ import Image from 'next/image'
 import { ShoppingCart, Menu, X, ChevronDown, Search, ClipboardList, Loader, CheckCircle2, Package, Clock, AlertCircle } from 'lucide-react'
 import { useCart } from '@/lib/store'
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 
 // ── Modal seguimiento de pedido ───────────────────────────────────────────────
 const STATUS_LABELS: Record<string, { label: string; color: string }> = {
@@ -168,11 +168,27 @@ const MAS_LINKS = [
 
 export function Header() {
   const { items } = useCart()
+  const pathname  = usePathname()
   const [menuOpen,      setMenuOpen]      = useState(false)
   const [masOpen,       setMasOpen]       = useState(false)
   const [trackingOpen,  setTrackingOpen]  = useState(false)
   const masRef = useRef<HTMLDivElement>(null)
   const cartCount = items.reduce((sum, item) => sum + item.quantity, 0)
+
+  // Clase de nav link: mismo color base para todos, rojo activo
+  const navLink = (href: string) => {
+    const isActive = pathname === href || (href !== '/' && pathname.startsWith(href))
+    return isActive
+      ? 'px-2.5 py-2 text-xs font-bold text-white bg-red-600 rounded-lg transition whitespace-nowrap'
+      : 'px-2.5 py-2 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition whitespace-nowrap'
+  }
+
+  const mobileNavLink = (href: string) => {
+    const isActive = pathname === href || (href !== '/' && pathname.startsWith(href))
+    return isActive
+      ? 'block px-4 py-2.5 text-sm font-bold text-white bg-red-600 rounded-lg transition'
+      : 'block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition'
+  }
 
   // Cerrar dropdown al hacer click fuera
   useEffect(() => {
@@ -200,21 +216,11 @@ export function Header() {
           </Link>
 
           <nav className="hidden lg:flex items-center gap-0.5">
-            <Link href="/combos" className="px-2.5 py-2 text-xs font-bold text-red-400 hover:text-red-300 hover:bg-white/10 rounded-lg transition whitespace-nowrap">
-              🔥 Combos
-            </Link>
-            <Link href="/promociones" className="px-2.5 py-2 text-xs font-bold text-yellow-400 hover:text-yellow-300 hover:bg-white/10 rounded-lg transition whitespace-nowrap">
-              🏷️ Promos
-            </Link>
-            <Link href="/#categorias" className="px-2.5 py-2 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition whitespace-nowrap">
-              Productos
-            </Link>
-            <Link href="/horarios" className="px-2.5 py-2 text-xs font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10 rounded-lg transition whitespace-nowrap">
-              Horarios
-            </Link>
-            <Link href="/como-llegar" className="px-2.5 py-2 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition whitespace-nowrap">
-              Cómo Llegar
-            </Link>
+            <Link href="/combos"       className={navLink('/combos')}>🔥 Combos</Link>
+            <Link href="/promociones"  className={navLink('/promociones')}>🏷️ Promos</Link>
+            <Link href="/#categorias"  className="px-2.5 py-2 text-xs font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition whitespace-nowrap">Productos</Link>
+            <Link href="/horarios"     className={navLink('/horarios')}>Horarios</Link>
+            <Link href="/como-llegar"  className={navLink('/como-llegar')}>Cómo Llegar</Link>
             <span className="w-px h-4 bg-white/20 mx-1" />
             {/* Dropdown Más */}
             <div ref={masRef} className="relative">
@@ -284,31 +290,15 @@ export function Header() {
               Ver estado de mi pedido
             </button>
 
-            <Link href="/combos" onClick={() => setMenuOpen(false)}
-              className="block px-4 py-2.5 text-sm font-bold text-red-400 hover:text-red-300 hover:bg-white/10 rounded-lg transition">
-              🔥 Combos
-            </Link>
-            <Link href="/promociones" onClick={() => setMenuOpen(false)}
-              className="block px-4 py-2.5 text-sm font-bold text-yellow-400 hover:text-yellow-300 hover:bg-white/10 rounded-lg transition">
-              🏷️ Promos
-            </Link>
-            <Link href="/#categorias" onClick={() => setMenuOpen(false)}
-              className="block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition">
-              Productos
-            </Link>
+            <Link href="/combos"      onClick={() => setMenuOpen(false)} className={mobileNavLink('/combos')}>🔥 Combos</Link>
+            <Link href="/promociones" onClick={() => setMenuOpen(false)} className={mobileNavLink('/promociones')}>🏷️ Promos</Link>
+            <Link href="/#categorias" onClick={() => setMenuOpen(false)} className="block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition">Productos</Link>
             <div className="border-t border-white/10 my-1" />
-            <Link href="/horarios" onClick={() => setMenuOpen(false)}
-              className="block px-4 py-2.5 text-sm font-medium text-orange-400 hover:text-orange-300 hover:bg-white/10 rounded-lg transition">
-              🕐 Horarios
-            </Link>
-            <Link href="/como-llegar" onClick={() => setMenuOpen(false)}
-              className="block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition">
-              📍 Cómo Llegar
-            </Link>
+            <Link href="/horarios"    onClick={() => setMenuOpen(false)} className={mobileNavLink('/horarios')}>🕐 Horarios</Link>
+            <Link href="/como-llegar" onClick={() => setMenuOpen(false)} className={mobileNavLink('/como-llegar')}>📍 Cómo Llegar</Link>
             <div className="border-t border-white/10 my-1" />
             {MAS_LINKS.map(l => (
-              <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)}
-                className="block px-4 py-2.5 text-sm font-medium text-gray-300 hover:text-white hover:bg-white/10 rounded-lg transition">
+              <Link key={l.href} href={l.href} onClick={() => setMenuOpen(false)} className={mobileNavLink(l.href)}>
                 {l.label}
               </Link>
             ))}
