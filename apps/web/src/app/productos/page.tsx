@@ -23,6 +23,20 @@ const CATEGORY_IMAGES: Record<string, string> = {
   default:   'https://images.unsplash.com/photo-1544025162-d76594e8bb25?w=400&q=80',
 }
 
+// Cuadrícula visual de categorías (vista inicial)
+const CATEGORY_GRID = [
+  { id: 'cat-vacuno',    label: 'Vacuno',      desc: 'Cortes premium de res',    emoji: '🥩', img: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80' },
+  { id: 'cat-cerdo',     label: 'Cerdo',       desc: 'Carnes selectas',           emoji: '🐷', img: 'https://images.unsplash.com/photo-1607623814075-e51df1bdc82f?w=600&q=80' },
+  { id: 'cat-pollo',     label: 'Aves',        desc: 'Pollo fresco y pavo',       emoji: '🐔', img: 'https://images.unsplash.com/photo-1587593810167-a84920ea0781?w=600&q=80' },
+  { id: 'cat-embutidos', label: 'Embutidos',   desc: 'Longanizas y chorizos',     emoji: '🌭', img: 'https://images.unsplash.com/photo-1527477396000-e27163b481c2?w=600&q=80' },
+  { id: 'cat-parrilla',  label: 'Parrilla',    desc: 'Para tu asado perfecto',    emoji: '🔥', img: 'https://images.unsplash.com/photo-1529193591184-b1d58069ecdd?w=600&q=80' },
+  { id: 'cat-congelados',label: 'Congelados',  desc: 'Listos para cocinar',       emoji: '🧊', img: 'https://images.unsplash.com/photo-1551782450-a2132b4ba21d?w=600&q=80' },
+  { id: 'cat-bebidas',   label: 'Bebidas',     desc: 'Para acompañar',            emoji: '🥤', img: 'https://images.unsplash.com/photo-1499638673689-79a0b5115d87?w=600&q=80' },
+  { id: 'cat-quesos',    label: 'Quesos',      desc: 'Selección artesanal',       emoji: '🧀', img: 'https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?w=600&q=80' },
+  { id: 'cat-mascotas',  label: 'Mascotas',    desc: 'Para tus perritos',         emoji: '🐾', img: 'https://images.unsplash.com/photo-1587300003388-59208cc962cb?w=600&q=80' },
+  { id: 'cat-combos',    label: 'Combos',      desc: 'Packs armados',             emoji: '📦', img: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80' },
+]
+
 const CATEGORIES = [
   { id: 'all',                  label: 'Todos' },
   { id: 'cat-vacuno',           label: 'Vacuno' },
@@ -149,21 +163,25 @@ function ProductsContent() {
   const [products, setProducts] = useState<Product[]>(CATALOGO)
   const [syncing, setSyncing] = useState(true)
   const [search, setSearch]     = useState('')
-  const [activeCategory, setActiveCategory] = useState(() => searchParams.get('cat') || 'all')
+  const [activeCategory, setActiveCategory] = useState(() => searchParams.get('cat') ?? '')
   const [quantities, setQuantities] = useState<Record<string, number>>({})
   const { addItem, items } = useCart()
 
-  // Sincronizar categoría con URL — se dispara en cada cambio de ruta
+  // Sincronizar categoría con URL
   useEffect(() => {
-    const cat = searchParams.get('cat') || 'all'
+    const cat = searchParams.get('cat') ?? ''
     setActiveCategory(cat)
-    setSearch('') // limpiar búsqueda al cambiar categoría desde el header
+    setSearch('')
   }, [searchParams])
+
+  // Vista inicial: si no hay cat en URL, mostrar grid de categorías
+  const showCategoryGrid = !activeCategory && !search
 
   // Cambiar categoría desde los botones de la página
   const handleCategoryClick = (catId: string) => {
-    setActiveCategory(catId)
-    const url = catId === 'all' ? '/productos' : `/productos?cat=${catId}`
+    const newCat = catId === 'all' ? '' : catId
+    setActiveCategory(newCat)
+    const url = newCat ? `/productos?cat=${newCat}` : '/productos'
     window.history.pushState({}, '', url)
   }
 
@@ -229,15 +247,14 @@ function ProductsContent() {
     })
   }
 
-  const promos    = products.filter(p => (p as any).promotional_price)
   const isPromos  = activeCategory === 'promos'
   const isInCart  = (id: string) => items.some(i => i.id === id)
 
-  // Combos siempre van en la sección dark, nunca en el grid normal
   const filtered = products.filter(p => {
-    if (p.category_id === 'cat-combos') return false
+    if (showCategoryGrid) return false          // En vista de categorías no mostrar nada
+    if (p.category_id === 'cat-combos') return false  // Combos van en su sección propia
     if (isPromos) return !!(p as any).promotional_price
-    const matchCat    = activeCategory === 'all' || p.category_id === activeCategory
+    const matchCat    = !activeCategory || activeCategory === 'all' || p.category_id === activeCategory
     const matchSearch = p.name.toLowerCase().includes(search.toLowerCase())
     return matchCat && matchSearch
   })
@@ -483,7 +500,40 @@ function ProductsContent() {
           })()
         )}
 
+        {/* ── Vista inicial: grid de categorías ── */}
+        {showCategoryGrid && (
+          <div className="max-w-7xl mx-auto px-4 py-10">
+            <div className="mb-8">
+              <p className="text-red-600 font-semibold text-sm uppercase tracking-widest mb-2">Carnicería El Fundo</p>
+              <h1 className="text-4xl font-black text-gray-900">Productos</h1>
+              <p className="text-gray-500 mt-2">Selecciona una categoría para explorar</p>
+            </div>
+            <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+              {CATEGORY_GRID.map((cat, i) => (
+                <button
+                  key={cat.id}
+                  onClick={() => handleCategoryClick(cat.id)}
+                  className={`group relative overflow-hidden rounded-2xl text-left focus:outline-none ${i === 0 ? 'col-span-2 row-span-2' : ''}`}
+                  style={{ minHeight: i === 0 ? '400px' : '180px' }}
+                >
+                  <img src={cat.img} alt={cat.label}
+                    className="absolute inset-0 w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+                  <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
+                  <div className="absolute bottom-0 left-0 right-0 p-5">
+                    <h3 className="text-white font-black text-xl mb-0.5">{cat.emoji} {cat.label}</h3>
+                    <p className="text-gray-300 text-sm">{cat.desc}</p>
+                    <div className="flex items-center gap-1 text-red-400 text-sm font-semibold mt-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                      Ver productos <ArrowRight className="w-3 h-3" />
+                    </div>
+                  </div>
+                </button>
+              ))}
+            </div>
+          </div>
+        )}
+
         {/* ── Filtros y catálogo ── */}
+        {!showCategoryGrid && (<>
         <div className="bg-white border-b border-gray-100 py-6">
           <div className="max-w-7xl mx-auto px-4">
             <div className="flex flex-col sm:flex-row sm:items-center gap-4">
@@ -541,6 +591,7 @@ function ProductsContent() {
             </>
           )}
         </div>
+        </>)}
       </main>
 
       {/* ── Mini barra carrito flotante ── */}
