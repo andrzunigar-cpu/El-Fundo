@@ -2,8 +2,9 @@ import Link from 'next/link'
 import { Header } from '@/components/Header'
 import { Footer } from '@/components/Footer'
 import { FlashSale } from '@/components/FlashSale'
-import { ArrowRight } from 'lucide-react'
+import { ArrowRight, Mail, Phone } from 'lucide-react'
 import WelcomePopup from '@/components/WelcomePopup'
+import ContactForm from '@/components/ContactForm'
 
 const CATEGORIES = [
   { id: 'vacuno',    name: 'Vacuno',      desc: 'Cortes premium de res',       image: 'https://images.unsplash.com/photo-1603048297172-c92544798d5a?w=600&q=80' },
@@ -93,6 +94,55 @@ export default function Home() {
                 </Wrapper>
               )
             })}
+          </div>
+        </section>
+
+        {/* ── Sección Contacto ── */}
+        <section className="max-w-5xl mx-auto px-4 py-16">
+          <div className="grid md:grid-cols-2 gap-12 items-start">
+            {/* Info */}
+            <div>
+              <p className="text-red-600 font-semibold text-sm uppercase tracking-widest mb-2">Escríbenos</p>
+              <h2 className="text-3xl font-black text-gray-900 mb-4">¿Tienes alguna consulta?</h2>
+              <p className="text-gray-500 mb-8">Déjanos tu mensaje y te responderemos a la brevedad. También puedes contactarnos directamente.</p>
+              <ul className="space-y-4">
+                <li className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center shrink-0">
+                    <span className="text-lg">💬</span>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium">WhatsApp</p>
+                    <a href="https://wa.me/56928239161" target="_blank" rel="noopener noreferrer"
+                      className="text-sm font-bold text-gray-800 hover:text-green-600 transition">+56 9 2823 9161</a>
+                  </div>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-red-100 rounded-xl flex items-center justify-center shrink-0">
+                    <Mail className="w-5 h-5 text-red-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium">Email</p>
+                    <a href="mailto:contacto@carniceriaelfundo.cl"
+                      className="text-sm font-bold text-gray-800 hover:text-red-600 transition">contacto@carniceriaelfundo.cl</a>
+                  </div>
+                </li>
+                <li className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-gray-100 rounded-xl flex items-center justify-center shrink-0">
+                    <Phone className="w-5 h-5 text-gray-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400 font-medium">Teléfono</p>
+                    <a href="tel:+56928239161"
+                      className="text-sm font-bold text-gray-800 hover:text-gray-600 transition">+56 9 2823 9161</a>
+                  </div>
+                </li>
+              </ul>
+            </div>
+            {/* Formulario */}
+            <div className="bg-white rounded-3xl shadow-sm border border-gray-100 p-6 sm:p-8">
+              <h3 className="font-black text-gray-900 text-xl mb-5">Envíanos un mensaje</h3>
+              <ContactForm />
+            </div>
           </div>
         </section>
 
