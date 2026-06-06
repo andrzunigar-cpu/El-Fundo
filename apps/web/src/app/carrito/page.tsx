@@ -200,8 +200,8 @@ export default function CartPage() {
   const [schedDate, setSchedDate] = useState('')
   const [schedTime, setSchedTime] = useState('')
 
-  const [deliveryMode,  setDeliveryMode]  = useState<'delivery' | 'pickup'>('delivery')
-  const [deliverySelected, setDeliverySelected] = useState(false)
+  const [deliveryMode,  setDeliveryMode]  = useState<'delivery' | 'pickup'>('pickup')
+  const [deliverySelected, setDeliverySelected] = useState(true)
   const [deliveryPrice, setDeliveryPrice] = useState(2990)
   const [storeAddress,  setStoreAddress]  = useState('Av. Parque Central 06441, Puente Alto')
 
@@ -560,27 +560,14 @@ export default function CartPage() {
               {/* Tipo de entrega */}
               <div className="bg-white rounded-2xl p-4 sm:p-6 shadow-sm">
                 <h2 className="font-bold text-gray-900 mb-3 sm:mb-4">¿Cómo lo recibes?</h2>
-                <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
-                  {[
-                    { mode: 'delivery' as const, icon: <Truck className="w-5 h-5" />, label: 'Delivery', sub: deliveryPrice > 0 ? `+ $${fmt(deliveryPrice)}` : 'Gratis' },
-                    { mode: 'pickup'   as const, icon: <Store className="w-5 h-5" />, label: 'Retiro en local', sub: 'Sin costo extra' },
-                  ].map(opt => (
-                    <button
-                      key={opt.mode}
-                      onClick={() => { setDeliveryMode(opt.mode); setDeliverySelected(true) }}
-                      className={`flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 rounded-xl border-2 text-left transition ${
-                        deliverySelected && deliveryMode === opt.mode
-                          ? 'border-red-500 bg-red-50 text-red-700'
-                          : 'border-gray-200 text-gray-600 hover:border-gray-300 hover:bg-gray-50'
-                      }`}
-                    >
-                      <span className={`shrink-0 ${deliverySelected && deliveryMode === opt.mode ? 'text-red-600' : 'text-gray-400'}`}>{opt.icon}</span>
-                      <div className="min-w-0">
-                        <p className="text-sm font-bold leading-tight">{opt.label}</p>
-                        <p className="text-xs opacity-70 mt-0.5">{opt.sub}</p>
-                      </div>
-                    </button>
-                  ))}
+                <div className="grid grid-cols-1 gap-2.5 sm:gap-3">
+                  <div className="flex items-center gap-2.5 sm:gap-3 px-3 sm:px-4 py-3.5 sm:py-4 rounded-xl border-2 border-red-500 bg-red-50 text-red-700">
+                    <span className="shrink-0 text-red-600"><Store className="w-5 h-5" /></span>
+                    <div className="min-w-0">
+                      <p className="text-sm font-bold leading-tight">Retiro en local</p>
+                      <p className="text-xs opacity-70 mt-0.5">Sin costo extra</p>
+                    </div>
+                  </div>
                 </div>
                 {deliveryMode === 'pickup' && (
                   <p className="mt-3 text-xs text-gray-500 bg-gray-50 px-3 sm:px-4 py-3 rounded-xl">
