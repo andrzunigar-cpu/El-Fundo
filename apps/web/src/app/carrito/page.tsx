@@ -423,12 +423,6 @@ export default function CartPage() {
             <p className="text-gray-400 text-sm mb-6">Te contactaremos pronto para confirmar tu pedido.</p>
 
             <div className="flex flex-col sm:flex-row gap-3 justify-center">
-              <Link
-                href={`/pedido/${orderId}`}
-                className="inline-flex items-center justify-center gap-2 bg-gray-900 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-gray-800 transition"
-              >
-                Ver estado del pedido
-              </Link>
               <Link href="/productos" className="inline-flex items-center justify-center gap-2 bg-red-600 text-white px-6 py-3.5 rounded-xl font-bold hover:bg-red-700 transition">
                 Seguir comprando <ArrowRight className="w-4 h-4" />
               </Link>

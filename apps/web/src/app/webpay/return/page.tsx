@@ -6,7 +6,7 @@ import { useEffect, useRef, useState, Suspense } from 'react'
 import { useSearchParams, useRouter } from 'next/navigation'
 import { useCart } from '@/lib/store'
 import Link from 'next/link'
-import { CheckCircle, XCircle, Loader, ArrowRight, Home, ClipboardList, MapPin, Phone, Truck, Store, Clock } from 'lucide-react'
+import { CheckCircle, XCircle, Loader, ArrowRight, Home, MapPin, Phone, Truck, Store, Clock } from 'lucide-react'
 
 // Transbank envía token_ws como POST o GET; Next.js client recibe el GET final
 function ReturnContent() {
@@ -303,14 +303,6 @@ function ReturnContent() {
 
         {/* Acciones */}
         <div className="flex flex-col gap-3">
-          {detail.orderId && (
-            <Link
-              href={`/pedido/${detail.orderId}`}
-              className="inline-flex items-center justify-center gap-2 bg-red-600 text-white px-8 py-3 rounded-xl font-bold hover:bg-red-700 transition"
-            >
-              <ClipboardList className="w-5 h-5" /> Ver estado del pedido
-            </Link>
-          )}
           <Link
             href="/productos"
             className="inline-flex items-center justify-center gap-2 border border-gray-200 text-gray-700 px-8 py-3 rounded-xl font-semibold hover:bg-gray-50 transition"
