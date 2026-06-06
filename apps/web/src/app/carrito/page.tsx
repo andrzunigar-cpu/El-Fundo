@@ -174,7 +174,8 @@ interface PayOption {
 }
 
 const PAY_ONLINE: PayOption[] = [
-  { id: 'webpay',   label: 'WebPay',   sub: 'Débito, crédito y prepago',  icon: <Lock className="w-5 h-5" /> },
+  { id: 'webpay',  label: 'WebPay',  sub: 'Débito, crédito y prepago', icon: <Lock className="w-5 h-5" /> },
+  { id: 'amipass', label: 'Amipass', sub: 'Paga desde tu app Amipass',  icon: <span className="text-base">🎫</span> },
 ]
 
 const PAY_PRESENCIAL: PayOption[] = [
@@ -182,7 +183,6 @@ const PAY_PRESENCIAL: PayOption[] = [
   { id: 'efectivo',       label: 'Efectivo',      sub: 'Pago al recibir o en local',         icon: <Banknote className="w-5 h-5" /> },
   { id: 'transferencia',  label: 'Transferencia', sub: 'Transferencia bancaria previa',      icon: <Building2 className="w-5 h-5" /> },
   { id: 'pluxee',         label: 'Pluxee',        sub: 'Tarjeta de beneficios al recibir',   icon: <span className="text-base">🎫</span> },
-  { id: 'amipass',        label: 'Amipass',       sub: 'Próximamente online',                icon: <span className="text-base">🎫</span>, soon: true },
   { id: 'edenred',        label: 'Edenred',       sub: 'Próximamente online',                icon: <span className="text-base">🎫</span>, soon: true },
 ]
 
@@ -414,7 +414,20 @@ export default function CartPage() {
                 🏦 Te enviaremos los datos bancarios para realizar la transferencia. El pedido se confirma al acreditar el pago.
               </p>
             )}
-            {(payMethod === 'pluxee') && (
+            {payMethod === 'amipass' && (
+              <div className="bg-orange-50 border-2 border-orange-200 rounded-2xl px-5 py-4 mb-4 text-left">
+                <p className="text-sm font-black text-orange-800 mb-2">📱 Completa tu pago en la app Amipass</p>
+                <ol className="text-xs text-orange-700 space-y-1.5 list-decimal list-inside mb-3">
+                  <li>Abre tu app <strong>Amipass</strong></li>
+                  <li>Selecciona <strong>Pagar en comercio</strong></li>
+                  <li>Código: <span className="font-mono font-black text-orange-900 bg-orange-100 px-1.5 py-0.5 rounded">4114701</span></li>
+                  <li>Monto: <span className="font-black text-orange-900">${grandTotal.toLocaleString('es-CL')}</span></li>
+                  <li>Confirma con tu PIN</li>
+                </ol>
+                <p className="text-[11px] text-orange-600 border-t border-orange-200 pt-2">Tu pedido se confirma una vez que verifiquemos el pago.</p>
+              </div>
+            )}
+            {payMethod === 'pluxee' && (
               <p className="text-sm text-orange-700 bg-orange-50 rounded-xl px-4 py-3 mb-4">
                 🎫 Pago con Pluxee al retirar en local.
               </p>
@@ -825,6 +838,19 @@ export default function CartPage() {
                 )}
 
                 {/* ── Instrucciones Amipass ── */}
+                {payMethod === 'amipass' && (
+                  <div className="mt-3 bg-orange-50 border border-orange-200 rounded-xl p-4 space-y-2">
+                    <p className="text-sm font-black text-orange-800">📱 Cómo pagar con Amipass</p>
+                    <ol className="text-xs text-orange-700 space-y-1 list-decimal list-inside">
+                      <li>Abre tu app <strong>Amipass</strong></li>
+                      <li>Selecciona <strong>Pagar en comercio</strong></li>
+                      <li>Código de comercio: <span className="font-mono font-black text-orange-900 bg-orange-100 px-1.5 py-0.5 rounded">4114701</span></li>
+                      <li>Monto: <span className="font-black text-orange-900">${grandTotal.toLocaleString('es-CL')}</span></li>
+                      <li>Confirma con tu PIN</li>
+                    </ol>
+                    <p className="text-[11px] text-orange-600 pt-1 border-t border-orange-200">Tu pedido se confirma al verificar el pago.</p>
+                  </div>
+                )}
               </div>
 
               {/* Botón confirmar — solo visible en desktop */}
